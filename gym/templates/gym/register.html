@@ -1,0 +1,157 @@
+{% extends 'gym/base.html' %}
+{% load custom_filters %}
+
+{% block title %}ثبت نام - پلتفرم جامع ورزشی{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card register-card">
+            <div class="card-header text-white" style="background-color: var(--secondary-color);">
+                <h3 class="mb-0">ثبت نام</h3>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% for field in form %}
+                    <div class="mb-3">
+                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                        {{ field.errors }}
+                        {{ field|add_class:"form-control" }}
+                        {% if field.help_text %}
+                        <small class="form-text text-muted">{{ field.help_text }}</small>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                    
+                    <div class="mb-3">
+                        <label for="id_phone_number" class="form-label">شماره تلفن</label>
+                        <input type="tel" class="form-control" id="id_phone_number" name="phone_number" required>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="agreement" name="agreement" required>
+                        <label class="form-check-label" for="agreement">
+                            با <a href="#" data-bs-toggle="modal" data-bs-target="#agreementModal" class="agreement-link">شرایط و قوانین</a> موافقم
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">ثبت نام</button>
+                </form>
+            </div>
+            <div class="card-footer">
+                <p class="mb-0">حساب کاربری دارید؟ <a href="{% url 'gym:login' %}" class="login-link">ورود</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Agreement Modal -->
+<div class="modal fade" id="agreementModal" tabindex="-1" aria-labelledby="agreementModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header text-white" style="background-color: var(--secondary-color);">
+                <h5 class="modal-title" id="agreementModalLabel">توافقنامه کاربر</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="p-3">
+                    <p class="lead">توافقنامه کاربر:</p>
+                    <p>این سامانه به صورت خصوصی و بدون تعلق به هرگونه نهاد حقوقی و حقیقی میباشد و تمام مفاد اعم ازمادی و معنوی سامانه در قالب آموزش و ورزش با توافق کاربر میباشد.</p>
+                    <p>این سامانه هیچ گونه مسئولیتی در قبال خدمات ارائه شده در اماکن غیر ندارد.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .register-card {
+        border: none;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    .register-card .card-header {
+        border-bottom: 2px solid var(--primary-color);
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(255, 0, 0, 0.25);
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--primary-color) !important;
+        border-color: var(--primary-color) !important;
+    }
+    
+    .agreement-link {
+        color: var(--primary-color) !important;
+        transition: all 0.3s ease;
+    }
+    
+    .agreement-link:hover {
+        color: var(--dark-red) !important;
+        text-decoration: underline !important;
+    }
+    
+    .login-link {
+        color: var(--primary-color) !important;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .login-link:hover {
+        color: var(--dark-red) !important;
+        text-decoration: underline !important;
+    }
+    
+    .btn-primary {
+        background-color: var(--primary-color) !important;
+        border-color: var(--primary-color) !important;
+        font-weight: 600;
+        padding: 10px 0;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        background-color: var(--dark-red) !important;
+        border-color: var(--dark-red) !important;
+        transform: translateY(-2px);
+    }
+    
+    .btn-secondary {
+        background-color: var(--secondary-color) !important;
+        border-color: var(--secondary-color) !important;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #333 !important;
+        border-color: #333 !important;
+    }
+    
+    .modal-content {
+        border: none;
+        border-radius: 8px;
+    }
+    
+    .modal-header {
+        border-bottom: 2px solid var(--primary-color);
+    }
+</style>
+
+{% block extra_js %}
+<script>
+    // Add form-control class to all form fields
+    function addClassToFormControls() {
+        document.querySelectorAll('input, select, textarea').forEach(element => {
+            element.classList.add('form-control');
+        });
+    }
+    
+    document.addEventListener('DOMContentLoaded', addClassToFormControls);
+</script>
+{% endblock %} 

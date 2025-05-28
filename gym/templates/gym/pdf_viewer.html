@@ -1,0 +1,433 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}مشاهده جزوه - {{ booklet.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    #pdf-viewer {
+        width: 100%;
+        height: 80vh;
+        border: 1px solid #ddd;
+        margin: 20px 0;
+        overflow-y: auto;
+    }
+    /* Disable text selection and right-click */
+    body {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+    /* Overlay to prevent direct interaction with PDF */
+    .pdf-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10;
+        pointer-events: none;
+    }
+    /* Watermark */
+    .watermark {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-45deg);
+        font-size: 48px;
+        color: rgba(0, 0, 0, 0.1);
+        pointer-events: none;
+        z-index: 5;
+    }
+    /* Navigation controls */
+    .pdf-controls {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 10px;
+        margin: 10px 0;
+    }
+    .page-info {
+        margin: 0 15px;
+        font-size: 1.1em;
+    }
+    .pdf-canvas-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+    .pdf-page {
+        margin-bottom: 20px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    /* Screenshot prevention */
+    #security-warning {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        background: rgba(255, 0, 0, 0.1);
+        border: 1px solid rgba(255, 0, 0, 0.3);
+        padding: 10px;
+        border-radius: 5px;
+        z-index: 100;
+        font-size: 0.9em;
+        max-width: 300px;
+    }
+    #dynamic-watermark {
+        position: fixed;
+        pointer-events: none;
+        z-index: 20;
+        display: none;
+        font-size: 24px;
+        color: rgba(255, 0, 0, 0.3);
+        text-align: center;
+        width: 100%;
+        height: 100%;
+        justify-content: center;
+        align-items: center;
+        background: rgba(0, 0, 0, 0.05);
+    }
+    .watermark-text {
+        transform: rotate(-45deg);
+        white-space: nowrap;
+    }
+    /* Mobile optimization */
+    @media (max-width: 768px) {
+        #security-warning {
+            font-size: 12px;
+            padding: 8px;
+            max-width: 200px;
+        }
+        #dynamic-watermark {
+            font-size: 18px;
+        }
+        .watermark {
+            font-size: 36px;
+        }
+        .pdf-controls {
+            flex-wrap: wrap;
+        }
+        .page-info {
+            font-size: 0.9em;
+        }
+    }
+    /* Feedback button */
+    .feedback-button {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 100;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div id="security-warning">
+        <i class="fas fa-shield-alt"></i> 
+        <span class="desktop-only">عکس‌برداری از صفحه ممنوع است. تمام فعالیت‌ها قابل ردیابی هستند.</span>
+        <span class="mobile-only">عکس‌برداری از صفحه قابل ردیابی است.</span>
+    </div>
+    <div id="dynamic-watermark">
+        <div class="watermark-text">
+            {{ request.user.get_full_name|default:request.user.username }} - {{ booklet.title }} - {{ request.session.session_key|slice:":8" }}
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="mb-0">{{ booklet.title }}</h2>
+            <a href="{% url 'gym:booklet_detail' booklet.id %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-right"></i> بازگشت
+            </a>
+        </div>
+        <div class="card-body position-relative">
+            <div class="watermark">
+                {{ request.user.get_full_name|default:request.user.username }}
+            </div>
+            <div class="pdf-controls">
+                <button id="prevPage" class="btn btn-primary" disabled>
+                    <i class="fas fa-chevron-right"></i> صفحه قبل
+                </button>
+                <span class="page-info">صفحه <span id="pageNum">1</span> از <span id="pageCount">0</span></span>
+                <button id="nextPage" class="btn btn-primary">
+                    صفحه بعد <i class="fas fa-chevron-left"></i>
+                </button>
+            </div>
+            <div id="pdf-viewer" class="pdf-canvas-container">
+                <!-- PDF pages will be rendered here -->
+            </div>
+            <div class="pdf-overlay"></div>
+        </div>
+    </div>
+    <button class="btn btn-info feedback-button" onclick="showFeedbackModal()">
+        <i class="fas fa-comment"></i> گزارش مشکل
+    </button>
+</div>
+
+<!-- Feedback Modal -->
+<div class="modal fade" id="feedbackModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">گزارش مشکل</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="feedbackForm">
+                    <div class="mb-3">
+                        <label class="form-label">نوع مشکل</label>
+                        <select class="form-select" name="issue_type" required>
+                            <option value="watermark">مشکل با واترمارک</option>
+                            <option value="navigation">مشکل در ناوبری</option>
+                            <option value="performance">مشکل در عملکرد</option>
+                            <option value="other">سایر</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">توضیحات</label>
+                        <textarea class="form-control" name="description" rows="3" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="button" class="btn btn-primary" onclick="submitFeedback()">ارسال</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+<script>
+    // Initialize PDF.js
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
+
+    // Disable right-click
+    document.addEventListener('contextmenu', event => event.preventDefault());
+
+    // Disable print
+    window.onbeforeprint = function() {
+        return false;
+    };
+
+    // Disable developer tools
+    document.addEventListener('keydown', function(event) {
+        if (event.keyCode == 123 || // F12
+            (event.ctrlKey && event.shiftKey && event.keyCode == 73) || // Ctrl+Shift+I
+            (event.ctrlKey && event.shiftKey && event.keyCode == 74)) { // Ctrl+Shift+J
+            event.preventDefault();
+            return false;
+        }
+    });
+
+    // Screenshot prevention
+    const dynamicWatermark = document.getElementById('dynamic-watermark');
+    let watermarkTimeout;
+    let lastInteraction = Date.now();
+    let isUserActive = true;
+
+    // Track user activity
+    function updateLastInteraction() {
+        lastInteraction = Date.now();
+        isUserActive = true;
+    }
+
+    document.addEventListener('mousemove', updateLastInteraction);
+    document.addEventListener('scroll', updateLastInteraction);
+    document.addEventListener('click', updateLastInteraction);
+    document.addEventListener('keydown', updateLastInteraction);
+
+    function showDynamicWatermark() {
+        // Only show watermark if user is inactive
+        if (!isUserActive) {
+            dynamicWatermark.style.display = 'flex';
+            clearTimeout(watermarkTimeout);
+            watermarkTimeout = setTimeout(() => {
+                dynamicWatermark.style.display = 'none';
+            }, 2000); // Show for 2 seconds
+        }
+    }
+
+    // Check user activity every 5 seconds
+    setInterval(() => {
+        isUserActive = (Date.now() - lastInteraction) < 10000; // 10 seconds of inactivity
+    }, 5000);
+
+    // Show watermark periodically if user is inactive
+    setInterval(() => {
+        if (!isUserActive) {
+            showDynamicWatermark();
+        }
+    }, 30000); // Every 30 seconds
+
+    // Show watermark on potential screenshot events
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'PrintScreen' || 
+            (event.ctrlKey && event.key === 'p') || 
+            (event.ctrlKey && event.shiftKey && event.key === 's')) {
+            showDynamicWatermark();
+            logScreenshotAttempt('key_press');
+        }
+    });
+
+    // Monitor window focus for potential screenshots
+    window.addEventListener('blur', function() {
+        showDynamicWatermark();
+        logScreenshotAttempt('window_blur');
+    });
+
+    // Log screenshot attempt with confidence level
+    function logScreenshotAttempt(eventType) {
+        const confidence = {
+            'key_press': 'high',
+            'window_blur': 'low',
+            'clipboard': 'medium'
+        }[eventType] || 'low';
+
+        fetch("{% url 'gym:log_screenshot_attempt' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                user: '{{ request.user.username }}',
+                booklet_id: '{{ booklet.id }}',
+                event_type: eventType,
+                confidence: confidence,
+                session_id: '{{ request.session.session_key }}'
+            })
+        });
+    }
+
+    // Feedback functionality
+    function showFeedbackModal() {
+        const modal = new bootstrap.Modal(document.getElementById('feedbackModal'));
+        modal.show();
+    }
+
+    function submitFeedback() {
+        const form = document.getElementById('feedbackForm');
+        const formData = new FormData(form);
+        
+        fetch("{% url 'gym:submit_feedback' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: formData
+        }).then(response => response.json())
+          .then(data => {
+              if (data.status === 'success') {
+                  alert('با تشکر از گزارش شما');
+                  bootstrap.Modal.getInstance(document.getElementById('feedbackModal')).hide();
+              } else {
+                  alert('خطا در ارسال گزارش');
+              }
+          });
+    }
+
+    // Load and render PDF
+    const url = "{% url 'gym:stream_pdf' booklet.id %}";
+    let pdfDoc = null;
+    let currentPage = 1;
+    let scale = 1.5;
+
+    // Get DOM elements
+    const viewer = document.getElementById('pdf-viewer');
+    const pageNum = document.getElementById('pageNum');
+    const pageCount = document.getElementById('pageCount');
+    const prevButton = document.getElementById('prevPage');
+    const nextButton = document.getElementById('nextPage');
+
+    // Render a page
+    async function renderPage(pageNum) {
+        const page = await pdfDoc.getPage(pageNum);
+        const viewport = page.getViewport({ scale });
+
+        // Create canvas for this page
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        canvas.className = 'pdf-page';
+
+        // Render PDF page into canvas context
+        const renderContext = {
+            canvasContext: context,
+            viewport: viewport
+        };
+
+        await page.render(renderContext).promise;
+        return canvas;
+    }
+
+    // Render all pages
+    async function renderAllPages() {
+        viewer.innerHTML = ''; // Clear previous pages
+        for (let i = 1; i <= pdfDoc.numPages; i++) {
+            const canvas = await renderPage(i);
+            viewer.appendChild(canvas);
+        }
+    }
+
+    // Initialize PDF
+    pdfjsLib.getDocument(url).promise.then(function(pdf) {
+        pdfDoc = pdf;
+        pageCount.textContent = pdfDoc.numPages;
+        
+        // Render all pages
+        renderAllPages();
+        
+        // Update button states
+        prevButton.disabled = true;
+        nextButton.disabled = pdfDoc.numPages <= 1;
+        
+        // Add event listeners for navigation
+        prevButton.addEventListener('click', function() {
+            if (currentPage > 1) {
+                currentPage--;
+                viewer.scrollTo({
+                    top: viewer.scrollTop - viewer.clientHeight,
+                    behavior: 'smooth'
+                });
+                updatePageInfo();
+            }
+        });
+
+        nextButton.addEventListener('click', function() {
+            if (currentPage < pdfDoc.numPages) {
+                currentPage++;
+                viewer.scrollTo({
+                    top: viewer.scrollTop + viewer.clientHeight,
+                    behavior: 'smooth'
+                });
+                updatePageInfo();
+            }
+        });
+    }).catch(function(error) {
+        console.error('Error loading PDF:', error);
+        alert('خطا در بارگذاری جزوه. لطفا دوباره تلاش کنید.');
+    });
+
+    // Update page information
+    function updatePageInfo() {
+        pageNum.textContent = currentPage;
+        prevButton.disabled = currentPage <= 1;
+        nextButton.disabled = currentPage >= pdfDoc.numPages;
+    }
+
+    // Add keyboard navigation
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+            nextButton.click();
+        } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+            prevButton.click();
+        }
+    });
+</script>
+{% endblock %} 

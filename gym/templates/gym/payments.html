@@ -1,0 +1,80 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}پرداخت‌ها - پلتفرم جامع آموزشی{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">پرداخت‌ها</h3>
+            <a href="{% url 'gym:profile' %}" class="btn btn-light">
+                <i class="fas fa-arrow-right"></i> بازگشت به داشبورد
+            </a>
+        </div>
+        <div class="card-body">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>تاریخ</th>
+                            {% if is_admin %}
+                            <th>کاربر</th>
+                            {% endif %}
+                            <th>مبلغ</th>
+                            <th>توضیحات</th>
+                            <th>وضعیت</th>
+                            <th>رسید</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr>
+                            <td>{{ payment.date|date:"Y/m/d" }}</td>
+                            {% if is_admin %}
+                            <td>{{ payment.user }}</td>
+                            {% endif %}
+                            <td>{{ payment.amount }} تومان</td>
+                            <td>{{ payment.description }}</td>
+                            <td>
+                                <span class="badge {% if payment.status == 'approved' %}bg-success{% elif payment.status == 'rejected' %}bg-danger{% else %}bg-warning{% endif %}">
+                                    {% if payment.status == 'approved' %}
+                                        تایید شده
+                                    {% elif payment.status == 'rejected' %}
+                                        رد شده
+                                    {% else %}
+                                        در انتظار تایید
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                {% if payment.receipt %}
+                                    <a href="{{ payment.receipt.url }}" target="_blank" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i> مشاهده
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">بدون رسید</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="{% if is_admin %}6{% else %}5{% endif %}" class="text-center">هیچ پرداختی ثبت نشده است.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

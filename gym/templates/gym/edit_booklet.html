@@ -1,0 +1,48 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}ویرایش جزوه - {{ booklet.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="mb-0">ویرایش جزوه: {{ booklet.title }}</h2>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="id_title" class="form-label">عنوان</label>
+                    {{ form.title }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_description" class="form-label">توضیحات</label>
+                    {{ form.description }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_price" class="form-label">قیمت (تومان)</label>
+                    {{ form.price }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_file" class="form-label">فایل جزوه</label>
+                    {{ form.file }}
+                    {% if booklet.file %}
+                        <p class="text-muted mt-1">فایل فعلی: {{ booklet.file.name }}</p>
+                    {% endif %}
+                </div>
+                <div class="mb-3">
+                    <div class="form-check">
+                        {{ form.is_active }}
+                        <label class="form-check-label" for="id_is_active">فعال</label>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">ذخیره تغییرات</button>
+                    <a href="{% url 'gym:booklet_detail' booklet.id %}" class="btn btn-secondary">انصراف</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

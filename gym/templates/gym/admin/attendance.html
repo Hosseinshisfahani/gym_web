@@ -1,0 +1,119 @@
+{% extends 'gym/base.html' %}
+{% load custom_filters %}
+
+{% block title %}مدیریت حضور و غیاب - ادمین{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">مدیریت حضور و غیاب</h3>
+        </div>
+        <div class="card-body">
+            <form method="get" class="mb-4">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label for="date">انتخاب تاریخ:</label>
+                            <input type="date" class="form-control" id="date" name="date" value="{{ attendance_date|date:'Y-m-d' }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label for="class">فیلتر بر اساس کلاس:</label>
+                            <select class="form-select" id="class" name="class">
+                                <option value="">همه کلاس‌ها</option>
+                                {% for class_obj in classes %}
+                                <option value="{{ class_obj.id }}" {% if selected_class == class_obj.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ class_obj.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group mb-3">
+                            <label>&nbsp;</label>
+                            <button type="submit" class="btn btn-primary d-block w-100">اعمال فیلتر</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if users %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>کد ملی</th>
+                                <th>نام و نام خانوادگی</th>
+                                <th>وضعیت</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td>{{ user.username }}</td>
+                                <td>
+                                    {% if user.userprofile.full_name %}
+                                        {{ user.userprofile.full_name }}
+                                    {% else %}
+                                        {{ user.username }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if attendance_records|get_item:user.id %}
+                                        <span class="badge bg-success">حاضر</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">غایب</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <form method="post" class="d-inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="user_id" value="{{ user.id }}">
+                                        <input type="hidden" name="date" value="{{ attendance_date|date:'Y-m-d' }}">
+                                        <button type="submit" name="present" value="true" class="btn btn-sm btn-success">
+                                            <i class="fas fa-check"></i> حاضر
+                                        </button>
+                                        <button type="submit" name="present" value="false" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-times"></i> غایب
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">هیچ کاربری برای نمایش وجود ندارد.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default date to today if field is empty
+    const dateField = document.getElementById('date');
+    if (!dateField.value) {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        dateField.value = `${year}-${month}-${day}`;
+    }
+});
+</script>
+{% endblock %} 

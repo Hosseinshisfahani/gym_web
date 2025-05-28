@@ -1,0 +1,175 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}{{ ticket.subject }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Ticket Details -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ ticket.title }}</h5>
+                    {% if is_admin %}
+                    <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#statusModal" onclick="updateTicketStatus({{ ticket.id }})">
+                        تغییر وضعیت
+                    </button>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted">ایجاد شده توسط: {{ ticket.user.get_full_name|default:ticket.user.username }}</small>
+                        <br>
+                        <small class="text-muted">تاریخ ایجاد: {{ ticket.created_at|date:"Y/m/d H:i" }}</small>
+                        <br>
+                        <small class="text-muted">وضعیت: 
+                            <span class="badge {% if ticket.status == 'pending' %}bg-warning
+                                             {% elif ticket.status == 'in_progress' %}bg-info
+                                             {% elif ticket.status == 'resolved' %}bg-success
+                                             {% else %}bg-secondary{% endif %}">
+                                {{ ticket.get_status_display }}
+                            </span>
+                        </small>
+                    </div>
+                    <p class="card-text">{{ ticket.description }}</p>
+                </div>
+            </div>
+
+            <!-- Responses -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">پاسخ‌ها</h5>
+                </div>
+                <div class="card-body">
+                    {% for response in responses %}
+                    <div class="mb-3 p-3 {% if response.user.is_staff %}bg-light{% else %}bg-white{% endif %} border rounded">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <strong>{{ response.user.get_full_name|default:response.user.username }}</strong>
+                                {% if response.user.is_staff %}
+                                <span class="badge bg-info ms-2">پشتیبان</span>
+                                {% endif %}
+                            </div>
+                            <small class="text-muted">{{ response.created_at|date:"Y/m/d H:i" }}</small>
+                        </div>
+                        <p class="mb-0">{{ response.message }}</p>
+                    </div>
+                    {% empty %}
+                    <p class="text-center text-muted">هنوز پاسخی ثبت نشده است.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Reply Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">ارسال پاسخ</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="message" class="form-label">پیام شما</label>
+                            {{ form.message }}
+                        </div>
+                        <button type="submit" class="btn btn-primary">ارسال پاسخ</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {% if is_admin %}
+        <div class="col-md-4">
+            <!-- Ticket Information for Admin -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">اطلاعات تیکت</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <strong>شماره تیکت:</strong> #{{ ticket.id }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>کاربر:</strong> {{ ticket.user.get_full_name|default:ticket.user.username }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>ایمیل:</strong> {{ ticket.user.email }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>تاریخ ایجاد:</strong> {{ ticket.created_at|date:"Y/m/d H:i" }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>آخرین به‌روزرسانی:</strong> {{ ticket.updated_at|date:"Y/m/d H:i" }}
+                        </li>
+                        <li class="list-group-item">
+                            <strong>وضعیت:</strong> {{ ticket.get_status_display }}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">عملیات سریع</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-success" onclick="updateStatus('resolved')">علامت‌گذاری به عنوان حل شده</button>
+                        <button class="btn btn-secondary" onclick="updateStatus('closed')">بستن تیکت</button>
+                        <a href="{% url 'gym:tickets' %}" class="btn btn-outline-primary">بازگشت به لیست تیکت‌ها</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Status Update Modal -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">به‌روزرسانی وضعیت تیکت</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="statusForm" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="ticketStatus" class="form-label">وضعیت جدید</label>
+                        <select class="form-select" id="ticketStatus" name="status">
+                            <option value="pending">در انتظار بررسی</option>
+                            <option value="in_progress">در حال بررسی</option>
+                            <option value="resolved">حل شده</option>
+                            <option value="closed">بسته شده</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                    <button type="submit" class="btn btn-primary">ذخیره تغییرات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function updateTicketStatus(ticketId) {
+        const form = document.getElementById('statusForm');
+        form.action = `/tickets/${ticketId}/update-status/`;
+    }
+
+    function updateStatus(status) {
+        const form = document.getElementById('statusForm');
+        document.getElementById('ticketStatus').value = status;
+        form.submit();
+    }
+</script>
+{% endblock %} 

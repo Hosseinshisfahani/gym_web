@@ -1,0 +1,116 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">مدیریت تیکت‌ها</h2>
+
+    <!-- Search and Filter Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="search" class="form-label">جستجو</label>
+                    <input type="text" class="form-control" id="search" name="search" value="{{ search_query }}" placeholder="جستجو در عنوان، توضیحات یا نام کاربر">
+                </div>
+                <div class="col-md-4">
+                    <label for="status" class="form-label">وضعیت</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">همه</option>
+                        <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>در انتظار بررسی</option>
+                        <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>در حال بررسی</option>
+                        <option value="resolved" {% if status_filter == 'resolved' %}selected{% endif %}>حل شده</option>
+                        <option value="closed" {% if status_filter == 'closed' %}selected{% endif %}>بسته شده</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">اعمال فیلتر</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tickets Table -->
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>شماره تیکت</th>
+                    <th>کاربر</th>
+                    <th>عنوان</th>
+                    <th>وضعیت</th>
+                    <th>تاریخ ایجاد</th>
+                    <th>آخرین به‌روزرسانی</th>
+                    <th>عملیات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in tickets %}
+                <tr>
+                    <td>#{{ ticket.id }}</td>
+                    <td>{{ ticket.user.get_full_name|default:ticket.user.username }}</td>
+                    <td>{{ ticket.title }}</td>
+                    <td>
+                        <span class="badge {% if ticket.status == 'pending' %}bg-warning
+                                         {% elif ticket.status == 'in_progress' %}bg-info
+                                         {% elif ticket.status == 'resolved' %}bg-success
+                                         {% else %}bg-secondary{% endif %}">
+                            {{ ticket.get_status_display }}
+                        </span>
+                    </td>
+                    <td>{{ ticket.created_at|date:"Y/m/d H:i" }}</td>
+                    <td>{{ ticket.updated_at|date:"Y/m/d H:i" }}</td>
+                    <td>
+                        <a href="{% url 'gym:ticket_detail' ticket.id %}" class="btn btn-sm btn-primary">مشاهده و پاسخ</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center">هیچ تیکتی یافت نشد.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Status Update Modal -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">به‌روزرسانی وضعیت تیکت</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="statusForm" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="ticketStatus" class="form-label">وضعیت جدید</label>
+                        <select class="form-select" id="ticketStatus" name="status">
+                            <option value="pending">در انتظار بررسی</option>
+                            <option value="in_progress">در حال بررسی</option>
+                            <option value="resolved">حل شده</option>
+                            <option value="closed">بسته شده</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                    <button type="submit" class="btn btn-primary">ذخیره تغییرات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function updateTicketStatus(ticketId) {
+        const form = document.getElementById('statusForm');
+        form.action = `/tickets/${ticketId}/update-status/`;
+    }
+</script>
+{% endblock %} 

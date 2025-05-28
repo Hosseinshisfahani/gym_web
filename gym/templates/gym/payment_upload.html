@@ -1,0 +1,58 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}آپلود رسید پرداخت{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">آپلود رسید پرداخت</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5>اطلاعات محصول</h5>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <tr>
+                                    <th class="bg-light">نام محصول:</th>
+                                    <td>{{ product_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="bg-light">قیمت:</th>
+                                    <td>{{ price }} تومان</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="receipt" class="form-label">تصویر رسید پرداخت</label>
+                            <input type="file" class="form-control" id="receipt" name="receipt" accept="image/*" required>
+                            <div class="form-text">لطفاً تصویر واضح از رسید پرداخت خود آپلود کنید.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">توضیحات (اختیاری)</label>
+                            <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-upload me-2"></i>آپلود رسید
+                            </button>
+                            <a href="{% url 'gym:booklets' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right me-2"></i>بازگشت به لیست محصولات
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

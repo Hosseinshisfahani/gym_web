@@ -1,0 +1,143 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}پروفایل - پلتفرم جامع ورزشی{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Dashboard Section -->
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header text-white" style="background-color: var(--secondary-color);">
+                    داشبورد شما
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="border rounded-3 p-3 text-center h-100">
+                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-certificate fa-2x"></i></div>
+                                گواهینامه‌ها
+                                <div>
+                                    {% if user.is_staff %}
+                                    <a href="{% url 'gym:manage_certificates' %}" class="btn btn-outline-primary btn-sm mt-2">مدیریت <i class="fa fa-cog"></i></a>
+                                    {% else %}
+                                    <a href="{% url 'gym:certificates' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded-3 p-3 text-center h-100">
+                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-utensils fa-2x"></i></div>
+                                برنامه‌های غذایی
+                                <div><a href="{% url 'gym:diet_plans' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded-3 p-3 text-center h-100">
+                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-dumbbell fa-2x"></i></div>
+                                برنامه‌های تمرینی
+                                <div><a href="{% url 'gym:workout_plans' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded-3 p-3 text-center h-100">
+                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-money-bill-wave fa-2x"></i></div>
+                                پرداخت‌ها
+                                <div><a href="{% url 'gym:payments' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded-3 p-3 text-center h-100">
+                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-calendar-check fa-2x"></i></div>
+                                حضور و غیاب
+                                <div><a href="{% url 'gym:attendance' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded-3 p-3 text-center h-100">
+                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-book fa-2x"></i></div>
+                                جزوات درسی
+                                <div><a href="{% url 'gym:booklets' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded-3 p-3 text-center h-100">
+                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-ticket-alt fa-2x"></i></div>
+                                تیکت‌های پشتیبانی
+                                <div><a href="{% url 'gym:tickets' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Personal Info Section -->
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header text-white" style="background-color: var(--secondary-color);">اطلاعات شخصی</div>
+                <div class="card-body text-center">
+                    {% if user_profile.profile_image %}
+                        <img src="{{ user_profile.profile_image.url }}" 
+                             class="rounded-circle mb-3" 
+                             style="width: 100px; height: 100px; object-fit: cover;">
+                    {% else %}
+                        <img src="{% static 'images/default_profile.png' %}" 
+                             class="rounded-circle mb-3" 
+                             style="width: 100px; height: 100px; object-fit: cover;">
+                    {% endif %}
+                    <h4 class="mb-1">سلام {{ user_profile.user.get_full_name|default:user_profile.user.username }} عزیز!</h4>
+                    <p class="text-muted mb-2">خوش آمدید به پنل کاربری شما</p>
+                    <ul class="list-unstyled text-end mb-3">
+                        <li><strong>نام کاربری:</strong> {{ user_profile.user.username }}</li>
+                        <li><strong>ایمیل:</strong> {{ user_profile.user.email }}</li>
+                        <li><strong>کد ملی:</strong> {{ user_profile.melli_code|default:"بدون اطلاعات" }}</li>
+                        <li><strong>شماره تلفن:</strong> {{ user_profile.phone_number|default:"بدون اطلاعات" }}</li>
+                    </ul>
+                    <a href="{% url 'gym:edit_profile' %}" class="btn btn-primary"><i class="fa fa-edit"></i> ویرایش پروفایل</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .icon-circle {
+        width: 80px;
+        height: 80px;
+        background-color: rgba(255, 0, 0, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 10px auto;
+        transition: transform 0.2s;
+    }
+    .icon-circle i {
+        color: var(--primary-color);
+    }
+    .border:hover .icon-circle {
+        transform: scale(1.1);
+    }
+    .card {
+        border-radius: 10px;
+    }
+    .btn {
+        border-radius: 5px;
+    }
+    .btn-outline-primary {
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    .btn-outline-primary:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+</style>
+
+{% if not user_profile.agreement_accepted %}
+    {% include 'gym/user_agreement_modal.html' %}
+{% endif %}
+
+{% endblock %} 

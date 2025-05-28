@@ -1,0 +1,133 @@
+{% extends 'gym/base.html' %}
+
+{% block title %}گواهی ورزشی{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>گواهی ورزشی</h1>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadCertificateModal">
+            <i class="fas fa-plus ms-1"></i>
+            ثبت گواهی جدید
+        </button>
+    </div>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    {% if certificates %}
+        <div class="row">
+            {% for certificate in certificates %}
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">{{ certificate.title }}</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if certificate.image %}
+                        <img src="{{ certificate.image.url }}" class="img-fluid mb-3" alt="{{ certificate.title }}">
+                        {% endif %}
+                        <p class="card-text">
+                            <strong>تاریخ صدور:</strong> {{ certificate.issue_date|date:"Y/m/d" }}<br>
+                            <strong>وضعیت:</strong>
+                            <span class="badge {% if certificate.status == 'approved' %}bg-success{% elif certificate.status == 'rejected' %}bg-danger{% else %}bg-warning{% endif %}">
+                                {{ certificate.get_status_display }}
+                            </span>
+                        </p>
+                        {% if certificate.approval_message and certificate.status == 'approved' %}
+                        <div class="alert alert-success mt-2 fw-bold border-2 border-success shadow-sm">
+                            {% for line in certificate.approval_message.splitlines %}
+                                <p class="mb-1">{{ line }}</p>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                        {% if certificate.description %}
+                        <p class="card-text">{{ certificate.description }}</p>
+                        {% endif %}
+
+                        <hr>
+                        
+                        <h6>نظرات:</h6>
+                        {% for comment in certificate.comments.all %}
+                        <div class="card mb-2">
+                            <div class="card-body">
+                                <p class="card-text">{{ comment.message }}</p>
+                                <small class="text-muted">
+                                    توسط {{ comment.user.username }} در {{ comment.created_at|date:"Y/m/d H:i" }}
+                                </small>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">هنوز نظری ثبت نشده است.</p>
+                        {% endfor %}
+                        
+                        <form method="post" action="{% url 'gym:add_certificate_comment' certificate.id %}" class="mt-3">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <textarea name="message" class="form-control" rows="3" placeholder="نظر خود را بنویسید..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">ارسال نظر</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="fas fa-certificate fa-5x text-muted"></i>
+            </div>
+            <h3 class="mb-3">شما هنوز گواهی‌ای ثبت نکرده‌اید</h3>
+            <p class="text-muted mb-4">برای ثبت گواهی جدید روی دکمه زیر کلیک کنید</p>
+            <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#uploadCertificateModal">
+                <i class="fas fa-plus ms-2"></i>
+                ثبت گواهی جدید
+            </button>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Upload Certificate Modal -->
+<div class="modal fade" id="uploadCertificateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">ثبت گواهی جدید</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'gym:add_certificate' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">عنوان گواهی</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="image" class="form-label">تصویر گواهی</label>
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="issue_date" class="form-label">تاریخ صدور</label>
+                        <input type="date" class="form-control" id="issue_date" name="issue_date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">توضیحات</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                    <button type="submit" class="btn btn-primary">ثبت گواهی</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

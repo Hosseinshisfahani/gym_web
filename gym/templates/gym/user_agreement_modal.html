@@ -1,0 +1,34 @@
+<!-- User Agreement Modal -->
+<div class="modal fade" id="userAgreementModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="userAgreementModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="userAgreementModalLabel">توافقنامه کاربر</h5>
+            </div>
+            <div class="modal-body">
+                <div class="p-3">
+                    <p class="lead">توافقنامه کاربر:</p>
+                    <p>این سامانه به صورت خصوصی و بدون تعلق به هرگونه نهاد حقوقی و حقیقی میباشد و تمام مفاد اعم ازمادی و معنوی سامانه در قالب آموزش و ورزش با توافق کاربر میباشد.</p>
+                    <p>این سامانه هیچ گونه مسئولیتی در قبال خدمات ارائه شده در اماکن غیر ندارد.</p>
+                </div>
+                <div class="alert alert-info mt-3">
+                    <p class="mb-0">برای ادامه استفاده از سامانه، باید با شرایط توافقنامه موافقت کنید.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <form method="post" action="{% url 'gym:accept_agreement' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">موافقم و ادامه می‌دهم</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Script to show modal automatically -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var userAgreementModal = new bootstrap.Modal(document.getElementById('userAgreementModal'));
+        userAgreementModal.show();
+    });
+</script> 

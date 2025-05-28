@@ -1,0 +1,129 @@
+{% extends 'gym/base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}افزودن برنامه تمرینی{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card mt-4 mb-4">
+                <div class="card-header bg-primary text-white">
+                    {% if target_user %}
+                    <h3 class="mb-0">افزودن برنامه تمرینی برای {{ target_user.get_full_name|default:target_user.username }}</h3>
+                    {% else %}
+                    <h3 class="mb-0">افزودن برنامه تمرینی جدید</h3>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if target_user %}
+                    <div class="alert alert-info mb-4">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                <i class="fas fa-info-circle fa-2x"></i>
+                            </div>
+                            <div>
+                                <strong>توجه:</strong> شما در حال ایجاد برنامه تمرینی برای کاربر "{{ target_user.get_full_name|default:target_user.username }}" هستید.
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if plan_request %}
+                    <div class="card mb-4 border-warning">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0">جزئیات درخواست</h5>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>تاریخ درخواست:</strong> {{ plan_request.created_at|date:"Y/m/d" }}</p>
+                            <div class="mb-3">
+                                <strong>توضیحات کاربر:</strong>
+                                <div class="p-3 bg-light rounded">{{ plan_request.description|linebreaks }}</div>
+                            </div>
+                            {% if plan_request.admin_response %}
+                            <div class="mb-0">
+                                <strong>پاسخ مدیر:</strong>
+                                <div class="p-3 bg-light rounded">{{ plan_request.admin_response|linebreaks }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        {% if request.user.is_staff and not target_user %}
+                        <div class="mb-3">
+                            <label for="user_id" class="form-label">انتخاب کاربر</label>
+                            <select name="user_id" id="user_id" class="form-control" required>
+                                <option value="">لطفاً یک کاربر انتخاب کنید</option>
+                                {% for user in users %}
+                                    <option value="{{ user.id }}">
+                                        {% if user.userprofile.full_name %}
+                                            {{ user.userprofile.full_name }} ({{ user.username }})
+                                        {% else %}
+                                            {{ user.username }}
+                                        {% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text text-muted">کاربری که این برنامه تمرینی برای او ایجاد می‌شود را انتخاب کنید.</div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.title.id_for_label }}" class="form-label">عنوان</label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                                <div class="text-danger">{{ form.title.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">توضیحات</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger">{{ form.description.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.image.id_for_label }}" class="form-label">تصویر (اختیاری)</label>
+                            {{ form.image }}
+                            {% if form.image.errors %}
+                                <div class="text-danger">{{ form.image.errors }}</div>
+                            {% endif %}
+                            <div class="form-text text-muted">تصویری که نشان‌دهنده برنامه تمرینی باشد (اختیاری)</div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            {% if target_user %}
+                            <a href="{% url 'gym:workout_plans' %}" class="btn btn-outline-secondary">انصراف</a>
+                            <button type="submit" class="btn btn-primary">ایجاد برنامه برای {{ target_user.username }}</button>
+                            {% else %}
+                                {% if request.user.is_staff %}
+                                <a href="{% url 'gym:workout_plans' %}" class="btn btn-outline-secondary">انصراف</a>
+                                <button type="submit" class="btn btn-primary">ایجاد برنامه برای کاربر انتخاب شده</button>
+                                {% else %}
+                                <a href="{% url 'gym:workout_plans' %}" class="btn btn-outline-secondary">انصراف</a>
+                                <button type="submit" class="btn btn-primary">ثبت برنامه</button>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

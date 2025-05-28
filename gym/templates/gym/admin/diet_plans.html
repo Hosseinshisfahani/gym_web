@@ -1,0 +1,197 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">مدیریت برنامه‌های غذایی</h2>
+
+    <!-- Search and Filter Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <label for="search" class="form-label">جستجو</label>
+                    <input type="text" class="form-control" id="search" name="search" value="{{ search_query }}" placeholder="جستجو در عنوان، توضیحات یا نام کاربر">
+                </div>
+                <div class="col-md-4">
+                    <label for="status" class="form-label">وضعیت</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">همه</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>فعال</option>
+                        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>غیرفعال</option>
+                        <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>درخواست‌های در انتظار</option>
+                        <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>درخواست‌های تایید شده</option>
+                        <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>درخواست‌های رد شده</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary">اعمال فیلتر</button>
+                    <a href="{% url 'gym:diet_plans' %}" class="btn btn-outline-secondary ms-2">پاک کردن فیلترها</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="d-flex justify-content-end mb-4">
+        <a href="{% url 'gym:add_diet_plan' %}" class="btn btn-success">
+            <i class="fas fa-plus me-1"></i> ایجاد برنامه غذایی جدید
+        </a>
+        <a href="{% url 'gym:manage_plan_requests' %}?plan_type=diet" class="btn btn-info ms-2">
+            <i class="fas fa-list-alt me-1"></i> مدیریت درخواست‌ها
+        </a>
+    </div>
+
+    <!-- Diet Plans Table -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4 class="mb-0">برنامه‌های غذایی</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>عنوان</th>
+                            <th>کاربر</th>
+                            <th>تاریخ ایجاد</th>
+                            <th>وضعیت</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for plan in diet_plans %}
+                        <tr>
+                            <td>{{ plan.title }}</td>
+                            <td>{{ plan.user.get_full_name|default:plan.user.username }}</td>
+                            <td>{{ plan.created_at|date:"Y/m/d" }}</td>
+                            <td>
+                                <span class="badge {% if plan.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {% if plan.is_active %}فعال{% else %}غیرفعال{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'gym:download_diet_plan' plan.id %}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-download"></i> دانلود
+                                    </a>
+                                    <button class="btn btn-sm btn-warning" onclick="editPlan({{ plan.id }})">
+                                        <i class="fas fa-edit"></i> ویرایش
+                                    </button>
+                                    <button class="btn btn-sm {% if plan.is_active %}btn-danger{% else %}btn-success{% endif %}" 
+                                            onclick="toggleStatus({{ plan.id }}, {% if plan.is_active %}false{% else %}true{% endif %})">
+                                        {% if plan.is_active %}
+                                        <i class="fas fa-ban"></i> غیرفعال کردن
+                                        {% else %}
+                                        <i class="fas fa-check"></i> فعال کردن
+                                        {% endif %}
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">هیچ برنامه غذایی یافت نشد.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Plan Requests Table -->
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">درخواست‌های برنامه غذایی</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>کاربر</th>
+                            <th>تاریخ درخواست</th>
+                            <th>وضعیت</th>
+                            <th>توضیحات</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for request in plan_requests %}
+                        <tr>
+                            <td>{{ request.user.get_full_name|default:request.user.username }}</td>
+                            <td>{{ request.created_at|date:"Y/m/d" }}</td>
+                            <td>
+                                <span class="badge {% if request.status == 'pending' %}bg-warning
+                                                 {% elif request.status == 'approved' %}bg-success
+                                                 {% else %}bg-danger{% endif %}">
+                                    {{ request.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ request.description|truncatechars:50 }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'gym:update_plan_request' request.id %}?status=approved" class="btn btn-sm btn-success">
+                                        <i class="fas fa-check"></i> تایید
+                                    </a>
+                                    <a href="{% url 'gym:update_plan_request' request.id %}?status=rejected" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-times"></i> رد
+                                    </a>
+                                    {% if request.status == 'approved' %}
+                                    <a href="{% url 'gym:add_diet_plan' %}?user_id={{ request.user.id }}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-plus"></i> ایجاد برنامه
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">هیچ درخواستی یافت نشد.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Toggle Modal - will be implemented later with AJAX -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تغییر وضعیت برنامه</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="statusForm" method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <p>آیا از تغییر وضعیت این برنامه غذایی اطمینان دارید؟</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                    <button type="submit" class="btn btn-primary">تایید</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // These functions are placeholders and will need to be implemented with proper AJAX functionality
+    function editPlan(planId) {
+        // Redirect to the plan edit page (will be implemented later)
+        alert('ویرایش برنامه با شناسه ' + planId);
+    }
+
+    function toggleStatus(planId, makeActive) {
+        // Toggle plan status (will be implemented later)
+        alert('تغییر وضعیت برنامه با شناسه ' + planId + ' به ' + (makeActive ? 'فعال' : 'غیرفعال'));
+    }
+</script>
+{% endblock %} 

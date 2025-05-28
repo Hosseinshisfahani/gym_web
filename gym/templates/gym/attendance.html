@@ -1,0 +1,288 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}حضور و غیاب{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center mb-4">{% if is_admin %}مدیریت حضور و غیاب{% else %}حضور و غیاب من{% endif %}</h2>
+
+    {% if messages %}
+    <div class="messages">
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message|safe }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if is_admin %}
+    <!-- Admin View -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <!-- Date Filter -->
+                <div class="col-md-4">
+                    <label for="date" class="form-label">تاریخ</label>
+                    <input type="date" name="date" id="date" class="form-control" value="{{ selected_date }}">
+                </div>
+
+                <!-- Class Filter -->
+                <div class="col-md-4">
+                    <label for="class" class="form-label">کلاس</label>
+                    <select name="class" id="class" class="form-select">
+                        <option value="">همه کلاس‌ها</option>
+                        {% for class in classes %}
+                        <option value="{{ class.id }}" {% if selected_class == class.id|stringformat:"s" %}selected{% endif %}>
+                            {{ class.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Search -->
+                <div class="col-md-4">
+                    <label for="search" class="form-label">جستجو</label>
+                    <input type="text" name="search" id="search" class="form-control" value="{{ search_query }}" placeholder="نام یا کد ملی دانش‌آموز">
+                </div>
+
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">اعمال فیلتر</button>
+                    <a href="{% url 'gym:attendance' %}" class="btn btn-secondary">حذف فیلتر</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">تعداد کل دانش‌آموزان</h5>
+                    <h2 class="display-4">{{ total_students }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">حاضرین</h5>
+                    <h2 class="display-4 text-success">{{ present_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">غایبین</h5>
+                    <h2 class="display-4 text-danger">{{ absent_count }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance by Class -->
+    {% if attendance_by_class %}
+        {% for class_name, class_attendances in attendance_by_class.items %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">{{ class_name }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>نام دانش‌آموز</th>
+                                <th>کد ملی</th>
+                                <th>وضعیت</th>
+                                <th>توضیحات</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for attendance in class_attendances %}
+                            <tr>
+                                <td>{{ attendance.user_profile.full_name }}</td>
+                                <td>{{ attendance.user_profile.melli_code }}</td>
+                                <td>
+                                    <span class="badge {% if attendance.present %}bg-success{% else %}bg-danger{% endif %}">
+                                        {% if attendance.present %}حاضر{% else %}غایب{% endif %}
+                                    </span>
+                                </td>
+                                <td>{{ attendance.description|default:"-" }}</td>
+                                <td>
+                                    <form method="post" class="d-inline" onsubmit="return confirm('آیا از تغییر وضعیت حضور و غیاب اطمینان دارید؟');">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="attendance_id" value="{{ attendance.id }}">
+                                        <input type="hidden" name="present" value="{% if attendance.present %}false{% else %}true{% endif %}">
+                                        <button type="submit" class="btn btn-sm {% if attendance.present %}btn-danger{% else %}btn-success{% endif %}">
+                                            {% if attendance.present %}تغییر به غایب{% else %}تغییر به حاضر{% endif %}
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> هیچ رکورد حضور و غیابی برای تاریخ انتخاب شده یافت نشد.
+        </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Student View -->
+    <div class="row">
+        <!-- Overall Statistics -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">درصد حضور</h5>
+                    <h2 class="display-4">{{ attendance_percentage|floatformat:1 }}%</h2>
+                    <div class="progress mt-3">
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             data-value="{{ attendance_percentage }}"
+                             aria-valuenow="{{ attendance_percentage }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">روزهای حضور</h5>
+                    <h2 class="display-4 text-success">{{ present_days }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <h5 class="card-title">روزهای غیبت</h5>
+                    <h2 class="display-4 text-danger">{{ absent_days }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Attendance -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">حضور و غیاب ماهانه</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ماه</th>
+                            <th>تعداد روزهای کلاس</th>
+                            <th>تعداد حضور</th>
+                            <th>درصد حضور</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for month, stats in monthly_attendance.items %}
+                        <tr>
+                            <td>{{ month }}</td>
+                            <td>{{ stats.total }}</td>
+                            <td>{{ stats.present }}</td>
+                            <td>
+                                {% with percentage=stats.present|div:stats.total|multiply:100 %}
+                                {{ percentage|floatformat:1 }}%
+                                <div class="progress" style="height: 5px;">
+                                    <div class="progress-bar bg-success" role="progressbar" 
+                                         data-value="{{ percentage }}"
+                                         aria-valuenow="{{ percentage }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">
+                                    </div>
+                                </div>
+                                {% endwith %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center">هیچ رکورد حضور و غیابی یافت نشد.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Attendance -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">جزئیات حضور و غیاب</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>تاریخ</th>
+                            <th>وضعیت</th>
+                            <th>توضیحات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for attendance in attendances %}
+                        <tr>
+                            <td>{{ attendance.date }}</td>
+                            <td>
+                                <span class="badge {% if attendance.present %}bg-success{% else %}bg-danger{% endif %}">
+                                    {% if attendance.present %}حاضر{% else %}غایب{% endif %}
+                                </span>
+                            </td>
+                            <td>{{ attendance.description|default:"-" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center">رکوردی یافت نشد.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if is_admin %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Update progress bars
+    document.querySelectorAll('.progress-bar').forEach(function(bar) {
+        const value = bar.getAttribute('data-value');
+        bar.style.width = value + '%';
+    });
+
+    // Date change handler
+    document.getElementById('date')?.addEventListener('change', function() {
+        document.querySelector('form').submit();
+    });
+
+    // Class change handler
+    document.getElementById('class')?.addEventListener('change', function() {
+        document.querySelector('form').submit();
+    });
+});
+</script>
+{% endif %}
+{% endblock %} 

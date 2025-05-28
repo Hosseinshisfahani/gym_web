@@ -1,0 +1,22 @@
+# Core Django and its dependencies
+Django==5.2.1
+asgiref==3.8.1
+sqlparse==0.5.3
+
+# Database
+psycopg2-binary==2.9.10  # PostgreSQL adapter for Python
+
+# Image Processing
+Pillow==11.2.1  # Python Imaging Library for image processing
+
+# Form Enhancement
+django-widget-tweaks==1.5.0  # For better form rendering and styling
+
+# PDF Generation
+reportlab==4.4.1  # For PDF generation
+
+# Environment Variables
+python-dotenv==1.1.0  # For loading environment variables from .env file
+
+# Character Encoding
+chardet==5.2.0  # Character encoding detector 

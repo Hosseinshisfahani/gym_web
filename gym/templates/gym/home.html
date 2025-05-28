@@ -1,0 +1,127 @@
+{% extends 'gym/base.html' %}
+
+{% block title %}صفحه اصلی - پلتفرم جامع ورزشی{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card mb-4 welcome-card">
+                <div class="card-body text-center p-5">
+                    <h1 class="display-4 fw-bold">به پلتفرم جامع ورزشی خوش آمدید</h1>
+                    {% if not user.is_authenticated %}
+                        <div class="mt-4">
+                            <a href="{% url 'gym:register' %}" class="btn btn-primary btn-lg me-2">ثبت نام کنید</a>
+                            <a href="{% url 'gym:login' %}" class="btn btn-outline-primary btn-lg">ورود</a>
+                        </div>
+                    {% else %}
+                        <div class="mt-4">
+                            <a href="{% url 'gym:profile' %}" class="btn btn-primary btn-lg">برو به پروفایل</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <div class="icon-circle mb-3">
+                        <i class="fas fa-dumbbell fa-2x"></i>
+                    </div>
+                    <h3>برنامه‌های تمرینی</h3>
+                    <p>دسترسی به برنامه‌های تمرینی شخصی‌سازی شده متناسب با اهداف تناسب اندام شما.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <div class="icon-circle mb-3">
+                        <i class="fas fa-utensils fa-2x"></i>
+                    </div>
+                    <h3>برنامه‌های غذایی</h3>
+                    <p>راهنمایی تغذیه و برنامه‌های غذایی برای تکمیل سفر تناسب اندام شما.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <div class="icon-circle mb-3">
+                        <i class="fas fa-chart-line fa-2x"></i>
+                    </div>
+                    <h3>پیگیری پیشرفت</h3>
+                    <p>پیگیری حضور، پرداخت‌ها و دستاوردهای تناسب اندام شما.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h3>درباره ما</h3>
+                    <p>
+                        ما متعهد به کمک به علاقه‌مندان به تناسب اندام و ورزشکاران برای دستیابی به اهداف خود
+                        از طریق مدیریت جامع سفر تناسب اندام آنها هستیم. پلتفرم ما ابزارهایی برای
+                        پیگیری پیشرفت، مدیریت برنامه‌های تمرینی و حفظ رژیم غذایی سالم ارائه می‌دهد.
+                    </p>
+                    <p>
+                        با رابط کاربری آسان ما، می‌توانید به راحتی به برنامه‌های تمرینی،
+                        برنامه‌های غذایی، گواهینامه‌ها و ارتباط با مربیان خود دسترسی داشته باشید.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h3>ویژگی‌ها</h3>
+                    <ul>
+                        <li>برنامه‌های تمرینی و غذایی شخصی‌سازی شده</li>
+                        <li>مدیریت گواهینامه‌ها</li>
+                        <li>پیگیری پیشرفت</li>
+                        <li>ثبت حضور و غیاب</li>
+                        <li>تاریخچه و مدیریت پرداخت‌ها</li>
+                        <li>سیستم تیکت پشتیبانی</li>
+                        <li>دسترسی به اسناد با گزینه‌های پرداخت</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .welcome-card {
+        border: none;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        background: linear-gradient(to bottom, #111111, #222222);
+        color: white;
+    }
+    
+    .welcome-card h1 {
+        color: white;
+    }
+    
+    .btn-primary {
+        background-color: var(--primary-color) !important;
+        border-color: var(--primary-color) !important;
+    }
+    
+    .btn-outline-primary {
+        color: var(--primary-color) !important;
+        border-color: var(--primary-color) !important;
+        background-color: transparent !important;
+    }
+    
+    .btn-outline-primary:hover {
+        background-color: var(--primary-color) !important;
+        color: white !important;
+    }
+</style>
+{% endblock %} 

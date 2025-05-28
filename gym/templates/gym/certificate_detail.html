@@ -1,0 +1,104 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}{{ certificate.title }} - پلتفرم جامع آموزشی{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">{{ certificate.title }}</h3>
+            <a href="{% url 'gym:certificates' %}" class="btn btn-light">
+                <i class="fas fa-arrow-right"></i> بازگشت به گواهینامه‌ها
+            </a>
+        </div>
+        <div class="card-body">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>اطلاعات گواهینامه</h5>
+                    <ul class="list-unstyled">
+                        <li><strong>عنوان:</strong> {{ certificate.title }}</li>
+                        <li><strong>تاریخ صدور:</strong> {{ certificate.issue_date|date:"Y/m/d" }}</li>
+                        <li><strong>تاریخ ثبت:</strong> {{ certificate.created_at|date:"Y/m/d H:i" }}</li>
+                        <li><strong>وضعیت:</strong> 
+                            <span class="badge {% if certificate.status == 'approved' %}bg-success{% elif certificate.status == 'rejected' %}bg-danger{% else %}bg-warning{% endif %}">
+                                {{ certificate.get_status_display }}
+                            </span>
+                        </li>
+                        {% if certificate.approval_message %}
+                        <li>
+                            <div class="alert alert-info mt-3">
+                                {% for line in certificate.approval_message.splitlines %}
+                                    <p class="mb-1">{{ line }}</p>
+                                {% endfor %}
+                            </div>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h5>اطلاعات کاربر</h5>
+                    <ul class="list-unstyled">
+                        <li><strong>نام:</strong> {{ certificate.user.get_full_name|default:certificate.user.username }}</li>
+                        <li><strong>نام کاربری:</strong> {{ certificate.user.username }}</li>
+                        <li><strong>ایمیل:</strong> {{ certificate.user.email }}</li>
+                    </ul>
+                </div>
+            </div>
+
+            {% if certificate.description %}
+            <div class="mt-4">
+                <h5>توضیحات</h5>
+                <p>{{ certificate.description }}</p>
+            </div>
+            {% endif %}
+
+            {% if certificate.image %}
+            <div class="mt-4">
+                <h5>تصویر گواهینامه</h5>
+                <img src="{{ certificate.image.url }}" class="img-fluid rounded" alt="{{ certificate.title }}">
+            </div>
+            {% endif %}
+
+            {% if certificate.approval_message %}
+            <div class="mt-4">
+                <h5>اطلاعات تایید</h5>
+                <div class="alert alert-info">
+                    {% for line in certificate.approval_message.splitlines %}
+                        <p class="mb-1">{{ line }}</p>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if certificate.status == 'pending' and request.user.is_staff %}
+            <div class="mt-4">
+                <h5>تایید یا رد گواهینامه</h5>
+                <form method="post" action="{% url 'gym:update_certificate_status' certificate.id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="approval_message" class="form-label">پیام تایید/رد:</label>
+                        <textarea class="form-control" id="approval_message" name="approval_message" rows="3"></textarea>
+                    </div>
+                    <button type="submit" name="status" value="approved" class="btn btn-success">
+                        <i class="fas fa-check"></i> تایید گواهینامه
+                    </button>
+                    <button type="submit" name="status" value="rejected" class="btn btn-danger">
+                        <i class="fas fa-times"></i> رد گواهینامه
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

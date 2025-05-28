@@ -1,0 +1,104 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}ویرایش پروفایل - پلتفرم جامع آموزشی{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body text-center">
+                    {% if user_profile.profile_image %}
+                        <img src="{{ user_profile.profile_image.url }}" 
+                             class="rounded-circle mb-3" 
+                             style="width: 150px; height: 150px; object-fit: cover;">
+                    {% else %}
+                        <img src="{% static 'images/default_profile.png' %}" 
+                             class="rounded-circle mb-3" 
+                             style="width: 150px; height: 150px; object-fit: cover;">
+                    {% endif %}
+                    <h4>{{ user_profile.user.get_full_name|default:user_profile.user.username }}</h4>
+                    <p class="text-muted">{{ user_profile.education_place|default:"بدون اطلاعات" }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">ویرایش اطلاعات شخصی</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_profile_image" class="form-label">تصویر پروفایل</label>
+                                    <input type="file" class="form-control" id="id_profile_image" name="profile_image">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="id_email" class="form-label">ایمیل</label>
+                                    <input type="email" class="form-control" id="id_email" name="email" value="{{ user_profile.user.email }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="id_password" class="form-label">رمز عبور جدید</label>
+                                    <input type="password" class="form-control" id="id_password" name="password">
+                                    <small class="text-muted">در صورت تمایل به تغییر رمز عبور، این فیلد را پر کنید.</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="id_full_name" class="form-label">نام و نام خانوادگی</label>
+                                    <input type="text" class="form-control" id="id_full_name" name="full_name" value="{{ user_profile.full_name|default:'' }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="id_confirm_password" class="form-label">تکرار رمز عبور جدید</label>
+                                    <input type="password" class="form-control" id="id_confirm_password" name="confirm_password">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="id_birth_year" class="form-label">سال تولد</label>
+                                    <input type="number" class="form-control" id="id_birth_year" name="birth_year" value="{{ user_profile.birth_year|default:'' }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="id_melli_code" class="form-label">کد ملی</label>
+                                    <input type="text" class="form-control" id="id_melli_code" name="melli_code" value="{{ user_profile.melli_code|default:'' }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="id_education_place" class="form-label">محل تحصیل</label>
+                                    <input type="text" class="form-control" id="id_education_place" name="education_place" value="{{ user_profile.education_place|default:'' }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="id_education_level" class="form-label">مقطع تحصیلی</label>
+                                    <input type="text" class="form-control" id="id_education_level" name="education_level" value="{{ user_profile.education_level|default:'' }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="id_phone_number" class="form-label">شماره تماس</label>
+                                    <input type="text" class="form-control" id="id_phone_number" name="phone_number" value="{{ user_profile.phone_number|default:'' }}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <a href="{% url 'gym:profile' %}" class="btn btn-secondary">انصراف</a>
+                            <button type="submit" class="btn btn-primary">ذخیره تغییرات</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 10px;
+    }
+    .btn {
+        border-radius: 5px;
+    }
+    .form-control {
+        border-radius: 5px;
+    }
+</style>
+{% endblock %} 

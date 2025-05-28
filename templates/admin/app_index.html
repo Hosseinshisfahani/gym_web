@@ -1,0 +1,50 @@
+{% extends "admin/app_index.html" %}
+{% load i18n admin_urls static %}
+
+{% block content %}
+    <h1>{{ app_config.verbose_name }}</h1>
+    <div class="app-{{ app_config.label }} module">
+        <table id="change-list" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>{% trans 'Model name' %}</th>
+                    <th>{% trans 'Add link' %}</th>
+                    <th>{% trans 'Change or view list link' %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {# Custom order below: #}
+                {% for model in app_list %}
+                    {% if model.name == "مدارس" %}
+                        <tr>{% include "admin/app_list_row.html" %}</tr>
+                    {% endif %}
+                {% endfor %}
+                {% for model in app_list %}
+                    {% if model.name == "پایه‌های تحصیلی" %}
+                        <tr>{% include "admin/app_list_row.html" %}</tr>
+                    {% endif %}
+                {% endfor %}
+                {% for model in app_list %}
+                    {% if model.name == "درس‌ها" %}
+                        <tr>{% include "admin/app_list_row.html" %}</tr>
+                    {% endif %}
+                {% endfor %}
+                {% for model in app_list %}
+                    {% if model.name == "کلاس‌ها" %}
+                        <tr>{% include "admin/app_list_row.html" %}</tr>
+                    {% endif %}
+                {% endfor %}
+                {% for model in app_list %}
+                    {% if model.name == "نمرات دانش‌آموزان" %}
+                        <tr>{% include "admin/app_list_row.html" %}</tr>
+                    {% endif %}
+                {% endfor %}
+                {% for model in app_list %}
+                    {% if model.name == "نمرات" %}
+                        <tr>{% include "admin/app_list_row.html" %}</tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %} 

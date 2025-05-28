@@ -1,0 +1,52 @@
+{% extends 'gym/base.html' %}
+
+{% block title %}مدیریت کاربران - ادمین{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">مدیریت کاربران</h3>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>نام کاربری</th>
+                            <th>نام و نام خانوادگی</th>
+                            <th>ایمیل</th>
+                            <th>وضعیت</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.username }}</td>
+                            <td>
+                                {% if user.userprofile %}
+                                    {{ user.userprofile.full_name|default:"" }}
+                                {% endif %}
+                            </td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                {% if user.is_staff %}
+                                    <span class="badge bg-success">ادمین</span>
+                                {% else %}
+                                    <span class="badge bg-info">کاربر عادی</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'profile' user.id %}" class="btn btn-sm btn-primary">مشاهده پروفایل</a>
+                                <a href="{% url 'edit_profile' user.id %}" class="btn btn-sm btn-warning">ویرایش</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

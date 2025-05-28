@@ -1,0 +1,117 @@
+{% extends 'gym/base.html' %}
+
+{% block title %}برنامه‌های ورزشی{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">برنامه‌های ورزشی من</h3>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if workout_plans %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>عنوان</th>
+                                        <th>تاریخ ایجاد</th>
+                                        <th>وضعیت</th>
+                                        <th>عملیات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for plan in workout_plans %}
+                                    <tr>
+                                        <td>{{ plan.title }}</td>
+                                        <td>{{ plan.created_at|date:"Y/m/d" }}</td>
+                                        <td>
+                                            <span class="badge {% if plan.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                                {% if plan.is_active %}فعال{% else %}غیرفعال{% endif %}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'gym:download_workout_plan' plan.id %}" class="btn btn-sm btn-primary">
+                                                دانلود
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">شما هنوز برنامه ورزشی ندارید.</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h3 class="mb-0">درخواست‌های برنامه ورزشی</h3>
+                </div>
+                <div class="card-body">
+                    {% if plan_requests %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>تاریخ درخواست</th>
+                                        <th>وضعیت</th>
+                                        <th>پاسخ ادمین</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for request in plan_requests %}
+                                    <tr>
+                                        <td>{{ request.created_at|date:"Y/m/d H:i" }}</td>
+                                        <td>
+                                            <span class="badge {% if request.status == 'pending' %}bg-warning{% elif request.status == 'approved' %}bg-success{% else %}bg-danger{% endif %}">
+                                                {{ request.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ request.admin_response|default:"بدون پاسخ" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">شما هنوز درخواست برنامه ورزشی نداده‌اید.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0">درخواست برنامه جدید</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'gym:request_plan' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="plan_type" value="workout">
+                        <div class="mb-3">
+                            <label for="description" class="form-label">توضیحات درخواست</label>
+                            <textarea name="description" id="description" class="form-control" rows="4" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">ثبت درخواست</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

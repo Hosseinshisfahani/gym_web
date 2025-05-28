@@ -1,0 +1,81 @@
+{% extends 'gym/base.html' %}
+
+{% block title %}مدیریت برنامه‌ها - ادمین{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <!-- Workout Plans -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">برنامه‌های تمرینی</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>کاربر</th>
+                                    <th>عنوان</th>
+                                    <th>تاریخ ایجاد</th>
+                                    <th>عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for plan in workout_plans %}
+                                <tr>
+                                    <td>{{ plan.user.username }}</td>
+                                    <td>{{ plan.title }}</td>
+                                    <td>{{ plan.created_at|date:"Y/m/d" }}</td>
+                                    <td>
+                                        <a href="{% url 'workout_plan_detail' plan.id %}" class="btn btn-sm btn-primary">مشاهده</a>
+                                        <a href="{% url 'edit_workout_plan' plan.id %}" class="btn btn-sm btn-warning">ویرایش</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Diet Plans -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">برنامه‌های غذایی</h3>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>کاربر</th>
+                                    <th>عنوان</th>
+                                    <th>تاریخ ایجاد</th>
+                                    <th>عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for plan in diet_plans %}
+                                <tr>
+                                    <td>{{ plan.user.username }}</td>
+                                    <td>{{ plan.title }}</td>
+                                    <td>{{ plan.created_at|date:"Y/m/d" }}</td>
+                                    <td>
+                                        <a href="{% url 'diet_plan_detail' plan.id %}" class="btn btn-sm btn-primary">مشاهده</a>
+                                        <a href="{% url 'edit_diet_plan' plan.id %}" class="btn btn-sm btn-warning">ویرایش</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
