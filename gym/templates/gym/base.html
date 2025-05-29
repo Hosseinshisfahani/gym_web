@@ -26,6 +26,9 @@
             --light-gray: #f8f8f8;
             --mid-gray: #e0e0e0;
             --dark-gray: #333333;
+            --section-bg-gradient: linear-gradient(to bottom, #111111, #222222);
+            --section-border-color: #333;
+            --background-color: #3a1c1c; /* Red-brown background color */
         }
         
         @font-face {
@@ -46,14 +49,14 @@
             line-height: 1.8;
             text-align: right;
             direction: rtl;
-            background-color: #f5f5f5;
-            color: var(--dark-gray);
+            background-color: var(--background-color);
+            color: var(--light-gray);
         }
         
         h1, h2, h3, h4, h5, h6 {
             font-weight: 700;
             line-height: 1.4;
-            color: var(--dark-gray);
+            color: white;
         }
         
         .navbar {
@@ -229,14 +232,52 @@
         
         /* Alert styling */
         .alert-success {
-            background-color: #d4edda;
-            border-color: #c3e6cb;
-            color: #155724;
+            background-color: #2c5f2d;
+            border-color: #1a4d1a;
+            color: white;
         }
         
         .alert-danger {
             background-color: var(--light-red);
             border-color: var(--primary-color);
+            color: white;
+        }
+        
+        .alert-info {
+            background-color: #1a3a4a;
+            border-color: #0f2a3a;
+            color: white;
+        }
+        
+        /* Form styling for better contrast on dark background */
+        .form-control {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-color: #444;
+        }
+        
+        .form-control:focus {
+            background-color: #fff;
+            box-shadow: 0 0 0 0.25rem rgba(255, 0, 0, 0.25);
+            border-color: var(--primary-color);
+        }
+        
+        .form-label {
+            color: white;
+        }
+        
+        /* Card styles for non-section cards if needed */
+        .card:not(.section-card) {
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+        }
+        
+        .card:not(.section-card) .card-title,
+        .card:not(.section-card) h1, 
+        .card:not(.section-card) h2, 
+        .card:not(.section-card) h3, 
+        .card:not(.section-card) h4, 
+        .card:not(.section-card) h5, 
+        .card:not(.section-card) h6 {
             color: white;
         }
         
@@ -246,14 +287,53 @@
             border-spacing: 0;
             border-radius: 8px;
             overflow: hidden;
+            color: white;
         }
         
         .table-striped tbody tr:nth-of-type(odd) {
-            background-color: rgba(255, 0, 0, 0.05);
+            background-color: rgba(255, 0, 0, 0.15);
         }
         
         .table-hover tbody tr:hover {
-            background-color: rgba(255, 0, 0, 0.1);
+            background-color: rgba(255, 0, 0, 0.25);
+        }
+        
+        /* Default section card style for consistency */
+        .section-card {
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            background: var(--section-bg-gradient);
+            color: white;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .section-card .card-header {
+            background: var(--secondary-color);
+            border-bottom: 1px solid var(--section-border-color);
+        }
+        
+        .section-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+        }
+        
+        .section-card h3 {
+            color: white;
+        }
+        
+        .table-dark {
+            background-color: #222;
+            color: white;
+        }
+        
+        .table-dark thead th {
+            background-color: #000;
+            color: white;
+            border-color: var(--section-border-color);
+        }
+        
+        .table-dark tbody td {
+            border-color: var(--section-border-color);
         }
     </style>
 </head>
@@ -280,14 +360,6 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'gym:diet_plans' %}">برنامه‌های غذایی</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'gym:attendance' %}">حضور و غیاب</a>
-                        </li>
-                        {% if user.is_staff %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'gym:attendance_management' %}">مدیریت حضور و غیاب</a>
-                            </li>
-                        {% endif %}
                         {% if user.is_superuser %}
                             <li class="nav-item">
                                 <a class="nav-link admin-link" href="{% url 'admin:index' %}">

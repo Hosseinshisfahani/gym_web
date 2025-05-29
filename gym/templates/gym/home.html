@@ -26,7 +26,7 @@
 
     <div class="row mt-5">
         <div class="col-md-4">
-            <div class="card h-100">
+            <div class="card h-100 section-card">
                 <div class="card-body text-center">
                     <div class="icon-circle mb-3">
                         <i class="fas fa-dumbbell fa-2x"></i>
@@ -37,7 +37,7 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card h-100">
+            <div class="card h-100 section-card">
                 <div class="card-body text-center">
                     <div class="icon-circle mb-3">
                         <i class="fas fa-utensils fa-2x"></i>
@@ -48,7 +48,7 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card h-100">
+            <div class="card h-100 section-card">
                 <div class="card-body text-center">
                     <div class="icon-circle mb-3">
                         <i class="fas fa-chart-line fa-2x"></i>
@@ -62,7 +62,7 @@
 
     <div class="row mt-4">
         <div class="col-md-6">
-            <div class="card h-100">
+            <div class="card h-100 section-card">
                 <div class="card-body">
                     <h3>درباره ما</h3>
                     <p>
@@ -78,7 +78,7 @@
             </div>
         </div>
         <div class="col-md-6">
-            <div class="card h-100">
+            <div class="card h-100 section-card">
                 <div class="card-body">
                     <h3>ویژگی‌ها</h3>
                     <ul>
@@ -100,11 +100,28 @@
     .welcome-card {
         border: none;
         box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        background: linear-gradient(to bottom, #111111, #222222);
+        background: var(--section-bg-gradient);
         color: white;
     }
     
     .welcome-card h1 {
+        color: white;
+    }
+    
+    .section-card {
+        border: none;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        background: var(--section-bg-gradient);
+        color: white;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .section-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+    }
+    
+    .section-card h3 {
         color: white;
     }
     
@@ -122,6 +139,27 @@
     .btn-outline-primary:hover {
         background-color: var(--primary-color) !important;
         color: white !important;
+    }
+    
+    .icon-circle {
+        width: 80px;
+        height: 80px;
+        background-color: rgba(255, 0, 0, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        transition: all 0.3s ease;
+    }
+    
+    .icon-circle i {
+        color: var(--primary-color);
+    }
+    
+    .section-card:hover .icon-circle {
+        transform: scale(1.1);
+        background-color: rgba(255, 0, 0, 0.3);
     }
 </style>
 {% endblock %} 

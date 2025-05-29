@@ -1,27 +1,15 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import UserProfile, WorkoutPlan, DietPlan, Certificate, Payment, Ticket, Document, Booklet, BookletPayment, PlanRequest
+from .models import UserProfile, WorkoutPlan, DietPlan, Payment, Ticket, Document, PlanRequest
 
 class UserRegistrationForm(UserCreationForm):
-    email = forms.EmailField(
-        required=True,
-        label='ایمیل',
-        help_text='لطفا ایمیل معتبر خود را وارد کنید.',
-        error_messages={
-            'required': 'لطفا ایمیل خود را وارد کنید.',
-            'invalid': 'لطفا یک ایمیل معتبر وارد کنید.',
-            'unique': 'این ایمیل قبلا ثبت شده است.'
-        }
-    )
-    melli_code = forms.CharField(
-        max_length=10, 
+    name = forms.CharField(
+        max_length=200, 
         required=True, 
-        label='کد ملی',
-        help_text='لطفا کد ملی خود را وارد کنید. این کد به عنوان رمز عبور شما نیز تنظیم خواهد شد.',
+        label='نام',
         error_messages={
-            'required': 'لطفا کد ملی خود را وارد کنید.',
-            'unique': 'کد ملی شما تکراری است. لطفا آن را تصحیح کنید.'
+            'required': 'لطفا نام خود را وارد کنید.'
         }
     )
     phone_number = forms.CharField(
@@ -33,87 +21,67 @@ class UserRegistrationForm(UserCreationForm):
             'required': 'لطفا شماره تلفن خود را وارد کنید.'
         }
     )
-    full_name = forms.CharField(max_length=200, required=True, label='نام و نام خانوادگی')
-    father_name = forms.CharField(max_length=100, required=True, label='نام پدر')
+    password1 = forms.CharField(
+        widget=forms.PasswordInput(),
+        label='رمز عبور',
+        required=True,
+        error_messages={
+            'required': 'لطفا رمز عبور را وارد کنید.'
+        }
+    )
+    password2 = forms.CharField(
+        widget=forms.PasswordInput(),
+        label='تکرار رمز عبور',
+        required=True,
+        error_messages={
+            'required': 'لطفا تکرار رمز عبور را وارد کنید.'
+        }
+    )
     
     class Meta:
         model = User
-        fields = ['email', 'password1', 'password2']
-        labels = {
-            'email': 'ایمیل',
-            'password1': 'رمز عبور',
-            'password2': 'تکرار رمز عبور',
-        }
-    
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Set password fields to use melli_code
-        self.fields['password1'].widget = forms.HiddenInput()
-        self.fields['password2'].widget = forms.HiddenInput()
-        self.fields['password1'].required = False
-        self.fields['password2'].required = False
-    
-    def clean_email(self):
-        email = self.cleaned_data.get('email')
-        if User.objects.filter(email=email).exists():
-            raise forms.ValidationError('این ایمیل قبلا ثبت شده است.')
-        return email
-    
-    def clean_melli_code(self):
-        melli_code = self.cleaned_data.get('melli_code')
-        if not melli_code.isdigit() or len(melli_code) != 10:
-            raise forms.ValidationError('کد ملی باید 10 رقم باشد.')
-        if UserProfile.objects.filter(melli_code=melli_code).exists():
-            raise forms.ValidationError('کد ملی شما تکراری است. لطفا آن را تصحیح کنید.')
-        return melli_code
+        fields = ['name', 'phone_number', 'password1', 'password2']
     
     def clean_phone_number(self):
         phone_number = self.cleaned_data.get('phone_number')
         if not phone_number.isdigit():
             raise forms.ValidationError('شماره تلفن باید فقط شامل اعداد باشد.')
+        if User.objects.filter(username=phone_number).exists():
+            raise forms.ValidationError('این شماره تلفن قبلا ثبت شده است.')
         return phone_number
     
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.email = self.cleaned_data['email']
-        user.username = self.cleaned_data['melli_code']  # Set username to melli_code
-        
-        # Set password to melli_code
-        melli_code = self.cleaned_data['melli_code']
-        user.set_password(melli_code)
+        user.username = self.cleaned_data['phone_number']  # Set username to phone_number
         
         if commit:
             user.save()
             UserProfile.objects.create(
                 user=user,
-                melli_code=self.cleaned_data['melli_code'],
-                full_name=self.cleaned_data['full_name'],
-                father_name=self.cleaned_data['father_name'],
-                phone_number=self.cleaned_data['phone_number']
+                name=self.cleaned_data['name'],
+                phone_number=self.cleaned_data['phone_number'],
+                melli_code=f"temp_{user.id}"  # Temporary melli_code to satisfy unique constraint
             )
         return user
 
 class UserProfileForm(forms.ModelForm):
-    email = forms.EmailField(required=True, label='ایمیل')
+    email = forms.EmailField(required=False, label='ایمیل')
     password = forms.CharField(widget=forms.PasswordInput(), required=False, label='رمز عبور جدید')
     confirm_password = forms.CharField(widget=forms.PasswordInput(), required=False, label='تکرار رمز عبور جدید')
     
     class Meta:
         model = UserProfile
-        fields = ['profile_image', 'full_name', 'father_name', 'birth_year', 'melli_code', 
-                 'education_place', 'education_level', 'phone_number']
+        fields = ['profile_image', 'name', 'melli_code', 'phone_number', 'post_code', 'home_address']
         labels = {
             'profile_image': 'عکس پروفایل',
-            'full_name': 'نام و نام خانوادگی',
-            'father_name': 'نام پدر',
-            'birth_year': 'سال تولد',
+            'name': 'نام',
             'melli_code': 'کد ملی',
-            'education_place': 'محل تحصیل',
-            'education_level': 'مقطع تحصیلی',
             'phone_number': 'شماره تلفن',
+            'post_code': 'کد پستی',
+            'home_address': 'آدرس منزل',
         }
         widgets = {
-            'birth_year': forms.NumberInput(attrs={'type': 'number'}),
+            'home_address': forms.Textarea(attrs={'rows': 3}),
         }
     
     def __init__(self, *args, **kwargs):
@@ -162,14 +130,6 @@ class DietPlanForm(forms.ModelForm):
             'image': forms.FileInput(attrs={'class': 'form-control'}),
         }
 
-class CertificateForm(forms.ModelForm):
-    class Meta:
-        model = Certificate
-        fields = ['title', 'issue_date', 'description']
-        widgets = {
-            'issue_date': forms.DateInput(attrs={'type': 'date'})
-        }
-
 class PaymentForm(forms.ModelForm):
     class Meta:
         model = Payment
@@ -190,22 +150,6 @@ class DocumentForm(forms.ModelForm):
     class Meta:
         model = Document
         fields = ['title', 'file']
-
-class BookletForm(forms.ModelForm):
-    class Meta:
-        model = Booklet
-        fields = ['title', 'description', 'price', 'file', 'is_active']
-        widgets = {
-            'description': forms.Textarea(attrs={'rows': 4}),
-        }
-
-class BookletPaymentForm(forms.ModelForm):
-    class Meta:
-        model = BookletPayment
-        fields = ['payment_image', 'amount', 'description']
-        widgets = {
-            'description': forms.Textarea(attrs={'rows': 3}),
-        }
 
 class PlanRequestForm(forms.ModelForm):
     class Meta:

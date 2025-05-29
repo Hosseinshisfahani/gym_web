@@ -1,119 +1,142 @@
 {% extends 'gym/base.html' %}
+{% load static %}
 
 {% block title %}مدیریت درخواست‌های برنامه{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container mt-4">
+    <h2 class="mb-4">مدیریت درخواست‌های برنامه</h2>
+
+    <!-- Filter Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="plan_type" class="form-label">نوع برنامه</label>
+                    <select class="form-select" id="plan_type" name="plan_type">
+                        <option value="">همه</option>
+                        <option value="workout" {% if plan_type == 'workout' %}selected{% endif %}>برنامه تمرینی</option>
+                        <option value="diet" {% if plan_type == 'diet' %}selected{% endif %}>برنامه غذایی</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="status" class="form-label">وضعیت</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">همه</option>
+                        <option value="pending" {% if status == 'pending' %}selected{% endif %}>در انتظار بررسی</option>
+                        <option value="approved" {% if status == 'approved' %}selected{% endif %}>تایید شده</option>
+                        <option value="rejected" {% if status == 'rejected' %}selected{% endif %}>رد شده</option>
+                        <option value="completed" {% if status == 'completed' %}selected{% endif %}>تکمیل شده</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="search" class="form-label">جستجو</label>
+                    <input type="text" class="form-control" id="search" name="search" value="{{ search_query }}" placeholder="جستجو در توضیحات یا نام کاربر">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">اعمال فیلتر</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Plan Requests Table -->
     <div class="card">
-        <div class="card-header bg-primary text-white">
-            <h3 class="mb-0">مدیریت درخواست‌های برنامه</h3>
+        <div class="card-header">
+            <h4 class="mb-0">درخواست‌های برنامه</h4>
         </div>
         <div class="card-body">
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-
-            {% if plan_requests %}
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>کاربر</th>
-                                <th>نوع برنامه</th>
-                                <th>توضیحات</th>
-                                <th>وضعیت</th>
-                                <th>تاریخ درخواست</th>
-                                <th>عملیات</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for request in plan_requests %}
-                            <tr>
-                                <td>{{ request.user.userprofile.full_name|default:request.user.username }}</td>
-                                <td>{{ request.get_plan_type_display }}</td>
-                                <td>{{ request.description|truncatechars:50 }}</td>
-                                <td>
-                                    <span class="badge {% if request.status == 'pending' %}bg-warning{% elif request.status == 'approved' %}bg-success{% else %}bg-danger{% endif %}">
-                                        {{ request.get_status_display }}
-                                    </span>
-                                </td>
-                                <td>{{ request.created_at|date:"Y/m/d H:i" }}</td>
-                                <td>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>کاربر</th>
+                            <th>نوع برنامه</th>
+                            <th>توضیحات</th>
+                            <th>وضعیت</th>
+                            <th>تاریخ درخواست</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for request in plan_requests %}
+                        <tr>
+                            <td>{{ request.user.userprofile.name|default:request.user.username }}</td>
+                            <td>{{ request.get_plan_type_display }}</td>
+                            <td>{{ request.description|truncatechars:50 }}</td>
+                            <td>
+                                <span class="badge {% if request.status == 'pending' %}bg-warning
+                                             {% elif request.status == 'approved' %}bg-success
+                                             {% elif request.status == 'completed' %}bg-info
+                                             {% else %}bg-danger{% endif %}">
+                                    {{ request.get_status_display }}
+                                </span>
+                            </td>
+                            <td>{{ request.created_at|date:"Y/m/d" }}</td>
+                            <td>
+                                <div class="btn-group">
                                     {% if request.status == 'pending' %}
-                                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#responseModal{{ request.id }}">
-                                            پاسخ
-                                        </button>
-                                        
-                                        <!-- Response Modal -->
-                                        <div class="modal fade" id="responseModal{{ request.id }}" tabindex="-1">
-                                            <div class="modal-dialog">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title">پاسخ به درخواست برنامه</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                    </div>
-                                                    <form method="post" action="{% url 'gym:update_plan_request' request.id %}">
-                                                        {% csrf_token %}
-                                                        <div class="modal-body">
-                                                            <div class="mb-3">
-                                                                <label class="form-label">وضعیت</label>
-                                                                <select name="status" class="form-select">
-                                                                    <option value="approved">تایید</option>
-                                                                    <option value="rejected">رد</option>
-                                                                </select>
-                                                            </div>
-                                                            <div class="mb-3">
-                                                                <label class="form-label">پاسخ</label>
-                                                                <textarea name="admin_response" class="form-control" rows="3"></textarea>
-                                                            </div>
-                                                        </div>
-                                                        <div class="modal-footer">
-                                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
-                                                            <button type="submit" class="btn btn-primary">ثبت پاسخ</button>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    {% else %}
-                                        <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewResponseModal{{ request.id }}">
-                                            مشاهده پاسخ
-                                        </button>
-                                        
-                                        <!-- View Response Modal -->
-                                        <div class="modal fade" id="viewResponseModal{{ request.id }}" tabindex="-1">
-                                            <div class="modal-dialog">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title">پاسخ ادمین</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        <p><strong>وضعیت:</strong> {{ request.get_status_display }}</p>
-                                                        <p><strong>پاسخ:</strong></p>
-                                                        <p>{{ request.admin_response|default:"بدون پاسخ" }}</p>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#responseModal{{ request.id }}">
+                                        <i class="fas fa-reply"></i> پاسخ
+                                    </button>
                                     {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div class="alert alert-info">هیچ درخواست برنامه‌ای وجود ندارد.</div>
-            {% endif %}
+                                    
+                                    {% if request.status == 'approved' %}
+                                    {% if request.plan_type == "workout" %}
+                                    <a href="{% url 'gym:add_workout_plan' %}?user_id={{ request.user.id }}" class="btn btn-sm btn-success">
+                                        <i class="fas fa-plus"></i> ایجاد برنامه
+                                    </a>
+                                    {% else %}
+                                    <a href="{% url 'gym:add_diet_plan' %}?user_id={{ request.user.id }}" class="btn btn-sm btn-success">
+                                        <i class="fas fa-plus"></i> ایجاد برنامه
+                                    </a>
+                                    {% endif %}
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Response Modal -->
+                                {% if request.status == 'pending' %}
+                                <div class="modal fade" id="responseModal{{ request.id }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">پاسخ به درخواست برنامه</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <form method="post" action="{% url 'gym:update_plan_request' request.id %}">
+                                                {% csrf_token %}
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">وضعیت</label>
+                                                        <select name="status" class="form-select">
+                                                            <option value="approved">تایید</option>
+                                                            <option value="rejected">رد</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">پاسخ</label>
+                                                        <textarea name="admin_response" class="form-control" rows="3"></textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                                                    <button type="submit" class="btn btn-primary">ثبت پاسخ</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">هیچ درخواستی یافت نشد.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

@@ -4,7 +4,11 @@ register = template.Library()
 
 @register.filter
 def add_class(field, css_class):
-    return field.as_widget(attrs={"class": css_class})
+    # Check if this is a form field with as_widget method
+    if hasattr(field, 'as_widget'):
+        return field.as_widget(attrs={"class": css_class})
+    # If it's a string or other type, just return it unchanged
+    return field
 
 @register.filter
 def div(value, arg):

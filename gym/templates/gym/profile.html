@@ -16,19 +16,6 @@
                     <div class="row g-3">
                         <div class="col-md-4">
                             <div class="border rounded-3 p-3 text-center h-100">
-                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-certificate fa-2x"></i></div>
-                                گواهینامه‌ها
-                                <div>
-                                    {% if user.is_staff %}
-                                    <a href="{% url 'gym:manage_certificates' %}" class="btn btn-outline-primary btn-sm mt-2">مدیریت <i class="fa fa-cog"></i></a>
-                                    {% else %}
-                                    <a href="{% url 'gym:certificates' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="border rounded-3 p-3 text-center h-100">
                                 <div class="icon-circle mb-2 mx-auto"><i class="fas fa-utensils fa-2x"></i></div>
                                 برنامه‌های غذایی
                                 <div><a href="{% url 'gym:diet_plans' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
@@ -46,20 +33,6 @@
                                 <div class="icon-circle mb-2 mx-auto"><i class="fas fa-money-bill-wave fa-2x"></i></div>
                                 پرداخت‌ها
                                 <div><a href="{% url 'gym:payments' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="border rounded-3 p-3 text-center h-100">
-                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-calendar-check fa-2x"></i></div>
-                                حضور و غیاب
-                                <div><a href="{% url 'gym:attendance' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="border rounded-3 p-3 text-center h-100">
-                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-book fa-2x"></i></div>
-                                جزوات درسی
-                                <div><a href="{% url 'gym:booklets' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -87,7 +60,7 @@
                              class="rounded-circle mb-3" 
                              style="width: 100px; height: 100px; object-fit: cover;">
                     {% endif %}
-                    <h4 class="mb-1">سلام {{ user_profile.user.get_full_name|default:user_profile.user.username }} عزیز!</h4>
+                    <h4 class="mb-1">سلام {{ user_profile.name|default:"کاربر" }} عزیز!</h4>
                     <p class="text-muted mb-2">خوش آمدید به پنل کاربری شما</p>
                     <ul class="list-unstyled text-end mb-3">
                         <li><strong>نام کاربری:</strong> {{ user_profile.user.username }}</li>

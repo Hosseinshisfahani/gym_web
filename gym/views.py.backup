@@ -860,34 +860,7 @@ def manage_plan_requests(request):
     return render(request, 'gym/admin/manage_plan_requests.html', context)
 
 @login_required
-def request_plan(request):
-    """View for submitting a new plan request (workout or diet)"""
-    if request.method == 'POST':
-        plan_type = request.POST.get('plan_type')
-        description = request.POST.get('description')
-        
-        if plan_type in ['workout', 'diet'] and description:
-            # Create a new plan request
-            plan_request = PlanRequest.objects.create(
-                user=request.user,
-                plan_type=plan_type,
-                description=description
-            )
-            
-            messages.success(request, 'درخواست شما با موفقیت ثبت شد و در انتظار بررسی است.')
-            
-            # Redirect to appropriate page based on plan type
-            if plan_type == 'workout':
-                return redirect('gym:workout_plans')
-            else:
-                return redirect('gym:diet_plans')
-        else:
-            messages.error(request, 'اطلاعات ارسالی نامعتبر است.')
-            
-    # For GET requests or invalid form data, redirect to home
-    return redirect('gym:home')
-
-@login_required
+@staff_member_required
 def update_plan_request(request, request_id):
     """View for updating a plan request status"""
     plan_request = get_object_or_404(PlanRequest, id=request_id)

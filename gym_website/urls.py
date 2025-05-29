@@ -21,7 +21,7 @@ from django.conf.urls.static import static
 from gym.admin import admin_site
 
 urlpatterns = [
-    path('admin/', admin.site.urls),  # Original Django admin
-    path('custom-admin/', admin_site.urls),  # Custom admin site
+    # path('admin/', admin.site.urls),  # Original Django admin - commented out
+    path('admin/', admin_site.urls),  # Custom admin site
     path('', include('gym.urls', namespace='gym')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
