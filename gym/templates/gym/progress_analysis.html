@@ -1,0 +1,200 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}نمودار پیشرفت - پلتفرم جامع ورزشی{% endblock %}
+
+{% block extrahead %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">ثبت اندازه‌گیری جدید</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="id_measurement_type" class="form-label">نوع اندازه‌گیری</label>
+                            {{ form.measurement_type }}
+                        </div>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="id_value" class="form-label">مقدار</label>
+                                    {{ form.value }}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="id_unit" class="form-label">واحد</label>
+                                    {{ form.unit }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_measurement_date" class="form-label">تاریخ اندازه‌گیری</label>
+                            {{ form.measurement_date }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_notes" class="form-label">یادداشت</label>
+                            {{ form.notes }}
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">ثبت اندازه‌گیری</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <!-- Charts Section -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">نمودار پیشرفت</h5>
+                </div>
+                <div class="card-body">
+                    {% if chart_data != '{}' %}
+                    <div class="mb-3">
+                        <select id="chart-selector" class="form-select">
+                            {% for key, data in chart_data.items %}
+                            <option value="{{ key }}">{{ data.label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div style="height: 300px;">
+                        <canvas id="progressChart"></canvas>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        هنوز اندازه‌گیری‌ای ثبت نکرده‌اید. برای مشاهده نمودار، لطفا از فرم سمت راست استفاده کنید و اندازه‌گیری‌های خود را ثبت کنید.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Data Table Section -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">سوابق اندازه‌گیری</h5>
+                </div>
+                <div class="card-body">
+                    {% if progress_data %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>نوع اندازه‌گیری</th>
+                                    <th>مقدار</th>
+                                    <th>تاریخ</th>
+                                    <th>یادداشت</th>
+                                    <th>عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in progress_data %}
+                                <tr>
+                                    <td>{{ entry.get_measurement_type_display }}</td>
+                                    <td>{{ entry.value }} {{ entry.unit }}</td>
+                                    <td>{{ entry.measurement_date|date:"Y/m/d" }}</td>
+                                    <td>{{ entry.notes|default:"-"|truncatechars:50 }}</td>
+                                    <td>
+                                        <form method="post" action="{% url 'gym:delete_progress_entry' entry.id %}" style="display: inline;" onsubmit="return confirm('آیا از حذف این اندازه‌گیری اطمینان دارید؟');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        هنوز هیچ اندازه‌گیری‌ای ثبت نکرده‌اید. می‌توانید از فرم سمت راست استفاده کنید تا اولین اندازه‌گیری خود را ثبت کنید.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if chart_data != '{}' %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const chartData = JSON.parse('{{ chart_data|safe }}');
+        const ctx = document.getElementById('progressChart').getContext('2d');
+        const chartSelector = document.getElementById('chart-selector');
+        let chart;
+        
+        // Function to create or update chart
+        function updateChart(dataKey) {
+            const selectedData = chartData[dataKey];
+            
+            const data = {
+                labels: selectedData.dates,
+                datasets: [{
+                    label: `${selectedData.label} (${selectedData.unit})`,
+                    data: selectedData.values,
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2,
+                    tension: 0.3,
+                    pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                    pointRadius: 5
+                }]
+            };
+            
+            const config = {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.raw}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+            
+            if (chart) {
+                chart.data = data;
+                chart.update();
+            } else {
+                chart = new Chart(ctx, config);
+            }
+        }
+        
+        // Initial chart load
+        if (chartSelector.options.length > 0) {
+            updateChart(chartSelector.value);
+        }
+        
+        // Change chart when selector changes
+        chartSelector.addEventListener('change', function() {
+            updateChart(this.value);
+        });
+    });
+</script>
+{% endif %}
+{% endblock %} 

@@ -42,9 +42,85 @@
                                 <div><a href="{% url 'gym:tickets' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
                             </div>
                         </div>
+                        <!-- New Dashboard Items -->
+                        <div class="col-md-4">
+                            <div class="border rounded-3 p-3 text-center h-100">
+                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-flask fa-2x"></i></div>
+                                آنالیز بدن و آزمایشات
+                                <div class="badge bg-primary mb-1">{{ stats.body_analysis_count }} مورد</div>
+                                {% if stats.body_analysis_pending > 0 %}
+                                <div class="badge bg-warning text-dark mb-1">{{ stats.body_analysis_pending }} در انتظار بررسی</div>
+                                {% endif %}
+                                <div><a href="{% url 'gym:body_analysis_reports' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded-3 p-3 text-center h-100">
+                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-receipt fa-2x"></i></div>
+                                سوابق پرداخت
+                                <div class="badge bg-primary mb-1">{{ stats.payment_count }} مورد</div>
+                                {% if stats.payment_pending > 0 %}
+                                <div class="badge bg-warning text-dark mb-1">{{ stats.payment_pending }} در انتظار تایید</div>
+                                {% endif %}
+                                <div><a href="{% url 'gym:payments' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded-3 p-3 text-center h-100">
+                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-bullseye fa-2x"></i></div>
+                                اهداف ماهانه
+                                <div class="badge bg-primary mb-1">{{ stats.goals_count }} هدف</div>
+                                {% if stats.goals_active > 0 %}
+                                <div class="badge bg-success mb-1">{{ stats.goals_active }} فعال</div>
+                                {% endif %}
+                                <div><a href="{% url 'gym:monthly_goals' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded-3 p-3 text-center h-100">
+                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-chart-line fa-2x"></i></div>
+                                نمودار پیشرفت
+                                <div class="badge bg-primary mb-1">{{ stats.progress_entries }} اندازه‌گیری</div>
+                                <div><a href="{% url 'gym:progress_analysis' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
+            
+            {% if recent_progress %}
+            <!-- Recent Progress Preview -->
+            <div class="card mb-4">
+                <div class="card-header text-white" style="background-color: var(--secondary-color);">
+                    آخرین اندازه‌گیری‌های شما
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>نوع اندازه‌گیری</th>
+                                    <th>مقدار</th>
+                                    <th>تاریخ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for entry in recent_progress %}
+                                <tr>
+                                    <td>{{ entry.get_measurement_type_display }}</td>
+                                    <td>{{ entry.value }} {{ entry.unit }}</td>
+                                    <td>{{ entry.measurement_date|date:"Y/m/d" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center mt-2">
+                        <a href="{% url 'gym:progress_analysis' %}" class="btn btn-primary btn-sm">مشاهده همه و ثبت مقادیر جدید</a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
         </div>
         <!-- Personal Info Section -->
         <div class="col-md-4">

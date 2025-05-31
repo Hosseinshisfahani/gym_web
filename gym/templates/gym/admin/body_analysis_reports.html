@@ -1,0 +1,93 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}مدیریت آنالیزهای بدن - پلتفرم جامع ورزشی{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">مدیریت آنالیزهای بدن</h2>
+
+    <!-- Filter Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="status" class="form-label">وضعیت</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">همه</option>
+                        <option value="pending" {% if status == 'pending' %}selected{% endif %}>در انتظار بررسی</option>
+                        <option value="reviewed" {% if status == 'reviewed' %}selected{% endif %}>بررسی شده</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label for="search" class="form-label">جستجو</label>
+                    <input type="text" class="form-control" id="search" name="search" value="{{ search_query }}" placeholder="جستجو در توضیحات یا نام کاربر">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">اعمال فیلتر</button>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <a href="{% url 'gym:body_analysis_reports' %}" class="btn btn-outline-secondary w-100">پاک کردن</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Body Analysis Reports Table -->
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">آنالیزهای بدن</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>کاربر</th>
+                            <th>تاریخ آزمایش</th>
+                            <th>تصویر</th>
+                            <th>وضعیت</th>
+                            <th>تاریخ پاسخ</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in reports %}
+                        <tr>
+                            <td>{{ report.user.userprofile.name|default:report.user.username }}</td>
+                            <td>{{ report.report_date|date:"Y/m/d" }}</td>
+                            <td>
+                                <a href="{{ report.image.url }}" target="_blank">
+                                    <img src="{{ report.image.url }}" alt="آنالیز بدن" style="height: 40px; width: auto;">
+                                </a>
+                            </td>
+                            <td>
+                                {% if report.status == 'pending' %}
+                                    <span class="badge bg-warning text-dark">در انتظار بررسی</span>
+                                {% else %}
+                                    <span class="badge bg-success">بررسی شده</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ report.response_date|date:"Y/m/d"|default:"-" }}</td>
+                            <td>
+                                <a href="{% url 'gym:body_analysis_detail' report.id %}" class="btn btn-sm btn-primary">
+                                    {% if report.status == 'pending' %}
+                                    <i class="fas fa-reply"></i> پاسخ
+                                    {% else %}
+                                    <i class="fas fa-eye"></i> مشاهده
+                                    {% endif %}
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">هیچ آنالیز بدنی یافت نشد.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

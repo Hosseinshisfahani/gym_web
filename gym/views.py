@@ -7,11 +7,15 @@ from django.http import HttpResponse, FileResponse, StreamingHttpResponse, HttpR
 from .forms import (
     UserRegistrationForm, UserProfileForm, WorkoutPlanForm, 
     DietPlanForm, PaymentForm, TicketForm,
-    TicketResponseForm, DocumentForm, PlanRequestForm
+    TicketResponseForm, DocumentForm, PlanRequestForm,
+    BodyAnalysisReportForm, BodyAnalysisResponseForm,
+    MonthlyGoalForm, MonthlyGoalUpdateForm, MonthlyGoalCoachForm,
+    ProgressAnalysisForm
 )
 from .models import (
     UserProfile, WorkoutPlan, DietPlan, 
-    Payment, Ticket, TicketResponse, Document, PlanRequest
+    Payment, Ticket, TicketResponse, Document, PlanRequest,
+    BodyAnalysisReport, MonthlyGoal, ProgressAnalysis
 )
 from django.db.models import Q, Avg
 import datetime
@@ -140,9 +144,31 @@ def profile(request, user_id=None):
                 # If it's a different IntegrityError, re-raise it
                 raise
     
+    # Get counts for dashboard statistics
+    if user_id:
+        user = User.objects.get(id=user_id)
+    else:
+        user = request.user
+    
+    # Dashboard statistics
+    stats = {
+        'body_analysis_count': BodyAnalysisReport.objects.filter(user=user).count(),
+        'body_analysis_pending': BodyAnalysisReport.objects.filter(user=user, status='pending').count(),
+        'payment_count': Payment.objects.filter(user=user).count(),
+        'payment_pending': Payment.objects.filter(user=user, status='pending').count(),
+        'goals_count': MonthlyGoal.objects.filter(user=user).count(),
+        'goals_active': MonthlyGoal.objects.filter(user=user).exclude(status__in=['completed', 'failed']).count(),
+        'progress_entries': ProgressAnalysis.objects.filter(user=user).count(),
+    }
+    
+    # Get most recent progress data for quick view
+    recent_progress = ProgressAnalysis.objects.filter(user=user).order_by('-measurement_date')[:5]
+    
     context = {
         'user_profile': user_profile,
         'is_own_profile': not user_id or user_id == request.user.id,
+        'stats': stats,
+        'recent_progress': recent_progress,
     }
     return render(request, 'gym/profile.html', context)
 
@@ -925,10 +951,10 @@ def payments(request):
     # Get regular payments
     if request.user.is_staff:
         # For admin users, get all payments
-        payments = Payment.objects.all().order_by('-date')
+        payments = Payment.objects.all().order_by('-payment_date')
     else:
         # For regular users, get only their payments
-        payments = Payment.objects.filter(user=request.user).order_by('-date')
+        payments = Payment.objects.filter(user=request.user).order_by('-payment_date')
     
     return render(request, 'gym/payments.html', {
         'payments': payments,
@@ -1057,3 +1083,292 @@ def verify_profile_for_payment(request, next_url=None):
     if next_url:
         return redirect(next_url)
     return redirect('gym:payments')
+
+# Body Analysis Reports
+@login_required
+def body_analysis_reports(request):
+    """View all body analysis reports for a user or all reports for admin"""
+    
+    if request.user.is_staff:
+        # For admin, get all reports with filters
+        reports = BodyAnalysisReport.objects.all().order_by('-report_date')
+        
+        # Get filter parameters
+        status = request.GET.get('status')
+        user_id = request.GET.get('user_id')
+        search_query = request.GET.get('search', '')
+        
+        # Apply filters
+        if status:
+            reports = reports.filter(status=status)
+        
+        if user_id:
+            reports = reports.filter(user_id=user_id)
+        
+        if search_query:
+            reports = reports.filter(
+                Q(user__username__icontains=search_query) |
+                Q(user__userprofile__name__icontains=search_query) |
+                Q(description__icontains=search_query) |
+                Q(admin_response__icontains=search_query)
+            )
+            
+        context = {
+            'reports': reports,
+            'status': status,
+            'user_id': user_id,
+            'search_query': search_query,
+            'is_admin': True
+        }
+        
+        return render(request, 'gym/admin/body_analysis_reports.html', context)
+    
+    else:
+        # For regular users, get only their reports
+        reports = BodyAnalysisReport.objects.filter(user=request.user).order_by('-report_date')
+        
+        if request.method == 'POST':
+            form = BodyAnalysisReportForm(request.POST, request.FILES)
+            if form.is_valid():
+                report = form.save(commit=False)
+                report.user = request.user
+                report.save()
+                messages.success(request, 'گزارش آنالیز بدن با موفقیت ثبت شد و در انتظار بررسی است.')
+                return redirect('gym:body_analysis_reports')
+        else:
+            form = BodyAnalysisReportForm()
+        
+        context = {
+            'reports': reports,
+            'form': form
+        }
+        
+        return render(request, 'gym/body_analysis_reports.html', context)
+
+@login_required
+def body_analysis_detail(request, report_id):
+    """View and respond to a specific body analysis report"""
+    report = get_object_or_404(BodyAnalysisReport, id=report_id)
+    
+    # Check permissions
+    if not request.user.is_staff and request.user != report.user:
+        messages.error(request, 'شما دسترسی لازم برای مشاهده این گزارش را ندارید.')
+        return redirect('gym:body_analysis_reports')
+    
+    # Handle response from admin
+    if request.user.is_staff and request.method == 'POST':
+        form = BodyAnalysisResponseForm(request.POST, instance=report)
+        if form.is_valid():
+            updated_report = form.save(commit=False)
+            updated_report.status = 'reviewed'
+            updated_report.response_date = timezone.now()
+            updated_report.save()
+            messages.success(request, 'پاسخ شما با موفقیت ثبت شد.')
+            return redirect('gym:body_analysis_reports')
+    
+    # Prepare form for admin response
+    if request.user.is_staff:
+        form = BodyAnalysisResponseForm(instance=report)
+    else:
+        form = None
+    
+    context = {
+        'report': report,
+        'form': form,
+        'is_admin': request.user.is_staff
+    }
+    
+    return render(request, 'gym/body_analysis_detail.html', context)
+
+# Monthly Goals
+@login_required
+def monthly_goals(request):
+    """View and manage monthly goals for a user or all goals for admin"""
+    
+    if request.user.is_staff:
+        # For admin, get all goals with filters
+        goals = MonthlyGoal.objects.all().order_by('-start_date')
+        
+        # Get filter parameters
+        status = request.GET.get('status')
+        user_id = request.GET.get('user_id')
+        search_query = request.GET.get('search', '')
+        
+        # Apply filters
+        if status:
+            goals = goals.filter(status=status)
+        
+        if user_id:
+            goals = goals.filter(user_id=user_id)
+        
+        if search_query:
+            goals = goals.filter(
+                Q(title__icontains=search_query) |
+                Q(description__icontains=search_query) |
+                Q(user__username__icontains=search_query) |
+                Q(user__userprofile__name__icontains=search_query)
+            )
+            
+        context = {
+            'goals': goals,
+            'status': status,
+            'user_id': user_id,
+            'search_query': search_query,
+            'is_admin': True
+        }
+        
+        return render(request, 'gym/admin/monthly_goals.html', context)
+    
+    else:
+        # For regular users, get only their goals
+        goals = MonthlyGoal.objects.filter(user=request.user).order_by('-start_date')
+        
+        if request.method == 'POST':
+            form = MonthlyGoalForm(request.POST)
+            if form.is_valid():
+                goal = form.save(commit=False)
+                goal.user = request.user
+                goal.status = 'not_started'  # Default status for new goals
+                goal.save()
+                messages.success(request, 'هدف ماهانه جدید با موفقیت ثبت شد.')
+                return redirect('gym:monthly_goals')
+        else:
+            form = MonthlyGoalForm()
+        
+        context = {
+            'goals': goals,
+            'form': form
+        }
+        
+        return render(request, 'gym/monthly_goals.html', context)
+
+@login_required
+def monthly_goal_detail(request, goal_id):
+    """View and update a specific monthly goal"""
+    goal = get_object_or_404(MonthlyGoal, id=goal_id)
+    
+    # Check permissions
+    if not request.user.is_staff and request.user != goal.user:
+        messages.error(request, 'شما دسترسی لازم برای مشاهده این هدف را ندارید.')
+        return redirect('gym:monthly_goals')
+    
+    # Handle updates from user
+    if request.user == goal.user and request.method == 'POST' and 'update_progress' in request.POST:
+        form = MonthlyGoalUpdateForm(request.POST, instance=goal)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'پیشرفت شما با موفقیت به‌روزرسانی شد.')
+            return redirect('gym:monthly_goal_detail', goal_id=goal.id)
+    
+    # Handle coach notes from admin
+    if request.user.is_staff and request.method == 'POST' and 'update_coach_notes' in request.POST:
+        form = MonthlyGoalCoachForm(request.POST, instance=goal)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'یادداشت مربی با موفقیت ثبت شد.')
+            return redirect('gym:monthly_goal_detail', goal_id=goal.id)
+    
+    # Prepare forms
+    user_form = MonthlyGoalUpdateForm(instance=goal) if request.user == goal.user else None
+    coach_form = MonthlyGoalCoachForm(instance=goal) if request.user.is_staff else None
+    
+    context = {
+        'goal': goal,
+        'user_form': user_form,
+        'coach_form': coach_form,
+        'is_admin': request.user.is_staff,
+        'is_own_goal': request.user == goal.user
+    }
+    
+    return render(request, 'gym/monthly_goal_detail.html', context)
+
+# Progress Analysis
+@login_required
+def progress_analysis(request):
+    """View and manage progress measurements for a user or all progress for admin"""
+    
+    if request.user.is_staff:
+        # For admin, get all progress measurements with filters
+        progress_data = ProgressAnalysis.objects.all().order_by('-measurement_date')
+        
+        # Get filter parameters
+        measurement_type = request.GET.get('measurement_type')
+        user_id = request.GET.get('user_id')
+        search_query = request.GET.get('search', '')
+        
+        # Apply filters
+        if measurement_type:
+            progress_data = progress_data.filter(measurement_type=measurement_type)
+        
+        if user_id:
+            progress_data = progress_data.filter(user_id=user_id)
+        
+        if search_query:
+            progress_data = progress_data.filter(
+                Q(user__username__icontains=search_query) |
+                Q(user__userprofile__name__icontains=search_query) |
+                Q(notes__icontains=search_query)
+            )
+            
+        context = {
+            'progress_data': progress_data,
+            'measurement_type': measurement_type,
+            'user_id': user_id,
+            'search_query': search_query,
+            'is_admin': True
+        }
+        
+        return render(request, 'gym/admin/progress_analysis.html', context)
+    
+    else:
+        # For regular users, get only their progress data
+        progress_data = ProgressAnalysis.objects.filter(user=request.user).order_by('-measurement_date')
+        
+        # Group data by measurement type for charts
+        chart_data = {}
+        measurement_types = ProgressAnalysis.MEASUREMENT_TYPES
+        
+        for m_type, m_label in measurement_types:
+            type_data = progress_data.filter(measurement_type=m_type).order_by('measurement_date')
+            if type_data.exists():
+                chart_data[m_type] = {
+                    'label': m_label,
+                    'dates': [entry.measurement_date.strftime('%Y-%m-%d') for entry in type_data],
+                    'values': [float(entry.value) for entry in type_data],
+                    'unit': type_data.first().unit
+                }
+        
+        if request.method == 'POST':
+            form = ProgressAnalysisForm(request.POST)
+            if form.is_valid():
+                progress = form.save(commit=False)
+                progress.user = request.user
+                progress.save()
+                messages.success(request, 'اندازه‌گیری جدید با موفقیت ثبت شد.')
+                return redirect('gym:progress_analysis')
+        else:
+            form = ProgressAnalysisForm()
+        
+        context = {
+            'progress_data': progress_data,
+            'chart_data': json.dumps(chart_data),
+            'form': form
+        }
+        
+        return render(request, 'gym/progress_analysis.html', context)
+
+@login_required
+def delete_progress_entry(request, entry_id):
+    """Delete a progress analysis entry"""
+    entry = get_object_or_404(ProgressAnalysis, id=entry_id)
+    
+    # Check permissions
+    if not request.user.is_staff and request.user != entry.user:
+        messages.error(request, 'شما دسترسی لازم برای حذف این اندازه‌گیری را ندارید.')
+        return redirect('gym:progress_analysis')
+    
+    if request.method == 'POST':
+        entry.delete()
+        messages.success(request, 'اندازه‌گیری با موفقیت حذف شد.')
+        
+    return redirect('gym:progress_analysis')

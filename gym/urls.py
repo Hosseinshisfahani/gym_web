@@ -46,6 +46,18 @@ urlpatterns = [
     path('plan-requests/<int:request_id>/update/', views.update_plan_request, name='update_plan_request'),
     path('request-plan/', views.request_plan, name='request_plan'),
     
+    # Body Analysis Reports
+    path('body-analysis/', views.body_analysis_reports, name='body_analysis_reports'),
+    path('body-analysis/<int:report_id>/', views.body_analysis_detail, name='body_analysis_detail'),
+    
+    # Monthly Goals
+    path('monthly-goals/', views.monthly_goals, name='monthly_goals'),
+    path('monthly-goals/<int:goal_id>/', views.monthly_goal_detail, name='monthly_goal_detail'),
+    
+    # Progress Analysis
+    path('progress/', views.progress_analysis, name='progress_analysis'),
+    path('progress/delete/<int:entry_id>/', views.delete_progress_entry, name='delete_progress_entry'),
+    
     # Placeholder routes for removed features
     path('attendance/', lambda request: render(request, 'gym/attendance.html'), name='attendance'),
     path('certificates/', lambda request: render(request, 'gym/certificates.html'), name='certificates'),

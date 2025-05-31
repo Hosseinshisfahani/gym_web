@@ -31,7 +31,8 @@ admin_site = CustomAdminSite(name='admin')
 
 from .models import (
     UserProfile, WorkoutPlan, DietPlan, 
-    Payment, Ticket, TicketResponse, Document, PlanRequest
+    Payment, Ticket, TicketResponse, Document, PlanRequest,
+    BodyAnalysisReport, MonthlyGoal, ProgressAnalysis
 )
 
 class UserProfileAdmin(admin.ModelAdmin):
@@ -47,79 +48,77 @@ class UserProfileAdmin(admin.ModelAdmin):
 class WorkoutPlanAdmin(admin.ModelAdmin):
     verbose_name = 'برنامه تمرینی'
     verbose_name_plural = 'برنامه‌های تمرینی'
-    list_display = ('user', 'title', 'is_active', 'created_at')
-    list_filter = ('is_active', 'created_at', 'user')
-    search_fields = ('title', 'description', 'user__username')
-    readonly_fields = ('created_at',)
-    list_editable = ('is_active',)
-    def has_add_permission(self, request):
-        return request.user.is_superuser
-    def has_change_permission(self, request, obj=None):
-        return request.user.is_superuser
-    def has_delete_permission(self, request, obj=None):
-        return request.user.is_superuser
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
-        return qs.filter(user=request.user)
+    list_display = ('title', 'user', 'created_at', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('title', 'user__username', 'user__userprofile__name')
+    ordering = ('-created_at',)
 
 class DietPlanAdmin(admin.ModelAdmin):
     verbose_name = 'برنامه غذایی'
     verbose_name_plural = 'برنامه‌های غذایی'
-    list_display = ('user', 'title', 'is_active', 'created_at')
-    list_filter = ('is_active', 'created_at', 'user')
-    search_fields = ('title', 'description', 'user__username')
-    readonly_fields = ('created_at',)
-    list_editable = ('is_active',)
-    def has_add_permission(self, request):
-        return request.user.is_superuser
-    def has_change_permission(self, request, obj=None):
-        return request.user.is_superuser
-    def has_delete_permission(self, request, obj=None):
-        return request.user.is_superuser
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
-        return qs.filter(user=request.user)
+    list_display = ('title', 'user', 'created_at', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('title', 'user__username', 'user__userprofile__name')
+    ordering = ('-created_at',)
 
 class PaymentAdmin(admin.ModelAdmin):
     verbose_name = 'پرداخت'
     verbose_name_plural = 'پرداخت‌ها'
-    list_display = ('user', 'amount', 'date', 'status')
-    search_fields = ('user__username',)
-    list_filter = ('date', 'status')
+    list_display = ('user', 'amount', 'payment_type', 'payment_date', 'status')
+    list_filter = ('status', 'payment_type')
+    search_fields = ('user__username', 'user__userprofile__name', 'description')
+    ordering = ('-payment_date',)
 
 class TicketAdmin(admin.ModelAdmin):
     verbose_name = 'تیکت'
     verbose_name_plural = 'تیکت‌ها'
-    list_display = ('user', 'subject', 'created_at', 'resolved')
-    search_fields = ('user__username', 'subject')
-    list_filter = ('created_at', 'resolved')
+    list_display = ('subject', 'user', 'status', 'created_at')
+    list_filter = ('status',)
+    search_fields = ('subject', 'user__username', 'user__userprofile__name')
+    ordering = ('-created_at',)
 
 class TicketResponseAdmin(admin.ModelAdmin):
     verbose_name = 'پاسخ تیکت'
     verbose_name_plural = 'پاسخ‌های تیکت'
-    list_display = ('ticket', 'user', 'created_at')
-    search_fields = ('ticket__subject', 'user__username')
-    list_filter = ('created_at',)
+    list_display = ('ticket', 'user', 'created_at', 'is_staff')
+    list_filter = ('is_staff',)
+    search_fields = ('ticket__subject', 'user__username', 'message')
+    ordering = ('-created_at',)
 
 class DocumentAdmin(admin.ModelAdmin):
     verbose_name = 'مدرک'
     verbose_name_plural = 'مدارک'
-    list_display = ('user', 'title', 'upload_date', 'is_paid')
-    search_fields = ('user__username', 'title')
-    list_filter = ('upload_date', 'is_paid')
+    list_display = ('title', 'user', 'document_type', 'upload_date')
+    list_filter = ('document_type',)
+    search_fields = ('title', 'user__username', 'user__userprofile__name')
+    ordering = ('-upload_date',)
 
 class PlanRequestAdmin(admin.ModelAdmin):
     verbose_name = 'درخواست برنامه'
     verbose_name_plural = 'درخواست‌های برنامه'
     list_display = ('user', 'plan_type', 'status', 'created_at')
-    list_filter = ('plan_type', 'status', 'created_at')
-    search_fields = ('user__username', 'description')
-    readonly_fields = ('created_at', 'updated_at')
-    list_editable = ('status',)
+    list_filter = ('status', 'plan_type')
+    search_fields = ('user__username', 'user__userprofile__name', 'description')
+    ordering = ('-created_at',)
+
+# Admin classes for new models
+class BodyAnalysisReportAdmin(admin.ModelAdmin):
+    list_display = ('user', 'report_date', 'status', 'response_date')
+    list_filter = ('status',)
+    search_fields = ('user__username', 'user__userprofile__name', 'description', 'admin_response')
+    ordering = ('-report_date',)
+
+class MonthlyGoalAdmin(admin.ModelAdmin):
+    list_display = ('title', 'user', 'start_date', 'end_date', 'status', 'progress')
+    list_filter = ('status',)
+    search_fields = ('title', 'user__username', 'user__userprofile__name', 'description')
+    ordering = ('-start_date',)
+
+class ProgressAnalysisAdmin(admin.ModelAdmin):
+    list_display = ('user', 'measurement_type', 'value', 'unit', 'measurement_date')
+    list_filter = ('measurement_type',)
+    search_fields = ('user__username', 'user__userprofile__name', 'notes')
+    ordering = ('-measurement_date',)
 
 # Register all models with the custom Persian admin site
 admin_site.register(UserProfile, UserProfileAdmin)
@@ -132,3 +131,6 @@ admin_site.register(Document, DocumentAdmin)
 admin_site.register(PlanRequest, PlanRequestAdmin)
 admin_site.register(User, UserAdmin)
 admin_site.register(Group, GroupAdmin)
+admin_site.register(BodyAnalysisReport, BodyAnalysisReportAdmin)
+admin_site.register(MonthlyGoal, MonthlyGoalAdmin)
+admin_site.register(ProgressAnalysis, ProgressAnalysisAdmin)

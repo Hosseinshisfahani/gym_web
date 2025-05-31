@@ -1,0 +1,80 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}جزئیات آنالیز بدن - پلتفرم جامع ورزشی{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">جزئیات آنالیز بدن</h5>
+                    <a href="{% url 'gym:body_analysis_reports' %}" class="btn btn-sm btn-outline-primary">بازگشت به لیست</a>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <p><strong>تاریخ آزمایش:</strong> {{ report.report_date|date:"Y/m/d" }}</p>
+                            <p>
+                                <strong>وضعیت:</strong> 
+                                {% if report.status == 'pending' %}
+                                    <span class="badge bg-warning text-dark">در انتظار بررسی</span>
+                                {% else %}
+                                    <span class="badge bg-success">بررسی شده</span>
+                                {% endif %}
+                            </p>
+                            {% if report.description %}
+                            <p><strong>توضیحات کاربر:</strong> {{ report.description }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            {% if report.response_date %}
+                            <p><strong>تاریخ پاسخ:</strong> {{ report.response_date|date:"Y/m/d H:i" }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4 text-center">
+                        <img src="{{ report.image.url }}" alt="آنالیز بدن" class="img-fluid rounded" style="max-height: 600px;">
+                        <div class="mt-2">
+                            <a href="{{ report.image.url }}" target="_blank" class="btn btn-sm btn-primary">
+                                <i class="fas fa-search-plus"></i> مشاهده در اندازه واقعی
+                            </a>
+                        </div>
+                    </div>
+                    
+                    {% if report.admin_response %}
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading"><i class="fas fa-reply"></i> پاسخ مربی:</h6>
+                        <p class="mb-0">{{ report.admin_response|linebreaks }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if is_admin %}
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">ثبت پاسخ</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="id_admin_response" class="form-label">پاسخ شما</label>
+                                    {{ form.admin_response }}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="id_status" class="form-label">وضعیت</label>
+                                    {{ form.status }}
+                                </div>
+                                <button type="submit" class="btn btn-primary">ثبت پاسخ</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

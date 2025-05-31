@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+import datetime
 
 # Create your models here.
 
@@ -41,101 +42,143 @@ def update_user_username(sender, instance, created, **kwargs):
 
 class WorkoutPlan(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='workout_plans')
-    title = models.CharField(max_length=100)
-    image = models.ImageField(upload_to='workout_plans/', blank=True, null=True)
-    description = models.TextField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    is_active = models.BooleanField(default=True)
+    title = models.CharField(max_length=200, verbose_name='عنوان')
+    description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
+    plan_file = models.FileField(upload_to='workout_plans/', blank=True, null=True, verbose_name='فایل برنامه')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
+    is_active = models.BooleanField(default=True, verbose_name='فعال')
+    duration_weeks = models.PositiveIntegerField(default=4, verbose_name='مدت (هفته)')
+    start_date = models.DateField(default=timezone.now, verbose_name='تاریخ شروع')
+    end_date = models.DateField(blank=True, null=True, verbose_name='تاریخ پایان')
     
     class Meta:
         verbose_name = 'برنامه تمرینی'
         verbose_name_plural = 'برنامه‌های تمرینی'
-        permissions = [
-            ('can_view_private_workout_plans', 'Can view private workout plans'),
-        ]
     
     def __str__(self):
-        return f"{self.user.username} - {self.title}"
+        return f"{self.title} - {self.user.username}"
+    
+    def save(self, *args, **kwargs):
+        # Calculate end date based on start date and duration
+        if self.start_date and self.duration_weeks:
+            self.end_date = self.start_date + datetime.timedelta(weeks=self.duration_weeks)
+        super().save(*args, **kwargs)
 
 class DietPlan(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='diet_plans')
-    title = models.CharField(max_length=100)
-    image = models.ImageField(upload_to='diet_plans/', blank=True, null=True)
-    description = models.TextField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    is_active = models.BooleanField(default=True)
+    title = models.CharField(max_length=200, verbose_name='عنوان')
+    description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
+    plan_file = models.FileField(upload_to='diet_plans/', blank=True, null=True, verbose_name='فایل برنامه')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
+    is_active = models.BooleanField(default=True, verbose_name='فعال')
+    duration_weeks = models.PositiveIntegerField(default=4, verbose_name='مدت (هفته)')
+    start_date = models.DateField(default=timezone.now, verbose_name='تاریخ شروع')
+    end_date = models.DateField(blank=True, null=True, verbose_name='تاریخ پایان')
     
     class Meta:
         verbose_name = 'برنامه غذایی'
         verbose_name_plural = 'برنامه‌های غذایی'
-        permissions = [
-            ('can_view_private_diet_plans', 'Can view private diet plans'),
-        ]
     
     def __str__(self):
-        return f"{self.user.username} - {self.title}"
+        return f"{self.title} - {self.user.username}"
+    
+    def save(self, *args, **kwargs):
+        # Calculate end date based on start date and duration
+        if self.start_date and self.duration_weeks:
+            self.end_date = self.start_date + datetime.timedelta(weeks=self.duration_weeks)
+        super().save(*args, **kwargs)
 
 class Payment(models.Model):
-    STATUS_CHOICES = [
-        ('pending', 'Pending'),
-        ('completed', 'Completed'),
-        ('failed', 'Failed'),
+    PAYMENT_STATUS_CHOICES = [
+        ('pending', 'در انتظار تایید'),
+        ('approved', 'تایید شده'),
+        ('rejected', 'رد شده'),
+    ]
+    PAYMENT_TYPE_CHOICES = [
+        ('membership', 'حق عضویت'),
+        ('workout_plan', 'برنامه تمرینی'),
+        ('diet_plan', 'برنامه غذایی'),
+        ('other', 'سایر'),
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payments')
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    description = models.CharField(max_length=200)
-    date = models.DateField()
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
-    payment_image = models.ImageField(upload_to='payment_proofs/', blank=True, null=True)
+    amount = models.PositiveIntegerField(verbose_name='مبلغ (تومان)')
+    payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPE_CHOICES, default='other', verbose_name='نوع پرداخت')
+    payment_date = models.DateField(default=timezone.now, verbose_name='تاریخ پرداخت')
+    proof_image = models.ImageField(upload_to='payment_proofs/', blank=True, null=True, verbose_name='تصویر رسید پرداخت')
+    description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
+    status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default='pending', verbose_name='وضعیت')
+    admin_note = models.TextField(blank=True, null=True, verbose_name='توضیحات مدیر')
     
     class Meta:
         verbose_name = 'پرداخت'
         verbose_name_plural = 'پرداخت‌ها'
-        
+        ordering = ['-payment_date']
+    
     def __str__(self):
-        return f"{self.user.username} - {self.amount} - {self.status}"
+        return f"{self.user.username} - {self.amount} تومان - {self.get_status_display()}"
 
 class Ticket(models.Model):
+    STATUS_CHOICES = [
+        ('open', 'باز'),
+        ('in_progress', 'در حال بررسی'),
+        ('closed', 'بسته'),
+    ]
+    
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tickets')
-    subject = models.CharField(max_length=100)
-    message = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    resolved = models.BooleanField(default=False)
+    subject = models.CharField(max_length=200, verbose_name='موضوع')
+    message = models.TextField(verbose_name='پیام')
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='open', verbose_name='وضعیت')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
     
     class Meta:
-        verbose_name = 'تیکت'
-        verbose_name_plural = 'تیکت‌ها'
-        
+        verbose_name = 'تیکت پشتیبانی'
+        verbose_name_plural = 'تیکت‌های پشتیبانی'
+        ordering = ['-created_at']
+    
     def __str__(self):
-        return f"{self.user.username} - {self.subject}"
+        return f"{self.subject} - {self.user.username}"
 
 class TicketResponse(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='responses')
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    message = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ticket_responses')
+    message = models.TextField(verbose_name='پیام')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    is_staff = models.BooleanField(default=False, verbose_name='پاسخ کارمند')
     
     class Meta:
         verbose_name = 'پاسخ تیکت'
         verbose_name_plural = 'پاسخ‌های تیکت'
-        
+        ordering = ['created_at']
+    
     def __str__(self):
-        return f"Response to {self.ticket.subject}"
+        return f"پاسخ به {self.ticket.subject} توسط {self.user.username}"
 
 class Document(models.Model):
+    DOCUMENT_TYPES = [
+        ('certificate', 'گواهینامه'),
+        ('education', 'مدرک تحصیلی'),
+        ('medical', 'مدارک پزشکی'),
+        ('other', 'سایر'),
+    ]
+    
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='documents')
-    title = models.CharField(max_length=100)
-    file = models.FileField(upload_to='documents/')
-    is_paid = models.BooleanField(default=False)
-    upload_date = models.DateTimeField(auto_now_add=True)
+    title = models.CharField(max_length=200, verbose_name='عنوان')
+    document_type = models.CharField(max_length=20, choices=DOCUMENT_TYPES, default='other', verbose_name='نوع سند')
+    file = models.FileField(upload_to='documents/', verbose_name='فایل')
+    description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
+    upload_date = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ آپلود')
     
     class Meta:
-        verbose_name = 'مدرک'
-        verbose_name_plural = 'مدارک'
-        
+        verbose_name = 'سند'
+        verbose_name_plural = 'اسناد'
+        ordering = ['-upload_date']
+    
     def __str__(self):
-        return f"{self.user.username} - {self.title}"
+        return f"{self.title} - {self.user.username}"
 
 class PlanRequest(models.Model):
     PLAN_TYPES = [
@@ -164,3 +207,79 @@ class PlanRequest(models.Model):
     
     def __str__(self):
         return f"{self.get_plan_type_display()} - {self.user.username}"
+
+# New models for the dashboard sections
+
+class BodyAnalysisReport(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'در انتظار بررسی'),
+        ('reviewed', 'بررسی شده'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='body_analysis_reports')
+    report_date = models.DateField(default=timezone.now, verbose_name='تاریخ آزمایش')
+    image = models.ImageField(upload_to='body_analysis/', verbose_name='تصویر آزمایش')
+    description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', verbose_name='وضعیت')
+    admin_response = models.TextField(blank=True, null=True, verbose_name='پاسخ مربی')
+    response_date = models.DateTimeField(blank=True, null=True, verbose_name='تاریخ پاسخ')
+    
+    class Meta:
+        verbose_name = 'گزارش آنالیز بدن'
+        verbose_name_plural = 'گزارش‌های آنالیز بدن'
+        ordering = ['-report_date']
+    
+    def __str__(self):
+        return f"آنالیز بدن {self.user.userprofile.name} - {self.report_date}"
+
+class MonthlyGoal(models.Model):
+    STATUS_CHOICES = [
+        ('not_started', 'شروع نشده'),
+        ('in_progress', 'در حال انجام'),
+        ('completed', 'تکمیل شده'),
+        ('failed', 'ناموفق'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='monthly_goals')
+    title = models.CharField(max_length=200, verbose_name='عنوان هدف')
+    description = models.TextField(verbose_name='توضیحات')
+    start_date = models.DateField(default=timezone.now, verbose_name='تاریخ شروع')
+    end_date = models.DateField(verbose_name='تاریخ پایان')
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='not_started', verbose_name='وضعیت')
+    progress = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)], verbose_name='پیشرفت (درصد)')
+    coach_notes = models.TextField(blank=True, null=True, verbose_name='یادداشت مربی')
+    
+    class Meta:
+        verbose_name = 'هدف ماهانه'
+        verbose_name_plural = 'اهداف ماهانه'
+        ordering = ['-start_date']
+    
+    def __str__(self):
+        return f"{self.title} - {self.user.userprofile.name}"
+
+class ProgressAnalysis(models.Model):
+    MEASUREMENT_TYPES = [
+        ('weight', 'وزن'),
+        ('body_fat', 'درصد چربی بدن'),
+        ('muscle_mass', 'توده عضلانی'),
+        ('waist', 'دور کمر'),
+        ('chest', 'دور سینه'),
+        ('arm', 'دور بازو'),
+        ('thigh', 'دور ران'),
+        ('other', 'سایر'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='progress_analyses')
+    measurement_type = models.CharField(max_length=20, choices=MEASUREMENT_TYPES, verbose_name='نوع اندازه‌گیری')
+    value = models.DecimalField(max_digits=6, decimal_places=2, verbose_name='مقدار')
+    unit = models.CharField(max_length=10, default='kg', verbose_name='واحد')
+    measurement_date = models.DateField(default=timezone.now, verbose_name='تاریخ اندازه‌گیری')
+    notes = models.TextField(blank=True, null=True, verbose_name='یادداشت')
+    
+    class Meta:
+        verbose_name = 'آنالیز پیشرفت'
+        verbose_name_plural = 'آنالیزهای پیشرفت'
+        ordering = ['-measurement_date']
+    
+    def __str__(self):
+        return f"{self.get_measurement_type_display()} - {self.user.userprofile.name} - {self.measurement_date}"

@@ -1,0 +1,101 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}اهداف ماهانه - پلتفرم جامع ورزشی{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">ثبت هدف جدید</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="id_title" class="form-label">عنوان هدف</label>
+                            <input type="text" class="form-control" id="id_title" name="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_description" class="form-label">توضیحات</label>
+                            {{ form.description }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_start_date" class="form-label">تاریخ شروع</label>
+                            {{ form.start_date }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_end_date" class="form-label">تاریخ پایان</label>
+                            {{ form.end_date }}
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">ثبت هدف</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">اهداف ماهانه شما</h5>
+                </div>
+                <div class="card-body">
+                    {% if goals %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>عنوان</th>
+                                    <th>بازه زمانی</th>
+                                    <th>وضعیت</th>
+                                    <th>پیشرفت</th>
+                                    <th>عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for goal in goals %}
+                                <tr>
+                                    <td>{{ goal.title }}</td>
+                                    <td>{{ goal.start_date|date:"Y/m/d" }} تا {{ goal.end_date|date:"Y/m/d" }}</td>
+                                    <td>
+                                        {% if goal.status == 'not_started' %}
+                                            <span class="badge bg-secondary">شروع نشده</span>
+                                        {% elif goal.status == 'in_progress' %}
+                                            <span class="badge bg-primary">در حال انجام</span>
+                                        {% elif goal.status == 'completed' %}
+                                            <span class="badge bg-success">تکمیل شده</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">ناموفق</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar {{ goal.progress|yesno:'bg-success,bg-warning' }}" 
+                                                 role="progressbar" 
+                                                 style="width: {{ goal.progress }}%;" 
+                                                 aria-valuenow="{{ goal.progress }}" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="100">{{ goal.progress }}%</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'gym:monthly_goal_detail' goal.id %}" class="btn btn-sm btn-primary">مشاهده / ویرایش</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        هنوز هیچ هدفی ثبت نکرده‌اید. می‌توانید از فرم سمت راست استفاده کنید تا اولین هدف ماهانه خود را ثبت کنید.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

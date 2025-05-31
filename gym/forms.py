@@ -1,7 +1,11 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import UserProfile, WorkoutPlan, DietPlan, Payment, Ticket, Document, PlanRequest
+from .models import (
+    UserProfile, WorkoutPlan, DietPlan, Payment, 
+    Ticket, Document, PlanRequest, BodyAnalysisReport, 
+    MonthlyGoal, ProgressAnalysis
+)
 
 class UserRegistrationForm(UserCreationForm):
     name = forms.CharField(
@@ -113,52 +117,106 @@ class UserProfileForm(forms.ModelForm):
 class WorkoutPlanForm(forms.ModelForm):
     class Meta:
         model = WorkoutPlan
-        fields = ['title', 'description', 'image']
+        fields = ['title', 'description', 'plan_file', 'duration_weeks', 'start_date', 'is_active']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
-            'image': forms.FileInput(attrs={'class': 'form-control'}),
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'description': forms.Textarea(attrs={'rows': 4}),
         }
 
 class DietPlanForm(forms.ModelForm):
     class Meta:
         model = DietPlan
-        fields = ['title', 'description', 'image']
+        fields = ['title', 'description', 'plan_file', 'duration_weeks', 'start_date', 'is_active']
         widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
-            'image': forms.FileInput(attrs={'class': 'form-control'}),
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'description': forms.Textarea(attrs={'rows': 4}),
         }
 
 class PaymentForm(forms.ModelForm):
     class Meta:
         model = Payment
-        fields = ['amount', 'description', 'date', 'payment_image']
+        fields = ['amount', 'payment_type', 'payment_date', 'proof_image', 'description']
         widgets = {
-            'date': forms.DateInput(attrs={'type': 'date'})
+            'payment_date': forms.DateInput(attrs={'type': 'date'}),
+            'description': forms.Textarea(attrs={'rows': 3}),
         }
 
 class TicketForm(forms.ModelForm):
     class Meta:
         model = Ticket
         fields = ['subject', 'message']
+        widgets = {
+            'message': forms.Textarea(attrs={'rows': 5}),
+        }
 
 class TicketResponseForm(forms.Form):
-    message = forms.CharField(widget=forms.Textarea)
+    message = forms.CharField(widget=forms.Textarea(attrs={'rows': 4}), label='پیام')
 
 class DocumentForm(forms.ModelForm):
     class Meta:
         model = Document
-        fields = ['title', 'file']
+        fields = ['title', 'document_type', 'file', 'description']
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 3}),
+        }
 
 class PlanRequestForm(forms.ModelForm):
     class Meta:
         model = PlanRequest
         fields = ['plan_type', 'description']
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 4, 'placeholder': 'لطفا توضیحات خود را وارد کنید...'}),
+            'description': forms.Textarea(attrs={'rows': 5}),
         }
-        labels = {
-            'plan_type': 'نوع برنامه',
-            'description': 'توضیحات',
+
+# Forms for new models
+class BodyAnalysisReportForm(forms.ModelForm):
+    class Meta:
+        model = BodyAnalysisReport
+        fields = ['image', 'description', 'report_date']
+        widgets = {
+            'report_date': forms.DateInput(attrs={'type': 'date'}),
+            'description': forms.Textarea(attrs={'rows': 3, 'placeholder': 'توضیحات اضافی خود را وارد کنید...'}),
+        }
+
+class BodyAnalysisResponseForm(forms.ModelForm):
+    class Meta:
+        model = BodyAnalysisReport
+        fields = ['admin_response', 'status']
+        widgets = {
+            'admin_response': forms.Textarea(attrs={'rows': 4, 'placeholder': 'پاسخ خود را بنویسید...'}),
+        }
+
+class MonthlyGoalForm(forms.ModelForm):
+    class Meta:
+        model = MonthlyGoal
+        fields = ['title', 'description', 'start_date', 'end_date']
+        widgets = {
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'type': 'date'}),
+            'description': forms.Textarea(attrs={'rows': 3, 'placeholder': 'جزئیات هدف خود را وارد کنید...'}),
+        }
+
+class MonthlyGoalUpdateForm(forms.ModelForm):
+    class Meta:
+        model = MonthlyGoal
+        fields = ['progress', 'status']
+        widgets = {
+            'progress': forms.NumberInput(attrs={'min': 0, 'max': 100, 'step': 5}),
+        }
+
+class MonthlyGoalCoachForm(forms.ModelForm):
+    class Meta:
+        model = MonthlyGoal
+        fields = ['coach_notes', 'status']
+        widgets = {
+            'coach_notes': forms.Textarea(attrs={'rows': 3, 'placeholder': 'یادداشت خود را برای کاربر بنویسید...'}),
+        }
+
+class ProgressAnalysisForm(forms.ModelForm):
+    class Meta:
+        model = ProgressAnalysis
+        fields = ['measurement_type', 'value', 'unit', 'measurement_date', 'notes']
+        widgets = {
+            'measurement_date': forms.DateInput(attrs={'type': 'date'}),
+            'notes': forms.Textarea(attrs={'rows': 2, 'placeholder': 'یادداشت...'}),
         } 

@@ -1,0 +1,87 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}آنالیز بدن و آزمایشات - پلتفرم جامع ورزشی{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">آپلود آنالیز جدید</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="id_image" class="form-label">تصویر آزمایش</label>
+                            <input type="file" class="form-control" id="id_image" name="image" required>
+                            <small class="text-muted">تصویر آزمایش یا آنالیز بدن خود را آپلود کنید.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_report_date" class="form-label">تاریخ آزمایش</label>
+                            {{ form.report_date }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_description" class="form-label">توضیحات</label>
+                            {{ form.description }}
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">ثبت آنالیز</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">آنالیزهای بدن شما</h5>
+                </div>
+                <div class="card-body">
+                    {% if reports %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>تاریخ آزمایش</th>
+                                    <th>تصویر</th>
+                                    <th>وضعیت</th>
+                                    <th>عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for report in reports %}
+                                <tr>
+                                    <td>{{ report.report_date|date:"Y/m/d" }}</td>
+                                    <td>
+                                        <a href="{{ report.image.url }}" target="_blank">
+                                            <img src="{{ report.image.url }}" alt="آنالیز بدن" style="height: 50px; width: auto;">
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {% if report.status == 'pending' %}
+                                            <span class="badge bg-warning text-dark">در انتظار بررسی</span>
+                                        {% else %}
+                                            <span class="badge bg-success">بررسی شده</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'gym:body_analysis_detail' report.id %}" class="btn btn-sm btn-primary">مشاهده</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        هنوز هیچ آنالیز بدنی ثبت نکرده‌اید. می‌توانید از فرم سمت راست استفاده کنید تا اولین آنالیز خود را ثبت کنید.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
