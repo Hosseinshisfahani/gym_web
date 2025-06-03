@@ -1,0 +1,309 @@
+{% extends 'gym_shop/base.html' %}
+{% load static %}
+
+{% block title %}سفارشات من - فروشگاه تجهیزات ورزشی{% endblock %}
+
+{% block breadcrumb %}
+<div class="container mt-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'gym_shop:home' %}">خانه</a></li>
+            <li class="breadcrumb-item active" aria-current="page">سفارشات من</li>
+        </ol>
+    </nav>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <!-- Page Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>
+                    <i class="fas fa-shopping-bag me-2"></i>
+                    سفارشات من
+                </h2>
+                <a href="{% url 'gym_shop:product_list' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>
+                    سفارش جدید
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-3">
+                            <label for="status_filter" class="form-label">وضعیت سفارش</label>
+                            <select name="status" id="status_filter" class="form-select">
+                                <option value="">همه سفارشات</option>
+                                <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>در انتظار پردازش</option>
+                                <option value="processing" {% if request.GET.status == 'processing' %}selected{% endif %}>در حال پردازش</option>
+                                <option value="shipped" {% if request.GET.status == 'shipped' %}selected{% endif %}>ارسال شده</option>
+                                <option value="delivered" {% if request.GET.status == 'delivered' %}selected{% endif %}>تحویل داده شده</option>
+                                <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>لغو شده</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="payment_status_filter" class="form-label">وضعیت پرداخت</label>
+                            <select name="payment_status" id="payment_status_filter" class="form-select">
+                                <option value="">همه</option>
+                                <option value="pending" {% if request.GET.payment_status == 'pending' %}selected{% endif %}>در انتظار</option>
+                                <option value="paid" {% if request.GET.payment_status == 'paid' %}selected{% endif %}>پرداخت شده</option>
+                                <option value="failed" {% if request.GET.payment_status == 'failed' %}selected{% endif %}>ناموفق</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="search" class="form-label">جستجو</label>
+                            <input type="text" name="search" id="search" class="form-control" 
+                                   placeholder="شماره سفارش..." value="{{ request.GET.search }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-outline-primary">
+                                    <i class="fas fa-search me-2"></i>
+                                    جستجو
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders List -->
+    {% if page_obj.object_list %}
+        <div class="row">
+            {% for order in page_obj.object_list %}
+                <div class="col-12 mb-4">
+                    <div class="card order-card">
+                        <div class="card-header">
+                            <div class="row align-items-center">
+                                <div class="col-md-3">
+                                    <h6 class="mb-0">سفارش #{{ order.order_number }}</h6>
+                                    <small class="text-muted">{{ order.created_at|date:"j F Y - H:i" }}</small>
+                                </div>
+                                <div class="col-md-2 text-center">
+                                    {% if order.status == 'pending' %}
+                                        <span class="badge bg-warning">در انتظار پردازش</span>
+                                    {% elif order.status == 'processing' %}
+                                        <span class="badge bg-info">در حال پردازش</span>
+                                    {% elif order.status == 'shipped' %}
+                                        <span class="badge bg-primary">ارسال شده</span>
+                                    {% elif order.status == 'delivered' %}
+                                        <span class="badge bg-success">تحویل داده شده</span>
+                                    {% elif order.status == 'cancelled' %}
+                                        <span class="badge bg-danger">لغو شده</span>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-2 text-center">
+                                    {% if order.payment_status == 'pending' %}
+                                        <span class="badge bg-secondary">در انتظار پرداخت</span>
+                                    {% elif order.payment_status == 'paid' %}
+                                        <span class="badge bg-success">پرداخت شده</span>
+                                    {% elif order.payment_status == 'failed' %}
+                                        <span class="badge bg-danger">پرداخت ناموفق</span>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-2 text-center">
+                                    <strong class="text-success">{{ order.total|floatformat:0 }} تومان</strong>
+                                </div>
+                                <div class="col-md-3 text-end">
+                                    <a href="{% url 'gym_shop:order_detail' order.id %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-eye me-1"></i>
+                                        مشاهده جزئیات
+                                    </a>
+                                    {% if order.status == 'pending' and order.payment_status == 'pending' %}
+                                        <a href="#" class="btn btn-primary btn-sm ms-1">
+                                            <i class="fas fa-credit-card me-1"></i>
+                                            پرداخت
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h6>آیتم‌های سفارش:</h6>
+                                    <div class="row g-2">
+                                        {% for item in order.orderitem_set.all|slice:":4" %}
+                                            <div class="col-6 col-md-3">
+                                                <div class="d-flex align-items-center">
+                                                    {% if item.product.image %}
+                                                        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" 
+                                                             class="rounded me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                                    {% else %}
+                                                        <div class="bg-light rounded me-2 d-flex align-items-center justify-content-center" 
+                                                             style="width: 40px; height: 40px;">
+                                                            <i class="fas fa-image text-muted"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                    <div>
+                                                        <small class="d-block">{{ item.product.name|truncatechars:20 }}</small>
+                                                        <small class="text-muted">{{ item.quantity }} عدد</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                        {% if order.orderitem_set.count > 4 %}
+                                            <div class="col-6 col-md-3">
+                                                <div class="text-center">
+                                                    <small class="text-muted">
+                                                        و {{ order.orderitem_set.count|add:"-4" }} مورد دیگر
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="text-end">
+                                        <h6>خلاصه سفارش:</h6>
+                                        <div class="d-flex justify-content-between">
+                                            <span>تعداد آیتم‌ها:</span>
+                                            <span>{{ order.orderitem_set.count }} مورد</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span>روش پرداخت:</span>
+                                            <span>
+                                                {% if order.payment_method == 'online' %}
+                                                    آنلاین
+                                                {% elif order.payment_method == 'cod' %}
+                                                    در محل
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                        {% if order.tracking_number %}
+                                            <div class="d-flex justify-content-between">
+                                                <span>کد رهگیری:</span>
+                                                <span class="text-primary">{{ order.tracking_number }}</span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+            <nav aria-label="صفحه‌بندی سفارشات" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}{% if request.GET.payment_status %}payment_status={{ request.GET.payment_status }}&{% endif %}{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                                <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}{% if request.GET.payment_status %}payment_status={{ request.GET.payment_status }}&{% endif %}{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}{% if request.GET.payment_status %}payment_status={{ request.GET.payment_status }}&{% endif %}{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}page={{ page_obj.next_page_number }}">
+                                <i class="fas fa-chevron-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    {% else %}
+        <!-- No Orders -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-shopping-bag fa-4x text-muted mb-4"></i>
+                        <h4>هنوز سفارشی ثبت نکرده‌اید</h4>
+                        <p class="text-muted mb-4">
+                            {% if request.GET.status or request.GET.payment_status or request.GET.search %}
+                                با فیلترهای اعمال شده سفارشی یافت نشد.
+                            {% else %}
+                                از طریق فروشگاه ما خرید کنید و اولین سفارش خود را ثبت کنید.
+                            {% endif %}
+                        </p>
+                        {% if request.GET.status or request.GET.payment_status or request.GET.search %}
+                            <a href="{% url 'gym_shop:order_list' %}" class="btn btn-outline-primary me-2">
+                                <i class="fas fa-times me-2"></i>
+                                پاک کردن فیلترها
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'gym_shop:product_list' %}" class="btn btn-primary">
+                            <i class="fas fa-shopping-cart me-2"></i>
+                            شروع خرید
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.order-card {
+    transition: box-shadow 0.3s ease;
+}
+
+.order-card:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.order-card .card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.badge {
+    font-size: 0.8rem;
+}
+
+.order-card .card-body {
+    padding: 1rem;
+}
+
+@media (max-width: 768px) {
+    .order-card .card-header .row > div {
+        margin-bottom: 0.5rem;
+        text-align: center !important;
+    }
+    
+    .order-card .card-header .row > div:last-child {
+        margin-bottom: 0;
+    }
+}
+</style>
+
+<script>
+// Auto submit form when filter changes
+document.getElementById('status_filter').addEventListener('change', function() {
+    this.form.submit();
+});
+
+document.getElementById('payment_status_filter').addEventListener('change', function() {
+    this.form.submit();
+});
+</script>
+{% endblock %} 

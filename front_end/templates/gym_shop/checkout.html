@@ -1,0 +1,329 @@
+{% extends 'gym_shop/base.html' %}
+{% load static %}
+
+{% block title %}تسویه حساب - فروشگاه تجهیزات ورزشی{% endblock %}
+
+{% block breadcrumb %}
+<div class="container mt-3">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'gym_shop:home' %}">خانه</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'gym_shop:cart' %}">سبد خرید</a></li>
+            <li class="breadcrumb-item active" aria-current="page">تسویه حساب</li>
+        </ol>
+    </nav>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row">
+        <!-- Order Summary -->
+        <div class="col-lg-4 order-lg-2 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">خلاصه سفارش</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Cart Items -->
+                    {% for item in cart_items %}
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                            <div class="d-flex align-items-center">
+                                {% if item.product.image %}
+                                    <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" 
+                                         class="rounded me-3" style="width: 50px; height: 50px; object-fit: cover;">
+                                {% else %}
+                                    <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center" 
+                                         style="width: 50px; height: 50px;">
+                                        <i class="fas fa-image text-muted"></i>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <h6 class="mb-0">{{ item.product.name }}</h6>
+                                    <small class="text-muted">تعداد: {{ item.quantity }}</small>
+                                    {% if item.size %}
+                                        <small class="text-muted d-block">سایز: {{ item.size }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <span class="text-success fw-bold">
+                                {{ item.total_price|floatformat:0 }} تومان
+                            </span>
+                        </div>
+                    {% endfor %}
+
+                    <!-- Totals -->
+                    <div class="border-top pt-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>جمع کل محصولات:</span>
+                            <span>{{ subtotal|floatformat:0 }} تومان</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>هزینه ارسال:</span>
+                            <span>{{ shipping_cost|floatformat:0 }} تومان</span>
+                        </div>
+                        {% if discount_amount %}
+                            <div class="d-flex justify-content-between mb-2 text-danger">
+                                <span>تخفیف:</span>
+                                <span>-{{ discount_amount|floatformat:0 }} تومان</span>
+                            </div>
+                        {% endif %}
+                        <hr>
+                        <div class="d-flex justify-content-between fs-5 fw-bold">
+                            <span>مبلغ نهایی:</span>
+                            <span class="text-success">{{ total|floatformat:0 }} تومان</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Checkout Form -->
+        <div class="col-lg-8 order-lg-1">
+            <form method="POST" id="checkoutForm">
+                {% csrf_token %}
+                
+                <!-- Shipping Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-shipping-fast me-2"></i>
+                            اطلاعات ارسال
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="first_name" class="form-label">نام *</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" 
+                                       value="{{ user.first_name }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="last_name" class="form-label">نام خانوادگی *</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" 
+                                       value="{{ user.last_name }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="phone" class="form-label">شماره تماس *</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" 
+                                       value="{{ user.userprofile.phone_number }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">ایمیل</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       value="{{ user.email }}">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="address" class="form-label">آدرس کامل *</label>
+                            <textarea class="form-control" id="address" name="address" rows="3" 
+                                      placeholder="آدرس کامل شامل شهر، منطقه، خیابان و پلاک" required>{{ user.userprofile.address }}</textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="city" class="form-label">شهر *</label>
+                                <input type="text" class="form-control" id="city" name="city" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="postal_code" class="form-label">کد پستی *</label>
+                                <input type="text" class="form-control" id="postal_code" name="postal_code" 
+                                       placeholder="1234567890" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">توضیحات (اختیاری)</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="2" 
+                                      placeholder="توضیحات اضافی برای ارسال"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Method -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-credit-card me-2"></i>
+                            روش پرداخت
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="payment_method" 
+                                           id="online_payment" value="online" checked>
+                                    <label class="form-check-label" for="online_payment">
+                                        <i class="fas fa-globe me-2"></i>
+                                        پرداخت آنلاین
+                                        <small class="d-block text-muted">پرداخت از طریق درگاه بانکی</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="payment_method" 
+                                           id="cash_on_delivery" value="cod">
+                                    <label class="form-check-label" for="cash_on_delivery">
+                                        <i class="fas fa-money-bill-wave me-2"></i>
+                                        پرداخت در محل
+                                        <small class="d-block text-muted">پرداخت هنگام تحویل کالا</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Discount Code -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-tag me-2"></i>
+                            کد تخفیف
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <input type="text" class="form-control" id="discount_code" name="discount_code" 
+                                       placeholder="کد تخفیف خود را وارد کنید">
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" class="btn btn-outline-primary w-100" onclick="applyDiscount()">
+                                    اعمال کد
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Terms and Submit -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="terms_agree" required>
+                            <label class="form-check-label" for="terms_agree">
+                                با <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">قوانین و مقررات</a> موافقم *
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success btn-lg w-100">
+                            <i class="fas fa-shopping-cart me-2"></i>
+                            تکمیل سفارش
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Terms Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="termsModalLabel">قوانین و مقررات</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>شرایط خرید و فروش:</h6>
+                <ul>
+                    <li>تمامی قیمت‌ها شامل مالیات بر ارزش افزوده می‌باشد.</li>
+                    <li>زمان ارسال کالا بین 2 تا 7 روز کاری می‌باشد.</li>
+                    <li>امکان مرجوعی کالا تا 7 روز پس از خرید وجود دارد.</li>
+                    <li>هزینه ارسال بر عهده خریدار می‌باشد.</li>
+                    <li>برای مرجوعی کالا، محصول باید در شرایط اولیه باشد.</li>
+                </ul>
+                <h6>حریم خصوصی:</h6>
+                <ul>
+                    <li>اطلاعات شخصی شما محفوظ نگهداری می‌شود.</li>
+                    <li>اطلاعات شما به هیچ شخص ثالثی داده نمی‌شود.</li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">متوجه شدم</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function applyDiscount() {
+    const discountCode = document.getElementById('discount_code').value;
+    if (!discountCode.trim()) {
+        alert('لطفا کد تخفیف را وارد کنید');
+        return;
+    }
+    
+    fetch("{% url 'gym_shop:apply_discount' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            'discount_code': discountCode
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('کد تخفیف با موفقیت اعمال شد');
+            location.reload();
+        } else {
+            alert(data.message || 'کد تخفیف نامعتبر است');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('خطا در اعمال کد تخفیف');
+    });
+}
+
+document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Show loading
+    const submitBtn = document.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>در حال پردازش...';
+    submitBtn.disabled = true;
+    
+    // Submit form
+    fetch(window.location.href, {
+        method: 'POST',
+        body: new FormData(this),
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            if (data.payment_url) {
+                window.location.href = data.payment_url;
+            } else {
+                window.location.href = data.order_url;
+            }
+        } else {
+            alert(data.message || 'خطا در ثبت سفارش');
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('خطا در ثبت سفارش');
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+});
+</script>
+{% endblock %} 
