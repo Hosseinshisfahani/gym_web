@@ -35,6 +35,9 @@ from .models import (
     BodyAnalysisReport, MonthlyGoal, ProgressAnalysis
 )
 
+# Import shop models
+from gym_shop.models import Category, Product, ProductImage, Cart, CartItem, Order, OrderItem
+
 class UserProfileAdmin(admin.ModelAdmin):
     verbose_name = 'پروفایل کاربر'
     verbose_name_plural = 'پروفایل‌های کاربران'
@@ -134,3 +137,11 @@ admin_site.register(Group, GroupAdmin)
 admin_site.register(BodyAnalysisReport, BodyAnalysisReportAdmin)
 admin_site.register(MonthlyGoal, MonthlyGoalAdmin)
 admin_site.register(ProgressAnalysis, ProgressAnalysisAdmin)
+
+# Import and register shop admin classes
+from gym_shop.admin import CategoryAdmin, ProductAdmin, CartAdmin, OrderAdmin, ProductImageAdmin
+admin_site.register(Category, CategoryAdmin)
+admin_site.register(Product, ProductAdmin)
+admin_site.register(Cart, CartAdmin)
+admin_site.register(Order, OrderAdmin)
+admin_site.register(ProductImage, ProductImageAdmin)
