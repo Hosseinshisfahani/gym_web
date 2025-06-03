@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'widget_tweaks',
     'gym',
+    'gym_shop',
 ]
 
 MIDDLEWARE = [

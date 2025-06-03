@@ -1,0 +1,296 @@
+{% extends 'gym_shop/base.html' %}
+{% load static %}
+
+{% block title %}صفحه اصلی فروشگاه - فروشگاه تجهیزات ورزشی{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="shop-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-4 fw-bold mb-3">
+                    <i class="fas fa-dumbbell me-3"></i>
+                    فروشگاه تجهیزات ورزشی
+                </h1>
+                <p class="lead mb-4">
+                    بهترین برندهای ورزشی، بهترین قیمت‌ها
+                </p>
+                <div class="d-flex gap-3">
+                    <a href="{% url 'gym_shop:product_list' %}" class="btn btn-light btn-lg">
+                        <i class="fas fa-shopping-bag me-2"></i>
+                        مشاهده محصولات
+                    </a>
+                    <a href="#categories" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-list me-2"></i>
+                        دسته‌بندی‌ها
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-4 text-center">
+                <i class="fas fa-trophy text-warning" style="font-size: 8rem;"></i>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section id="categories" class="py-5">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h2 class="display-5 fw-bold mb-3">دسته‌بندی‌ها</h2>
+                <p class="lead text-muted">انتخاب کنید و خرید کنید</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            {% for category in categories %}
+                <div class="col-lg-3 col-md-6">
+                    <a href="{% url 'gym_shop:category_detail' category.slug %}" class="text-decoration-none">
+                        <div class="category-card h-100">
+                            {% if category.image %}
+                                <img src="{{ category.image.url }}" alt="{{ category.name }}" class="img-fluid mb-3" style="height: 80px; object-fit: cover;">
+                            {% else %}
+                                <i class="category-icon fas fa-tags"></i>
+                            {% endif %}
+                            <h5 class="fw-bold">{{ category.name }}</h5>
+                            <p class="text-muted">{{ category.description|truncatewords:10 }}</p>
+                        </div>
+                    </a>
+                </div>
+            {% empty %}
+                <div class="col-12 text-center">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        هنوز دسته‌بندی‌ای تعریف نشده است.
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Featured Products Section -->
+{% if featured_products %}
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h2 class="display-5 fw-bold mb-3">محصولات ویژه</h2>
+                <p class="lead text-muted">بهترین انتخاب‌های ما برای شما</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            {% for product in featured_products %}
+                <div class="col-lg-3 col-md-6">
+                    <div class="card product-card h-100 position-relative">
+                        {% if product.discount_percentage %}
+                            <div class="discount-badge">
+                                {{ product.discount_percentage }}% تخفیف
+                            </div>
+                        {% endif %}
+                        
+                        <a href="{% url 'gym_shop:product_detail' product.slug %}">
+                            {% if product.image %}
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="card-img-top">
+                            {% else %}
+                                <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 250px;">
+                                    <i class="fas fa-image fa-3x text-muted"></i>
+                                </div>
+                            {% endif %}
+                        </a>
+                        
+                        <div class="card-body d-flex flex-column">
+                            <h6 class="card-title">
+                                <a href="{% url 'gym_shop:product_detail' product.slug %}" class="text-decoration-none text-dark">
+                                    {{ product.name }}
+                                </a>
+                            </h6>
+                            <p class="card-text text-muted flex-grow-1">{{ product.short_description|truncatewords:15 }}</p>
+                            
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    {% if product.discount_price %}
+                                        <div>
+                                            <span class="price">{{ product.discount_price|floatformat:0 }} تومان</span>
+                                            <small class="original-price ms-2">{{ product.price|floatformat:0 }}</small>
+                                        </div>
+                                    {% else %}
+                                        <span class="price">{{ product.price|floatformat:0 }} تومان</span>
+                                    {% endif %}
+                                    
+                                    {% if product.stock > 0 %}
+                                        <small class="text-success">
+                                            <i class="fas fa-check-circle me-1"></i>
+                                            موجود
+                                        </small>
+                                    {% else %}
+                                        <small class="text-danger">
+                                            <i class="fas fa-times-circle me-1"></i>
+                                            ناموجود
+                                        </small>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if user.is_authenticated and product.stock > 0 %}
+                                    <form method="POST" action="{% url 'gym_shop:add_to_cart' %}" class="d-grid">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                                        <input type="hidden" name="quantity" value="1">
+                                        <button type="submit" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-cart-plus me-1"></i>
+                                            افزودن به سبد
+                                        </button>
+                                    </form>
+                                {% elif not user.is_authenticated %}
+                                    <a href="{% url 'gym:login' %}" class="btn btn-outline-primary btn-sm d-grid">
+                                        <i class="fas fa-sign-in-alt me-1"></i>
+                                        ورود برای خرید
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <div class="row mt-5">
+            <div class="col-12 text-center">
+                <a href="{% url 'gym_shop:product_list' %}" class="btn btn-primary btn-lg">
+                    <i class="fas fa-eye me-2"></i>
+                    مشاهده همه محصولات
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Latest Products Section -->
+{% if latest_products %}
+<section class="py-5">
+    <div class="container">
+        <div class="row mb-5">
+            <div class="col-12 text-center">
+                <h2 class="display-5 fw-bold mb-3">جدیدترین محصولات</h2>
+                <p class="lead text-muted">آخرین محصولات اضافه شده به فروشگاه</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            {% for product in latest_products %}
+                <div class="col-lg-3 col-md-6">
+                    <div class="card product-card h-100 position-relative">
+                        {% if product.discount_percentage %}
+                            <div class="discount-badge">
+                                {{ product.discount_percentage }}% تخفیف
+                            </div>
+                        {% endif %}
+                        
+                        <a href="{% url 'gym_shop:product_detail' product.slug %}">
+                            {% if product.image %}
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="card-img-top">
+                            {% else %}
+                                <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 250px;">
+                                    <i class="fas fa-image fa-3x text-muted"></i>
+                                </div>
+                            {% endif %}
+                        </a>
+                        
+                        <div class="card-body d-flex flex-column">
+                            <h6 class="card-title">
+                                <a href="{% url 'gym_shop:product_detail' product.slug %}" class="text-decoration-none text-dark">
+                                    {{ product.name }}
+                                </a>
+                            </h6>
+                            <p class="card-text text-muted flex-grow-1">{{ product.short_description|truncatewords:15 }}</p>
+                            
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    {% if product.discount_price %}
+                                        <div>
+                                            <span class="price">{{ product.discount_price|floatformat:0 }} تومان</span>
+                                            <small class="original-price ms-2">{{ product.price|floatformat:0 }}</small>
+                                        </div>
+                                    {% else %}
+                                        <span class="price">{{ product.price|floatformat:0 }} تومان</span>
+                                    {% endif %}
+                                    
+                                    {% if product.stock > 0 %}
+                                        <small class="text-success">
+                                            <i class="fas fa-check-circle me-1"></i>
+                                            موجود
+                                        </small>
+                                    {% else %}
+                                        <small class="text-danger">
+                                            <i class="fas fa-times-circle me-1"></i>
+                                            ناموجود
+                                        </small>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if user.is_authenticated and product.stock > 0 %}
+                                    <form method="POST" action="{% url 'gym_shop:add_to_cart' %}" class="d-grid">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                                        <input type="hidden" name="quantity" value="1">
+                                        <button type="submit" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-cart-plus me-1"></i>
+                                            افزودن به سبد
+                                        </button>
+                                    </form>
+                                {% elif not user.is_authenticated %}
+                                    <a href="{% url 'gym:login' %}" class="btn btn-outline-primary btn-sm d-grid">
+                                        <i class="fas fa-sign-in-alt me-1"></i>
+                                        ورود برای خرید
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Features Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-6 text-center">
+                <div class="p-4">
+                    <i class="fas fa-shipping-fast text-primary fa-3x mb-3"></i>
+                    <h5>ارسال سریع</h5>
+                    <p class="text-muted">ارسال در کمترین زمان ممکن</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 text-center">
+                <div class="p-4">
+                    <i class="fas fa-medal text-primary fa-3x mb-3"></i>
+                    <h5>کیفیت تضمینی</h5>
+                    <p class="text-muted">تضمین اصالت و کیفیت محصولات</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 text-center">
+                <div class="p-4">
+                    <i class="fas fa-headset text-primary fa-3x mb-3"></i>
+                    <h5>پشتیبانی ۲۴/۷</h5>
+                    <p class="text-muted">پشتیبانی در تمام ساعات روز</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 text-center">
+                <div class="p-4">
+                    <i class="fas fa-undo text-primary fa-3x mb-3"></i>
+                    <h5>ضمانت بازگشت</h5>
+                    <p class="text-muted">امکان بازگشت کالا تا ۷ روز</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %} 

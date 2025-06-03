@@ -24,4 +24,5 @@ urlpatterns = [
     # path('admin/', admin.site.urls),  # Original Django admin - commented out
     path('admin/', admin_site.urls),  # Custom admin site
     path('', include('gym.urls', namespace='gym')),
+    path('shop/', include('gym_shop.urls', namespace='gym_shop')),  # فروشگاه
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
