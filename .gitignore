@@ -21,13 +21,19 @@ wheels/
 *.egg
 MANIFEST
 
-# Virtual Environment
+# Virtual Environment - COMPLETELY IGNORE
 venv/
 venv_new/
-env/
 ENV/
+env/
 .env
-.venv
+.venv/
+pyvenv.cfg
+
+# Shell scripts - COMPLETELY IGNORE
+*.sh
+*.bash
+*.zsh
 
 # Django
 *.log
@@ -40,7 +46,7 @@ media/
 staticfiles/
 static_root/
 
-# IDE and Editors
+# IDE
 .idea/
 .vscode/
 *.swp
