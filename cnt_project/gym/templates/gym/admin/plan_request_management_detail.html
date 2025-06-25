@@ -1,0 +1,477 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}مدیریت درخواست {{ plan_request.get_plan_type_display }} - {{ plan_request.user.userprofile.name|default:plan_request.user.username }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'gym:comprehensive_plan_management' %}">مدیریت برنامه‌ها</a></li>
+                    <li class="breadcrumb-item active">جزئیات درخواست</li>
+                </ol>
+            </nav>
+            <h2><i class="fas fa-user-cog me-2"></i>مدیریت درخواست {{ plan_request.get_plan_type_display }}</h2>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'gym:comprehensive_plan_management' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>بازگشت به لیست
+            </a>
+            <a href="{% url 'gym:profile' plan_request.user.id %}" class="btn btn-info">
+                <i class="fas fa-user me-1"></i>مشاهده پروفایل
+            </a>
+        </div>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row">
+        <!-- Left Column: Request & User Info -->
+        <div class="col-lg-8">
+            <!-- Request Information -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>اطلاعات درخواست</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>نوع برنامه:</strong> 
+                                <span class="badge {% if plan_request.plan_type == 'workout' %}bg-primary{% else %}bg-success{% endif %} fs-6">
+                                    {{ plan_request.get_plan_type_display }}
+                                </span>
+                            </p>
+                            <p><strong>وضعیت:</strong> 
+                                <span class="badge {% if plan_request.status == 'pending' %}bg-warning text-dark
+                                             {% elif plan_request.status == 'approved' %}bg-success
+                                             {% elif plan_request.status == 'completed' %}bg-info
+                                             {% else %}bg-danger{% endif %} fs-6">
+                                    {{ plan_request.get_status_display }}
+                                </span>
+                            </p>
+                            <p><strong>تاریخ درخواست:</strong> {{ plan_request.created_at|date:"Y/m/d H:i" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>تاریخ به‌روزرسانی:</strong> {{ plan_request.updated_at|date:"Y/m/d H:i" }}</p>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <strong>توضیحات درخواست:</strong>
+                        <div class="p-3 bg-light rounded mt-2">
+                            {{ plan_request.description|linebreaks }}
+                        </div>
+                    </div>
+                    
+                    {% if plan_request.admin_response %}
+                    <div class="mt-3">
+                        <strong>پاسخ مدیر:</strong>
+                        <div class="p-3 bg-warning bg-opacity-25 rounded mt-2">
+                            {{ plan_request.admin_response|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- User Information -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-user me-2"></i>اطلاعات کاربر</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            {% if user_profile.profile_image %}
+                                <img src="{{ user_profile.profile_image.url }}" alt="Profile Image" class="img-fluid rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-secondary rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 120px; height: 120px;">
+                                    <i class="fas fa-user fa-3x text-white"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-8">
+                            <p><strong>نام:</strong> {{ user_profile.name|default:"تعیین نشده" }}</p>
+                            <p><strong>نام کاربری:</strong> {{ plan_request.user.username }}</p>
+                            <p><strong>ایمیل:</strong> {{ plan_request.user.email|default:"تعیین نشده" }}</p>
+                            <p><strong>شماره تماس:</strong> {{ user_profile.phone_number|default:"تعیین نشده" }}</p>
+                            <p><strong>کد ملی:</strong> {{ user_profile.melli_code|default:"تعیین نشده" }}</p>
+                            <p><strong>کد پستی:</strong> {{ user_profile.post_code|default:"تعیین نشده" }}</p>
+                            <p><strong>آدرس:</strong> {{ user_profile.home_address|default:"تعیین نشده" }}</p>
+                            <p><strong>وضعیت پروفایل:</strong> 
+                                {% if is_profile_complete %}
+                                    <span class="badge bg-success">تکمیل شده</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">ناتمام</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Body Information -->
+            {% if body_info %}
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-weight me-2"></i>اطلاعات بدنی</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>تاریخ تولد:</strong> {{ body_info.birth_date|date:"Y/m/d"|default:"تعیین نشده" }}</p>
+                            <p><strong>جنسیت:</strong> {{ body_info.get_gender_display|default:"تعیین نشده" }}</p>
+                            <p><strong>قد:</strong> {{ body_info.height_cm|default:"تعیین نشده" }} سانتی‌متر</p>
+                            <p><strong>وزن:</strong> {{ body_info.weight_kg|default:"تعیین نشده" }} کیلوگرم</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>سابقه بیماری:</strong> {{ body_info.get_disease_history_display|default:"تعیین نشده" }}</p>
+                            {% if body_info.disease_description %}
+                            <p><strong>توضیحات بیماری:</strong> {{ body_info.disease_description }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Body Images -->
+                    {% if body_info.body_image_front or body_info.body_image_back or body_info.body_image_left or body_info.body_image_right %}
+                    <div class="mt-3">
+                        <h6>تصاویر بدنی:</h6>
+                        <div class="row">
+                            {% if body_info.body_image_front %}
+                            <div class="col-md-3 mb-2">
+                                <small class="text-muted">از جلو</small>
+                                <img src="{{ body_info.body_image_front.url }}" alt="Front" class="img-fluid rounded" style="cursor: pointer;" onclick="showImageModal('{{ body_info.body_image_front.url }}', 'عکس از جلو')">
+                            </div>
+                            {% endif %}
+                            {% if body_info.body_image_back %}
+                            <div class="col-md-3 mb-2">
+                                <small class="text-muted">از پشت</small>
+                                <img src="{{ body_info.body_image_back.url }}" alt="Back" class="img-fluid rounded" style="cursor: pointer;" onclick="showImageModal('{{ body_info.body_image_back.url }}', 'عکس از پشت')">
+                            </div>
+                            {% endif %}
+                            {% if body_info.body_image_left %}
+                            <div class="col-md-3 mb-2">
+                                <small class="text-muted">از چپ</small>
+                                <img src="{{ body_info.body_image_left.url }}" alt="Left" class="img-fluid rounded" style="cursor: pointer;" onclick="showImageModal('{{ body_info.body_image_left.url }}', 'عکس از چپ')">
+                            </div>
+                            {% endif %}
+                            {% if body_info.body_image_right %}
+                            <div class="col-md-3 mb-2">
+                                <small class="text-muted">از راست</small>
+                                <img src="{{ body_info.body_image_right.url }}" alt="Right" class="img-fluid rounded" style="cursor: pointer;" onclick="showImageModal('{{ body_info.body_image_right.url }}', 'عکس از راست')">
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                کاربر هنوز اطلاعات بدنی خود را تکمیل نکرده است.
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Column: Payment & Actions -->
+        <div class="col-lg-4">
+            <!-- Payment Information -->
+            <div class="card mb-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0"><i class="fas fa-credit-card me-2"></i>اطلاعات پرداخت</h5>
+                </div>
+                <div class="card-body">
+                    {% if related_payments %}
+                        {% for payment in related_payments %}
+                        <div class="border rounded p-3 mb-3 {% if forloop.first %}border-primary{% endif %}">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge {% if payment.status == 'pending' %}bg-warning text-dark
+                                             {% elif payment.status == 'approved' %}bg-success
+                                             {% else %}bg-danger{% endif %}">
+                                    {{ payment.get_status_display }}
+                                </span>
+                                <small class="text-muted">{{ payment.payment_date|date:"Y/m/d" }}</small>
+                            </div>
+                            <p class="mb-2"><strong>مبلغ:</strong> {{ payment.amount|floatformat:0 }} تومان</p>
+                            
+                            {% if payment.proof_image %}
+                            <div class="mb-3">
+                                <strong>رسید پرداخت:</strong><br>
+                                <img src="{{ payment.proof_image.url }}" alt="Payment Proof" class="img-fluid rounded mt-2" onclick="showImageModal('{{ payment.proof_image.url }}')" style="cursor: pointer; max-height: 200px;">
+                            </div>
+                            {% endif %}
+                            
+                            {% if payment.description %}
+                            <p class="mb-2"><strong>توضیحات:</strong> {{ payment.description }}</p>
+                            {% endif %}
+                            
+                            {% if payment.admin_note %}
+                            <div class="alert alert-info py-2 mb-2">
+                                <small><strong>یادداشت مدیر:</strong> {{ payment.admin_note }}</small>
+                            </div>
+                            {% endif %}
+                            
+                            {% if payment.status == 'pending' %}
+                            <div class="d-grid gap-2 d-md-block">
+                                <button class="btn btn-success btn-sm" onclick="updatePaymentStatus({{ payment.id }}, 'approved')">
+                                    <i class="fas fa-check me-1"></i>تایید
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="updatePaymentStatus({{ payment.id }}, 'rejected')">
+                                    <i class="fas fa-times me-1"></i>رد
+                                </button>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            هیچ پرداختی برای این نوع برنامه یافت نشد.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Management Actions -->
+            <div class="card mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>عملیات مدیریت</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Request Status Actions -->
+                    {% if plan_request.status == 'pending' %}
+                    <div class="mb-3">
+                        <h6>تغییر وضعیت درخواست:</h6>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-success" onclick="updateRequestStatus('approved')">
+                                <i class="fas fa-check me-1"></i>تایید درخواست
+                            </button>
+                            <button class="btn btn-danger" onclick="updateRequestStatus('rejected')">
+                                <i class="fas fa-times me-1"></i>رد درخواست
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Plan Creation -->
+                    {% if plan_request.status == 'approved' %}
+                    <div class="mb-3">
+                        <h6>ایجاد برنامه:</h6>
+                        <div class="d-grid gap-2">
+                            {% if plan_request.plan_type == 'workout' %}
+                            <a href="{% url 'gym:add_workout_plan_for_user' plan_request.user.id %}" class="btn btn-primary">
+                                <i class="fas fa-dumbbell me-1"></i>ایجاد برنامه تمرینی
+                            </a>
+                            {% else %}
+                            <a href="{% url 'gym:add_diet_plan_for_user' plan_request.user.id %}" class="btn btn-primary">
+                                <i class="fas fa-utensils me-1"></i>ایجاد برنامه غذایی
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Complete Request -->
+                    {% if plan_request.status == 'approved' and existing_plans %}
+                    <div class="mb-3">
+                        <h6>تکمیل درخواست:</h6>
+                        <div class="d-grid">
+                            <button class="btn btn-info" onclick="updateRequestStatus('completed')">
+                                <i class="fas fa-flag-checkered me-1"></i>تکمیل درخواست
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Existing Plans -->
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0"><i class="fas fa-list me-2"></i>برنامه‌های موجود</h5>
+                </div>
+                <div class="card-body">
+                    {% if existing_plans %}
+                        {% for plan in existing_plans %}
+                        <div class="border rounded p-3 mb-2">
+                            <h6 class="mb-1">{{ plan.title }}</h6>
+                            <p class="mb-1 text-muted small">{{ plan.created_at|date:"Y/m/d" }}</p>
+                            <span class="badge {% if plan.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                {% if plan.is_active %}فعال{% else %}غیرفعال{% endif %}
+                            </span>
+                            <div class="mt-2">
+                                {% if plan_request.plan_type == 'workout' %}
+                                <a href="{% url 'gym:download_workout_plan' plan.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-download me-1"></i>دانلود
+                                </a>
+                                {% else %}
+                                <a href="{% url 'gym:download_diet_plan' plan.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-download me-1"></i>دانلود
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            هنوز برنامه‌ای برای این کاربر ایجاد نشده است.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">تصویر</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="Image" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Status Modal -->
+<div class="modal fade" id="paymentStatusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تغییر وضعیت پرداخت</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="paymentStatusForm" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" id="paymentAction">
+                    <input type="hidden" name="payment_id" id="paymentId">
+                    
+                    <div class="mb-3">
+                        <label for="admin_note" class="form-label">یادداشت مدیر (اختیاری):</label>
+                        <textarea class="form-control" id="admin_note" name="admin_note" rows="3" placeholder="یادداشت خود را وارد کنید..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="button" class="btn btn-primary" onclick="submitPaymentStatus()">تایید</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Request Status Modal -->
+<div class="modal fade" id="requestStatusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تغییر وضعیت درخواست</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="requestStatusForm" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" id="requestAction">
+                    
+                    <div class="mb-3">
+                        <label for="admin_response" class="form-label">پاسخ مدیر:</label>
+                        <textarea class="form-control" id="admin_response" name="admin_response" rows="3" placeholder="پاسخ خود را وارد کنید..." required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                <button type="button" class="btn btn-primary" onclick="submitRequestStatus()">تایید</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showImageModal(imageUrl, description) {
+    document.getElementById('modalImage').src = imageUrl;
+    document.getElementById('modalTitle').innerText = description;
+    new bootstrap.Modal(document.getElementById('imageModal')).show();
+}
+
+function updatePaymentStatus(paymentId, status) {
+    document.getElementById('paymentId').value = paymentId;
+    document.getElementById('paymentAction').value = status === 'approved' ? 'approve_payment' : 'reject_payment';
+    document.getElementById('admin_note').value = '';
+    
+    const modal = new bootstrap.Modal(document.getElementById('paymentStatusModal'));
+    modal.show();
+}
+
+function submitPaymentStatus() {
+    document.getElementById('paymentStatusForm').submit();
+}
+
+function updateRequestStatus(status) {
+    document.getElementById('requestAction').value = status === 'approved' ? 'approve_request' : 
+                                                   status === 'rejected' ? 'reject_request' : 'complete_request';
+    document.getElementById('admin_response').value = '';
+    
+    if (status === 'completed') {
+        // Direct submit for completion
+        const form = document.getElementById('requestStatusForm');
+        document.getElementById('admin_response').required = false;
+        form.submit();
+    } else {
+        const modal = new bootstrap.Modal(document.getElementById('requestStatusModal'));
+        modal.show();
+    }
+}
+
+function submitRequestStatus() {
+    document.getElementById('requestStatusForm').submit();
+}
+</script>
+
+<style>
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: none;
+}
+
+.badge {
+    font-size: 0.8em;
+}
+
+.img-fluid {
+    max-height: 300px;
+}
+
+.border-primary {
+    border-color: #0d6efd !important;
+    border-width: 2px !important;
+}
+
+@media (max-width: 768px) {
+    .container-fluid {
+        padding: 0 10px;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+}
+</style>
+{% endblock %} 

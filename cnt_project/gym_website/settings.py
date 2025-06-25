@@ -105,9 +105,16 @@ DATABASES = {
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'OPTIONS': {
+            'user_attributes': ('username', 'first_name', 'last_name', 'email'),
+            'max_similarity': 0.7,
+        }
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 8,
+        }
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -115,6 +122,14 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+]
+
+# Persian password validation error messages
+AUTH_PASSWORD_VALIDATORS_HELP_TEXTS = [
+    'رمز عبور شما نمی‌تواند شبیه اطلاعات شخصی شما باشد.',
+    'رمز عبور شما باید حداقل ۸ کاراکتر داشته باشد.',
+    'رمز عبور شما نمی‌تواند از رمزهای عمومی باشد.',
+    'رمز عبور شما نمی‌تواند کاملاً عددی باشد.',
 ]
 
 

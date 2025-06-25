@@ -44,6 +44,7 @@ class WorkoutPlan(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='workout_plans')
     title = models.CharField(max_length=200, verbose_name='عنوان')
     description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
+    image = models.ImageField(upload_to='workout_plans/images/', blank=True, null=True, verbose_name='تصویر برنامه')
     plan_file = models.FileField(upload_to='workout_plans/', blank=True, null=True, verbose_name='فایل برنامه')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
@@ -69,6 +70,7 @@ class DietPlan(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='diet_plans')
     title = models.CharField(max_length=200, verbose_name='عنوان')
     description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
+    image = models.ImageField(upload_to='diet_plans/images/', blank=True, null=True, verbose_name='تصویر برنامه')
     plan_file = models.FileField(upload_to='diet_plans/', blank=True, null=True, verbose_name='فایل برنامه')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
@@ -283,3 +285,77 @@ class ProgressAnalysis(models.Model):
     
     def __str__(self):
         return f"{self.get_measurement_type_display()} - {self.user.userprofile.name} - {self.measurement_date}"
+
+class BodyInformationUser(models.Model):
+    GENDER_CHOICES = [
+        ('male', 'مرد'),
+        ('female', 'زن'),
+    ]
+    
+    DISEASE_CHOICES = [
+        ('yes', 'دارم'),
+        ('no', 'ندارم'),
+    ]
+    
+    user_profile = models.OneToOneField(UserProfile, on_delete=models.CASCADE, related_name='body_information')
+    birth_date = models.DateField(verbose_name='تاریخ تولد')
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, verbose_name='جنسیت')
+    height_cm = models.PositiveIntegerField(verbose_name='قد (سانتی متر)')
+    weight_kg = models.DecimalField(max_digits=5, decimal_places=2, verbose_name='وزن (کیلوگرم)')
+    disease_history = models.CharField(max_length=3, choices=DISEASE_CHOICES, verbose_name='سابقه بیماری')
+    disease_description = models.TextField(blank=True, null=True, verbose_name='توضیحات بیماری')
+    
+    # Body images (all optional)
+    body_image_front = models.ImageField(upload_to='body_images/', blank=True, null=True, verbose_name='عکس از جلو')
+    body_image_back = models.ImageField(upload_to='body_images/', blank=True, null=True, verbose_name='عکس از پشت')
+    body_image_left = models.ImageField(upload_to='body_images/', blank=True, null=True, verbose_name='عکس از طرف چپ')
+    body_image_right = models.ImageField(upload_to='body_images/', blank=True, null=True, verbose_name='عکس از طرف راست')
+    
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, blank=True, null=True)
+    
+    class Meta:
+        verbose_name = 'اطلاعات بدنی کاربر'
+        verbose_name_plural = 'اطلاعات بدنی کاربران'
+    
+    def __str__(self):
+        return f"اطلاعات بدنی {self.user_profile.name}"
+
+class PaymentCard(models.Model):
+    PLAN_TYPE_CHOICES = [
+        ('workout_plan', 'برنامه تمرینی'),
+        ('diet_plan', 'برنامه غذایی'),
+        ('both', 'هر دو برنامه'),
+    ]
+    
+    card_number = models.CharField(max_length=16, verbose_name='شماره کارت')
+    card_holder_name = models.CharField(max_length=100, verbose_name='نام صاحب کارت')
+    price_workout = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='قیمت برنامه تمرینی (تومان)')
+    price_diet = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='قیمت برنامه غذایی (تومان)')
+    price_both = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='قیمت هر دو برنامه (تومان)')
+    is_active = models.BooleanField(default=True, verbose_name='فعال')
+    
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    updated_at = models.DateTimeField(auto_now=True, blank=True, null=True)
+    
+    class Meta:
+        verbose_name = 'کارت پرداخت'
+        verbose_name_plural = 'کارت‌های پرداخت'
+    
+    def __str__(self):
+        return f"{self.card_holder_name} - {self.card_number}"
+    
+    def get_formatted_card_number(self):
+        """Return complete formatted card number like: 1234-5678-9012-3456"""
+        if len(self.card_number) == 16:
+            return f"{self.card_number[:4]}-{self.card_number[4:8]}-{self.card_number[8:12]}-{self.card_number[12:]}"
+        return self.card_number
+    
+    def get_price_for_plan_type(self, plan_type):
+        """Return price based on plan type"""
+        if plan_type == 'workout':
+            return self.price_workout
+        elif plan_type == 'diet':
+            return self.price_diet
+        else:
+            return self.price_both

@@ -82,10 +82,10 @@
                         {% endif %}
                         
                         <div class="mb-3">
-                            <label for="{{ form.title.id_for_label }}" class="form-label">عنوان</label>
+                            <label for="{{ form.title.id_for_label }}" class="form-label">عنوان <span class="text-danger">*</span></label>
                             {{ form.title }}
                             {% if form.title.errors %}
-                                <div class="text-danger">{{ form.title.errors }}</div>
+                                <div class="text-danger mt-1">{{ form.title.errors }}</div>
                             {% endif %}
                         </div>
                         
@@ -93,17 +93,57 @@
                             <label for="{{ form.description.id_for_label }}" class="form-label">توضیحات</label>
                             {{ form.description }}
                             {% if form.description.errors %}
-                                <div class="text-danger">{{ form.description.errors }}</div>
+                                <div class="text-danger mt-1">{{ form.description.errors }}</div>
                             {% endif %}
                         </div>
                         
                         <div class="mb-3">
-                            <label for="{{ form.image.id_for_label }}" class="form-label">تصویر (اختیاری)</label>
+                            <label for="{{ form.image.id_for_label }}" class="form-label">تصویر برنامه <span class="text-danger">*</span></label>
                             {{ form.image }}
                             {% if form.image.errors %}
-                                <div class="text-danger">{{ form.image.errors }}</div>
+                                <div class="text-danger mt-1">{{ form.image.errors }}</div>
                             {% endif %}
-                            <div class="form-text text-muted">تصویری که نشان‌دهنده برنامه تمرینی باشد (اختیاری)</div>
+                            <div class="form-text text-muted">تصویری که نشان‌دهنده برنامه تمرینی باشد (ضروری)</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.plan_file.id_for_label }}" class="form-label">فایل برنامه (اختیاری)</label>
+                            {{ form.plan_file }}
+                            {% if form.plan_file.errors %}
+                                <div class="text-danger mt-1">{{ form.plan_file.errors }}</div>
+                            {% endif %}
+                            <div class="form-text text-muted">فایل PDF یا سند برنامه تمرینی (در صورت وجود)</div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.duration_weeks.id_for_label }}" class="form-label">مدت (هفته)</label>
+                                    {{ form.duration_weeks }}
+                                    {% if form.duration_weeks.errors %}
+                                        <div class="text-danger mt-1">{{ form.duration_weeks.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.start_date.id_for_label }}" class="form-label">تاریخ شروع</label>
+                                    {{ form.start_date }}
+                                    {% if form.start_date.errors %}
+                                        <div class="text-danger mt-1">{{ form.start_date.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            {{ form.is_active }}
+                            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                فعال
+                            </label>
+                            {% if form.is_active.errors %}
+                                <div class="text-danger mt-1">{{ form.is_active.errors }}</div>
+                            {% endif %}
                         </div>
                         
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">

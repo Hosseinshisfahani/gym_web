@@ -19,6 +19,7 @@ urlpatterns = [
     path('profile/', views.profile, name='profile'),
     path('profile/<int:user_id>/', views.profile, name='profile'),
     path('profile/edit/', views.edit_profile, name='edit_profile'),
+    path('body-information/', views.body_information_form, name='body_information_form'),
     path('accept-agreement/', views.accept_agreement, name='accept_agreement'),
     path('verify-profile-for-payment/', views.verify_profile_for_payment, name='verify_profile_for_payment'),
     path('verify-profile-for-payment/<path:next_url>/', views.verify_profile_for_payment, name='verify_profile_for_payment_with_next'),
@@ -32,6 +33,7 @@ urlpatterns = [
     path('diet-plans/<int:plan_id>/download/', views.download_diet_plan, name='download_diet_plan'),
     path('payments/', views.payments, name='payments'),
     path('payments/add/', views.add_payment, name='add_payment'),
+    path('payments/plan-request/', views.plan_request_payment, name='plan_request_payment'),
     path('tickets/', views.tickets, name='tickets'),
     path('tickets/add/', views.add_ticket, name='add_ticket'),
     path('tickets/<int:ticket_id>/', views.ticket_detail, name='ticket_detail'),
@@ -44,7 +46,12 @@ urlpatterns = [
     # Plan request management
     path('plan-requests/', views.manage_plan_requests, name='manage_plan_requests'),
     path('plan-requests/<int:request_id>/update/', views.update_plan_request, name='update_plan_request'),
+    path('plan-requests/<int:request_id>/detail/', views.plan_request_management_detail, name='plan_request_management_detail'),
+    path('plan-management/', views.comprehensive_plan_management, name='comprehensive_plan_management'),
+    path('payments/<int:payment_id>/update-status/', views.update_payment_status, name='update_payment_status'),
     path('request-plan/', views.request_plan, name='request_plan'),
+    path('plan-request-flow/', views.plan_request_flow, name='plan_request_flow'),
+    path('plan-request-flow/<str:step>/', views.plan_request_flow, name='plan_request_flow'),
     
     # Body Analysis Reports
     path('body-analysis/', views.body_analysis_reports, name='body_analysis_reports'),

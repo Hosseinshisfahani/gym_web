@@ -1,0 +1,229 @@
+{% extends 'gym/base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}
+    {% if current_step == 'request' %}
+        درخواست برنامه - پلتفرم جامع ورزشی
+    {% else %}
+        {{ step_data.name }} - پلتفرم جامع ورزشی
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <!-- Progress Indicator -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="mb-3">مراحل درخواست برنامه</h5>
+                    <div class="progress-container">
+                        {% for step_key, step_info in steps.items %}
+                            <div class="progress-step {% if step_key == current_step %}active{% elif step_info.order < step_data.order %}completed{% endif %}">
+                                <div class="step-number">{{ step_info.order }}</div>
+                                <div class="step-label">{{ step_info.name }}</div>
+                            </div>
+                            {% if not forloop.last %}
+                                <div class="progress-line {% if step_info.order < step_data.order %}completed{% endif %}"></div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step Content -->
+            <div class="card">
+                <div class="card-header text-white" style="background-color: var(--primary-color);">
+                    <h4 class="mb-0">{{ step_data.name }}</h4>
+                </div>
+                <div class="card-body">
+                    {% if messages and current_step != 'request' %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if current_step == 'request' %}
+                        <!-- Step 1: Request Form -->
+                        <div class="alert alert-info mb-4">
+                            <h6><i class="fas fa-info-circle me-2"></i>درخواست برنامه ورزشی یا غذایی</h6>
+                            <p class="mb-0">لطفاً نوع برنامه مورد نظر خود را انتخاب کرده و توضیحات کامل در مورد اهداف و نیازهای خود ارائه دهید.</p>
+                        </div>
+
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label class="form-label">نوع برنامه <span class="text-danger">*</span></label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="plan_type" value="workout" id="workout" required>
+                                            <label class="form-check-label" for="workout">
+                                                <i class="fas fa-dumbbell me-2"></i>برنامه تمرینی
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="plan_type" value="diet" id="diet" required>
+                                            <label class="form-check-label" for="diet">
+                                                <i class="fas fa-utensils me-2"></i>برنامه غذایی
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="description" class="form-label">توضیحات و اهداف شما <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="description" name="description" rows="5" required
+                                    placeholder="لطفاً اهداف خود، سطح تجربه، محدودیت‌های زمانی، مشکلات جسمانی (در صورت وجود) و سایر نکات مهم را ذکر کنید..."></textarea>
+                                <small class="text-muted">هرچه توضیحات بیشتری ارائه دهید، برنامه بهتری برای شما تهیه خواهد شد.</small>
+                            </div>
+
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-between mt-4">
+                                <a href="{% url 'gym:profile' %}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>انصراف
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-arrow-right me-2"></i>ادامه
+                                </button>
+                            </div>
+                        </form>
+                    {% else %}
+                        <!-- Other steps - show progress -->
+                        <div class="alert alert-success">
+                            <h6><i class="fas fa-check-circle me-2"></i>مرحله {{ step_data.order }} از 5</h6>
+                            <p class="mb-0">{{ step_data.name }} در حال انجام...</p>
+                        </div>
+                        
+                        {% if plan_data %}
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6>اطلاعات درخواست شما:</h6>
+                                    <p><strong>نوع برنامه:</strong> 
+                                        {% if plan_data.plan_type == 'workout' %}
+                                            برنامه تمرینی
+                                        {% else %}
+                                            برنامه غذایی
+                                        {% endif %}
+                                    </p>
+                                    <p><strong>توضیحات:</strong> {{ plan_data.description|truncatewords:20 }}</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .progress-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        margin: 20px 0;
+    }
+
+    .progress-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: 1;
+        position: relative;
+        z-index: 2;
+    }
+
+    .step-number {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #e9ecef;
+        color: #6c757d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-bottom: 8px;
+        border: 2px solid #e9ecef;
+    }
+
+    .step-label {
+        font-size: 0.875rem;
+        text-align: center;
+        color: #6c757d;
+        max-width: 120px;
+    }
+
+    .progress-step.active .step-number {
+        background-color: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .progress-step.active .step-label {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+
+    .progress-step.completed .step-number {
+        background-color: #28a745;
+        color: white;
+        border-color: #28a745;
+    }
+
+    .progress-step.completed .step-label {
+        color: #28a745;
+    }
+
+    .progress-line {
+        height: 2px;
+        background-color: #e9ecef;
+        flex-grow: 1;
+        margin: 0 10px;
+        margin-top: -20px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .progress-line.completed {
+        background-color: #28a745;
+    }
+
+    .form-check-input:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .card {
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+<script>
+    // Add basic form validation
+    document.addEventListener('DOMContentLoaded', function() {
+        const textarea = document.getElementById('description');
+        if (textarea) {
+            textarea.addEventListener('input', function() {
+                const length = this.value.length;
+                const small = this.nextElementSibling;
+                if (length > 0) {
+                    small.textContent = `${length} کاراکتر وارد شده است.`;
+                    small.className = 'text-success';
+                } else {
+                    small.textContent = 'هرچه توضیحات بیشتری ارائه دهید، برنامه بهتری برای شما تهیه خواهد شد.';
+                    small.className = 'text-muted';
+                }
+            });
+        }
+    });
+</script>
+{% endblock %} 

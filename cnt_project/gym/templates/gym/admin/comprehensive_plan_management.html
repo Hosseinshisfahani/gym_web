@@ -1,0 +1,370 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}مدیریت جامع برنامه‌ها{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-tasks me-2"></i>مدیریت جامع برنامه‌ها</h2>
+        <div class="btn-group">
+            <a href="{% url 'gym:workout_plans' %}" class="btn btn-outline-primary">
+                <i class="fas fa-dumbbell me-1"></i>برنامه‌های تمرینی
+            </a>
+            <a href="{% url 'gym:diet_plans' %}" class="btn btn-outline-success">
+                <i class="fas fa-utensils me-1"></i>برنامه‌های غذایی
+            </a>
+            <a href="{% url 'gym:payments' %}" class="btn btn-outline-info">
+                <i class="fas fa-credit-card me-1"></i>پرداخت‌ها
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6>کل درخواست‌ها</h6>
+                            <h3>{{ request_data|length }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-list-alt fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6>در انتظار بررسی</h6>
+                            <h3>{% for data in request_data %}{% if data.request.status == 'pending' %}{{ forloop.counter }}{% endif %}{% endfor %}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6>تایید شده</h6>
+                            <h3>{% for data in request_data %}{% if data.request.status == 'approved' %}{{ forloop.counter }}{% endif %}{% endfor %}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6>تکمیل شده</h6>
+                            <h3>{% for data in request_data %}{% if data.request.status == 'completed' %}{{ forloop.counter }}{% endif %}{% endfor %}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-trophy fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Form -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-filter me-2"></i>فیلترها</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="plan_type" class="form-label">نوع برنامه</label>
+                    <select class="form-select" id="plan_type" name="plan_type">
+                        <option value="">همه</option>
+                        <option value="workout" {% if plan_type == 'workout' %}selected{% endif %}>برنامه تمرینی</option>
+                        <option value="diet" {% if plan_type == 'diet' %}selected{% endif %}>برنامه غذایی</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="status" class="form-label">وضعیت درخواست</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">همه</option>
+                        <option value="pending" {% if status == 'pending' %}selected{% endif %}>در انتظار بررسی</option>
+                        <option value="approved" {% if status == 'approved' %}selected{% endif %}>تایید شده</option>
+                        <option value="rejected" {% if status == 'rejected' %}selected{% endif %}>رد شده</option>
+                        <option value="completed" {% if status == 'completed' %}selected{% endif %}>تکمیل شده</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="payment_status" class="form-label">وضعیت پرداخت</label>
+                    <select class="form-select" id="payment_status" name="payment_status">
+                        <option value="">همه</option>
+                        <option value="pending" {% if payment_status == 'pending' %}selected{% endif %}>در انتظار تایید</option>
+                        <option value="approved" {% if payment_status == 'approved' %}selected{% endif %}>تایید شده</option>
+                        <option value="rejected" {% if payment_status == 'rejected' %}selected{% endif %}>رد شده</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="search" class="form-label">جستجو</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="search" name="search" value="{{ search_query }}" placeholder="نام، نام کاربری، توضیحات...">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Table -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-table me-2"></i>لیست درخواست‌ها</h5>
+        </div>
+        <div class="card-body">
+            {% if request_data %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>کاربر</th>
+                            <th>نوع برنامه</th>
+                            <th>توضیحات</th>
+                            <th>وضعیت درخواست</th>
+                            <th>وضعیت پرداخت</th>
+                            <th>اطلاعات بدنی</th>
+                            <th>پروفایل</th>
+                            <th>برنامه‌های موجود</th>
+                            <th>تاریخ</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for data in request_data %}
+                        {% with req=data.request payment=data.latest_payment %}
+                        <tr>
+                            <!-- User -->
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="me-2">
+                                        {% if req.user.userprofile.profile_image %}
+                                            <img src="{{ req.user.userprofile.profile_image.url }}" alt="Profile" class="rounded-circle" width="32" height="32">
+                                        {% else %}
+                                            <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                                <i class="fas fa-user text-white"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">{{ req.user.userprofile.name|default:req.user.username }}</div>
+                                        <small class="text-muted">{{ req.user.username }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            
+                            <!-- Plan Type -->
+                            <td>
+                                <span class="badge {% if req.plan_type == 'workout' %}bg-primary{% else %}bg-success{% endif %}">
+                                    {% if req.plan_type == 'workout' %}
+                                        <i class="fas fa-dumbbell me-1"></i>تمرینی
+                                    {% else %}
+                                        <i class="fas fa-utensils me-1"></i>غذایی
+                                    {% endif %}
+                                </span>
+                            </td>
+                            
+                            <!-- Description -->
+                            <td>
+                                <div class="text-truncate" style="max-width: 150px;" title="{{ req.description }}">
+                                    {{ req.description|truncatechars:50 }}
+                                </div>
+                            </td>
+                            
+                            <!-- Request Status -->
+                            <td>
+                                <span class="badge {% if req.status == 'pending' %}bg-warning text-dark
+                                             {% elif req.status == 'approved' %}bg-success
+                                             {% elif req.status == 'completed' %}bg-info
+                                             {% else %}bg-danger{% endif %}">
+                                    {{ req.get_status_display }}
+                                </span>
+                            </td>
+                            
+                            <!-- Payment Status -->
+                            <td>
+                                {% if payment %}
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge {% if payment.status == 'pending' %}bg-warning text-dark
+                                                     {% elif payment.status == 'approved' %}bg-success
+                                                     {% else %}bg-danger{% endif %} me-2">
+                                            {{ payment.get_status_display }}
+                                        </span>
+                                        {% if payment.proof_image %}
+                                            <button class="btn btn-sm btn-outline-info" onclick="showPaymentImage('{{ payment.proof_image.url }}')" title="مشاهده رسید">
+                                                <i class="fas fa-image"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted d-block">{{ payment.amount|floatformat:0 }} تومان</small>
+                                {% else %}
+                                    <span class="badge bg-secondary">بدون پرداخت</span>
+                                {% endif %}
+                            </td>
+                            
+                            <!-- Body Information -->
+                            <td>
+                                <span class="badge {% if data.body_info_exists %}bg-success{% else %}bg-danger{% endif %}">
+                                    {% if data.body_info_exists %}
+                                        <i class="fas fa-check me-1"></i>تکمیل
+                                    {% else %}
+                                        <i class="fas fa-times me-1"></i>ناقص
+                                    {% endif %}
+                                </span>
+                            </td>
+                            
+                            <!-- Profile Status -->
+                            <td>
+                                <span class="badge {% if data.profile_complete %}bg-success{% else %}bg-danger{% endif %}">
+                                    {% if data.profile_complete %}
+                                        <i class="fas fa-check me-1"></i>کامل
+                                    {% else %}
+                                        <i class="fas fa-times me-1"></i>ناقص
+                                    {% endif %}
+                                </span>
+                            </td>
+                            
+                            <!-- Existing Plans -->
+                            <td>
+                                <span class="badge bg-info">{{ data.plans_count }} برنامه</span>
+                            </td>
+                            
+                            <!-- Date -->
+                            <td>
+                                <small>{{ req.created_at|date:"Y/m/d H:i" }}</small>
+                            </td>
+                            
+                            <!-- Actions -->
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'gym:plan_request_management_detail' req.id %}" class="btn btn-sm btn-primary" title="مدیریت جامع">
+                                        <i class="fas fa-cogs"></i>
+                                    </a>
+                                    <a href="{% url 'gym:profile' req.user.id %}" class="btn btn-sm btn-info" title="مشاهده پروفایل">
+                                        <i class="fas fa-user"></i>
+                                    </a>
+                                    {% if req.status == 'approved' %}
+                                        {% if req.plan_type == 'workout' %}
+                                            <a href="{% url 'gym:add_workout_plan_for_user' req.user.id %}" class="btn btn-sm btn-success" title="ایجاد برنامه تمرینی">
+                                                <i class="fas fa-plus"></i>
+                                            </a>
+                                        {% else %}
+                                            <a href="{% url 'gym:add_diet_plan_for_user' req.user.id %}" class="btn btn-sm btn-success" title="ایجاد برنامه غذایی">
+                                                <i class="fas fa-plus"></i>
+                                            </a>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <div class="text-muted">
+                    <i class="fas fa-search fa-3x mb-3"></i>
+                    <h5>هیچ درخواستی یافت نشد</h5>
+                    <p>هنوز هیچ درخواست برنامه‌ای ثبت نشده است یا فیلترهای انتخابی نتیجه‌ای نداشته است.</p>
+                    <a href="{% url 'gym:workout_plans' %}" class="btn btn-primary me-2">
+                        <i class="fas fa-dumbbell me-1"></i>مدیریت برنامه‌های تمرینی
+                    </a>
+                    <a href="{% url 'gym:diet_plans' %}" class="btn btn-success">
+                        <i class="fas fa-utensils me-1"></i>مدیریت برنامه‌های غذایی
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Payment Image Modal -->
+<div class="modal fade" id="paymentImageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">رسید پرداخت</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="paymentImage" src="" alt="رسید پرداخت" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showPaymentImage(imageUrl) {
+    document.getElementById('paymentImage').src = imageUrl;
+    new bootstrap.Modal(document.getElementById('paymentImageModal')).show();
+}
+
+// Auto-refresh every 2 minutes
+setTimeout(function(){
+    location.reload();
+}, 120000);
+</script>
+
+<style>
+.table-responsive {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.card {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border: none;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.btn-group .btn {
+    margin-right: 2px;
+}
+
+.text-truncate {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.8rem;
+    }
+    
+    .btn-group .btn {
+        padding: 0.25rem 0.5rem;
+    }
+}
+</style>
+{% endblock %} 

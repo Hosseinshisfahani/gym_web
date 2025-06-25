@@ -100,15 +100,27 @@
                     <h3 class="mb-0">درخواست برنامه جدید</h3>
                 </div>
                 <div class="card-body">
-                    <form method="post" action="{% url 'gym:request_plan' %}">
-                        {% csrf_token %}
-                        <input type="hidden" name="plan_type" value="diet">
-                        <div class="mb-3">
-                            <label for="description" class="form-label">توضیحات درخواست</label>
-                            <textarea name="description" id="description" class="form-control" rows="4" required></textarea>
+                    <div class="alert alert-info mb-3">
+                        <h6><i class="fas fa-info-circle me-2"></i>درخواست برنامه غذایی</h6>
+                        <p class="mb-0">برای درخواست برنامه غذایی جدید، از فرآیند ۵ مرحله‌ای ما استفاده کنید.</p>
+                    </div>
+                    <div class="list-group list-group-flush mb-3">
+                        <div class="list-group-item bg-transparent border-0 px-0">
+                            <i class="fas fa-check text-success me-2"></i>بررسی اطلاعات بدنی
                         </div>
-                        <button type="submit" class="btn btn-primary w-100">ثبت درخواست</button>
-                    </form>
+                        <div class="list-group-item bg-transparent border-0 px-0">
+                            <i class="fas fa-check text-success me-2"></i>تکمیل اطلاعات شخصی
+                        </div>
+                        <div class="list-group-item bg-transparent border-0 px-0">
+                            <i class="fas fa-check text-success me-2"></i>پرداخت آنلاین
+                        </div>
+                        <div class="list-group-item bg-transparent border-0 px-0">
+                            <i class="fas fa-check text-success me-2"></i>پیگیری وضعیت
+                        </div>
+                    </div>
+                    <a href="{% url 'gym:plan_request_flow' %}" class="btn btn-primary w-100">
+                        <i class="fas fa-plus me-2"></i>شروع درخواست برنامه غذایی
+                    </a>
                 </div>
             </div>
         </div>

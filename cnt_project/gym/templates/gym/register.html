@@ -51,6 +51,8 @@
                         </label>
                     </div>
                     
+                    <div id="english-warning" class="alert alert-danger d-none" role="alert" style="font-size: 1rem;">زبان کیبورد شما باید انگلیسی باشد</div>
+                    
                     <button type="submit" class="btn btn-primary w-100">ثبت نام</button>
                 </form>
             </div>
@@ -156,6 +158,20 @@
     .modal-header {
         border-bottom: 2px solid var(--primary-color);
     }
+    
+    .modal-body {
+        color: #222 !important;
+    }
+    
+    .modal-body p {
+        color: #333 !important;
+        margin-bottom: 1rem;
+    }
+    
+    .modal-body .lead {
+        color: #000 !important;
+        font-weight: 600;
+    }
 </style>
 {% endblock %}
 
@@ -169,5 +185,61 @@
     }
     
     document.addEventListener('DOMContentLoaded', addClassToFormControls);
+
+    // Restrict name input to English only
+    document.addEventListener('DOMContentLoaded', function() {
+        var nameInput = document.getElementById('id_name');
+        var phoneInput = document.getElementById('id_phone_number');
+        var warning = document.getElementById('english-warning');
+        
+        function checkEnglishOnly(inputElement, value) {
+            // Check for Persian/Arabic characters
+            var persianPattern = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+            var nonEnglishPattern = /[^A-Za-z0-9\s]/;
+            
+            if (persianPattern.test(value) || nonEnglishPattern.test(value)) {
+                warning.classList.remove('d-none');
+                inputElement.style.borderColor = '#dc3545';
+                return false;
+            } else {
+                warning.classList.add('d-none');
+                inputElement.style.borderColor = '';
+                return true;
+            }
+        }
+        
+        if (nameInput) {
+            nameInput.addEventListener('input', function() {
+                checkEnglishOnly(nameInput, nameInput.value);
+            });
+            
+            nameInput.addEventListener('keypress', function(e) {
+                var char = String.fromCharCode(e.which);
+                if (!/[A-Za-z0-9\s]/.test(char)) {
+                    e.preventDefault();
+                }
+            });
+        }
+        
+        if (phoneInput) {
+            phoneInput.addEventListener('input', function() {
+                // Only allow numbers
+                if (!/^[0-9]*$/.test(phoneInput.value)) {
+                    warning.classList.remove('d-none');
+                    phoneInput.style.borderColor = '#dc3545';
+                } else {
+                    warning.classList.add('d-none');
+                    phoneInput.style.borderColor = '';
+                }
+            });
+            
+            phoneInput.addEventListener('keypress', function(e) {
+                var char = String.fromCharCode(e.which);
+                if (!/[0-9]/.test(char)) {
+                    e.preventDefault();
+                }
+            });
+        }
+    });
 </script>
 {% endblock %} 

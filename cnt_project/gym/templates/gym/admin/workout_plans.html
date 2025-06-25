@@ -3,7 +3,19 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2 class="mb-4">مدیریت برنامه‌های تمرینی</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">مدیریت برنامه‌های تمرینی</h2>
+        <a href="{% url 'gym:comprehensive_plan_management' %}?plan_type=workout" class="btn btn-primary">
+            <i class="fas fa-cogs me-1"></i> مدیریت جامع برنامه‌ها
+        </a>
+    </div>
+
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        برای مدیریت کامل درخواست‌ها شامل بررسی پرداخت، اطلاعات بدنی و ایجاد برنامه از 
+        <a href="{% url 'gym:comprehensive_plan_management' %}?plan_type=workout" class="alert-link">مدیریت جامع برنامه‌ها</a> 
+        استفاده کنید.
+    </div>
 
     <!-- Search and Filter Form -->
     <div class="card mb-4">
@@ -34,7 +46,10 @@
 
     <!-- Quick Actions -->
     <div class="d-flex justify-content-end mb-4">
-        <a href="{% url 'gym:add_workout_plan' %}" class="btn btn-success">
+        <a href="{% url 'gym:comprehensive_plan_management' %}?plan_type=workout" class="btn btn-primary">
+            <i class="fas fa-cogs me-1"></i> مدیریت جامع
+        </a>
+        <a href="{% url 'gym:add_workout_plan' %}" class="btn btn-success ms-2">
             <i class="fas fa-plus me-1"></i> ایجاد برنامه تمرینی جدید
         </a>
         <a href="{% url 'gym:manage_plan_requests' %}?plan_type=workout" class="btn btn-info ms-2">
@@ -132,15 +147,18 @@
                             <td>{{ request.description|truncatechars:50 }}</td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="{% url 'gym:update_plan_request' request.id %}?status=approved" class="btn btn-sm btn-success">
-                                        <i class="fas fa-check"></i> تایید
+                                    <a href="{% url 'gym:plan_request_management_detail' request.id %}" class="btn btn-sm btn-primary" title="مدیریت جامع">
+                                        <i class="fas fa-cogs"></i>
                                     </a>
-                                    <a href="{% url 'gym:update_plan_request' request.id %}?status=rejected" class="btn btn-sm btn-danger">
-                                        <i class="fas fa-times"></i> رد
+                                    <a href="{% url 'gym:update_plan_request' request.id %}?status=approved" class="btn btn-sm btn-success" title="تایید">
+                                        <i class="fas fa-check"></i>
+                                    </a>
+                                    <a href="{% url 'gym:update_plan_request' request.id %}?status=rejected" class="btn btn-sm btn-danger" title="رد">
+                                        <i class="fas fa-times"></i>
                                     </a>
                                     {% if request.status == 'approved' %}
-                                    <a href="{% url 'gym:add_workout_plan' %}?user_id={{ request.user.id }}" class="btn btn-sm btn-primary">
-                                        <i class="fas fa-plus"></i> ایجاد برنامه
+                                    <a href="{% url 'gym:add_workout_plan_for_user' request.user.id %}" class="btn btn-sm btn-warning" title="ایجاد برنامه">
+                                        <i class="fas fa-plus"></i>
                                     </a>
                                     {% endif %}
                                 </div>

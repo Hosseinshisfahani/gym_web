@@ -32,7 +32,7 @@ admin_site = CustomAdminSite(name='admin')
 from .models import (
     UserProfile, WorkoutPlan, DietPlan, 
     Payment, Ticket, TicketResponse, Document, PlanRequest,
-    BodyAnalysisReport, MonthlyGoal, ProgressAnalysis
+    BodyAnalysisReport, MonthlyGoal, ProgressAnalysis, BodyInformationUser, PaymentCard
 )
 
 # Import shop models
@@ -123,6 +123,10 @@ class ProgressAnalysisAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'user__userprofile__name', 'notes')
     ordering = ('-measurement_date',)
 
+class BodyInformationUserAdmin(admin.ModelAdmin):
+    list_display = ('user_profile', 'birth_date', 'gender', 'height_cm', 'weight_kg', 'disease_history')
+    search_fields = ('user_profile__name', 'user_profile__user__username')
+
 # Register all models with the custom Persian admin site
 admin_site.register(UserProfile, UserProfileAdmin)
 admin_site.register(WorkoutPlan, WorkoutPlanAdmin)
@@ -137,6 +141,7 @@ admin_site.register(Group, GroupAdmin)
 admin_site.register(BodyAnalysisReport, BodyAnalysisReportAdmin)
 admin_site.register(MonthlyGoal, MonthlyGoalAdmin)
 admin_site.register(ProgressAnalysis, ProgressAnalysisAdmin)
+admin_site.register(BodyInformationUser, BodyInformationUserAdmin)
 
 # Import and register shop admin classes
 from gym_shop.admin import CategoryAdmin, ProductAdmin, CartAdmin, OrderAdmin, ProductImageAdmin
@@ -145,3 +150,25 @@ admin_site.register(Product, ProductAdmin)
 admin_site.register(Cart, CartAdmin)
 admin_site.register(Order, OrderAdmin)
 admin_site.register(ProductImage, ProductImageAdmin)
+
+@admin.register(PaymentCard)
+class PaymentCardAdmin(admin.ModelAdmin):
+    list_display = ['card_holder_name', 'get_formatted_card_number', 'price_workout', 'price_diet', 'price_both', 'is_active', 'created_at']
+    list_filter = ['is_active', 'created_at']
+    search_fields = ['card_holder_name', 'card_number']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = [
+        ('اطلاعات کارت', {
+            'fields': ['card_number', 'card_holder_name', 'is_active']
+        }),
+        ('قیمت‌گذاری', {
+            'fields': ['price_workout', 'price_diet', 'price_both']
+        }),
+        ('تاریخ‌ها', {
+            'fields': ['created_at', 'updated_at'],
+            'classes': ['collapse']
+        }),
+    ]
+
+admin_site.register(PaymentCard, PaymentCardAdmin)

@@ -1,0 +1,176 @@
+{% extends 'gym/base.html' %}
+
+{% block title %}وضعیت درخواست - پلتفرم جامع ورزشی{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <!-- Progress Indicator -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="mb-3">مراحل درخواست برنامه</h5>
+                    <div class="progress-container">
+                        {% for step_key, step_info in steps.items %}
+                            <div class="progress-step completed">
+                                <div class="step-number">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div class="step-label">{{ step_info.name }}</div>
+                            </div>
+                            {% if not forloop.last %}
+                                <div class="progress-line completed"></div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Success Message -->
+            <div class="card">
+                <div class="card-header text-white" style="background-color: #28a745;">
+                    <h4 class="mb-0">
+                        <i class="fas fa-check-circle me-2"></i>درخواست شما با موفقیت ثبت شد
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-success">
+                        <h5><i class="fas fa-thumbs-up me-2"></i>تبریک!</h5>
+                        <p class="mb-0">درخواست برنامه شما با موفقیت ثبت شد و پرداخت آن انجام گردید. در حال حاضر درخواست شما در انتظار بررسی توسط مربیان ما است.</p>
+                    </div>
+
+                    <!-- Request Details -->
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <h6 class="card-title">جزئیات درخواست شما</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>نوع برنامه:</strong> 
+                                        {% if plan_data.plan_type == 'workout' %}
+                                            <span class="badge bg-primary">برنامه تمرینی</span>
+                                        {% else %}
+                                            <span class="badge bg-success">برنامه غذایی</span>
+                                        {% endif %}
+                                    </p>
+                                    {% if plan_request %}
+                                        <p><strong>شماره درخواست:</strong> {{ plan_request.id }}</p>
+                                        <p><strong>تاریخ ثبت:</strong> {{ plan_request.created_at|date:"Y/m/d H:i" }}</p>
+                                        <p><strong>وضعیت:</strong> 
+                                            <span class="badge bg-warning">{{ plan_request.get_status_display }}</span>
+                                        </p>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>توضیحات شما:</strong></p>
+                                    <p class="text-muted">{{ plan_data.description|truncatewords:30 }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- What's Next -->
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-2"></i>مرحله بعدی چیست؟</h6>
+                        <ul class="mb-0">
+                            <li>درخواست شما توسط مربیان باتجربه ما بررسی خواهد شد</li>
+                            <li>در صورت نیاز، مربی با شما تماس خواهد گرفت</li>
+                            <li>پس از تایید، برنامه اختصاصی شما آماده و در پروفایل شما قرار داده خواهد شد</li>
+                            <li>شما از طریق پیامک و ایمیل از آماده شدن برنامه مطلع خواهید شد</li>
+                        </ul>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
+                        <a href="{% url 'gym:profile' %}" class="btn btn-primary">
+                            <i class="fas fa-user me-2"></i>بازگشت به پروفایل
+                        </a>
+                        {% if plan_data.plan_type == 'workout' %}
+                            <a href="{% url 'gym:workout_plans' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-dumbbell me-2"></i>مشاهده برنامه‌های تمرینی
+                            </a>
+                        {% else %}
+                            <a href="{% url 'gym:diet_plans' %}" class="btn btn-outline-success">
+                                <i class="fas fa-utensils me-2"></i>مشاهده برنامه‌های غذایی
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'gym:payments' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-receipt me-2"></i>تاریخچه پرداخت‌ها
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Support Information -->
+            <div class="card mt-4">
+                <div class="card-body text-center">
+                    <h6>نیاز به پشتیبانی دارید؟</h6>
+                    <p class="text-muted mb-3">در صورت داشتن سوال یا نیاز به راهنمایی، با ما در تماس باشید.</p>
+                    <a href="{% url 'gym:add_ticket' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-headset me-2"></i>ارسال تیکت پشتیبانی
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .progress-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+        margin: 20px 0;
+    }
+
+    .progress-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: 1;
+        position: relative;
+        z-index: 2;
+    }
+
+    .step-number {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #28a745;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-bottom: 8px;
+        border: 2px solid #28a745;
+    }
+
+    .step-label {
+        font-size: 0.875rem;
+        text-align: center;
+        color: #28a745;
+        max-width: 120px;
+        font-weight: 600;
+    }
+
+    .progress-line {
+        height: 2px;
+        background-color: #28a745;
+        flex-grow: 1;
+        margin: 0 10px;
+        margin-top: -20px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .card {
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .badge {
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %} 

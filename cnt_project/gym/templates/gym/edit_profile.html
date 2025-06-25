@@ -48,12 +48,12 @@
                                     <small class="text-muted">در صورت تمایل به تغییر رمز عبور، این فیلد را پر کنید.</small>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="id_name" class="form-label">نام</label>
-                                    <input type="text" class="form-control" id="id_name" name="name" value="{{ user_profile.name|default:'' }}">
-                                </div>
-                                <div class="mb-3">
                                     <label for="id_confirm_password" class="form-label">تکرار رمز عبور جدید</label>
                                     <input type="password" class="form-control" id="id_confirm_password" name="confirm_password">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="id_name" class="form-label">نام</label>
+                                    <input type="text" class="form-control" id="id_name" name="name" value="{{ user_profile.name|default:'' }}">
                                 </div>
                             </div>
                             <div class="col-md-6">

@@ -10,12 +10,12 @@ from .forms import (
     TicketResponseForm, DocumentForm, PlanRequestForm,
     BodyAnalysisReportForm, BodyAnalysisResponseForm,
     MonthlyGoalForm, MonthlyGoalUpdateForm, MonthlyGoalCoachForm,
-    ProgressAnalysisForm
+    ProgressAnalysisForm, BodyInformationUserForm
 )
 from .models import (
     UserProfile, WorkoutPlan, DietPlan, 
     Payment, Ticket, TicketResponse, Document, PlanRequest,
-    BodyAnalysisReport, MonthlyGoal, ProgressAnalysis
+    BodyAnalysisReport, MonthlyGoal, ProgressAnalysis, BodyInformationUser, PaymentCard
 )
 from django.db.models import Q, Avg
 import datetime
@@ -212,6 +212,9 @@ def edit_profile(request):
                 # Check if there's a redirect URL stored in the session for payment
                 if 'payment_redirect_url' in request.session:
                     redirect_url = request.session.pop('payment_redirect_url')
+                    redirect_step = request.session.pop('payment_redirect_step', None)
+                    if redirect_step:
+                        return redirect(redirect_url, step=redirect_step)
                     return redirect(redirect_url)
                 
                 # Check if there's a product ID stored for payment
@@ -327,36 +330,49 @@ def add_workout_plan(request, user_id=None):
     if request.method == 'POST':
         form = WorkoutPlanForm(request.POST, request.FILES)
         if form.is_valid():
-            plan = form.save(commit=False)
-            
-            # If admin is creating for another user specified in the form
-            if not target_user and request.user.is_staff and 'user_id' in request.POST and request.POST['user_id']:
-                try:
-                    selected_user_id = request.POST['user_id']
-                    target_user = User.objects.get(id=selected_user_id)
+            try:
+                plan = form.save(commit=False)
+                
+                # If admin is creating for another user specified in the form
+                if not target_user and request.user.is_staff and 'user_id' in request.POST and request.POST['user_id']:
+                    try:
+                        selected_user_id = request.POST['user_id']
+                        target_user = User.objects.get(id=selected_user_id)
+                        plan.user = target_user
+                        success_message = f'برنامه تمرینی برای {target_user.username} با موفقیت ایجاد شد!'
+                    except User.DoesNotExist:
+                        messages.error(request, 'کاربر مورد نظر یافت نشد.')
+                        return redirect('gym:workout_plans')
+                # If admin is creating for a user passed in URL
+                elif target_user and request.user.is_staff:
                     plan.user = target_user
                     success_message = f'برنامه تمرینی برای {target_user.username} با موفقیت ایجاد شد!'
-                except User.DoesNotExist:
-                    messages.error(request, 'کاربر مورد نظر یافت نشد.')
-                    return redirect('gym:add_workout_plan')
-            # If admin is creating for a user passed in URL
-            elif target_user and request.user.is_staff:
-                plan.user = target_user
-                success_message = f'برنامه تمرینی برای {target_user.username} با موفقیت ایجاد شد!'
-            # Normal user creating their own plan
-            else:
-                plan.user = request.user
-                success_message = 'برنامه تمرینی با موفقیت ایجاد شد!'
-            
-            plan.save()
-            
-            # Mark the related request as completed if it exists
-            if plan_request:
-                plan_request.status = 'completed'
-                plan_request.save()
+                # Normal user creating their own plan
+                else:
+                    plan.user = request.user
+                    success_message = 'برنامه تمرینی با موفقیت ایجاد شد!'
                 
-            messages.success(request, success_message)
-            return redirect('gym:workout_plans')
+                plan.save()
+                
+                # Mark the related request as completed if it exists
+                if plan_request:
+                    plan_request.status = 'completed'
+                    plan_request.save()
+                    
+                messages.success(request, success_message)
+                return redirect('gym:workout_plans')
+                
+            except Exception as e:
+                messages.error(request, f'خطا در ذخیره برنامه: {str(e)}')
+        else:
+            # Handle form validation errors
+            for field, errors in form.errors.items():
+                for error in errors:
+                    if field == 'image':
+                        messages.error(request, 'لطفاً تصویر برنامه را انتخاب کنید. این فیلد ضروری است.')
+                    else:
+                        field_name = form.fields[field].label or field
+                        messages.error(request, f'{field_name}: {error}')
     else:
         form = WorkoutPlanForm()
     
@@ -557,36 +573,49 @@ def add_diet_plan(request, user_id=None):
     if request.method == 'POST':
         form = DietPlanForm(request.POST, request.FILES)
         if form.is_valid():
-            plan = form.save(commit=False)
-            
-            # If admin is creating for another user specified in the form
-            if not target_user and request.user.is_staff and 'user_id' in request.POST and request.POST['user_id']:
-                try:
-                    selected_user_id = request.POST['user_id']
-                    target_user = User.objects.get(id=selected_user_id)
+            try:
+                plan = form.save(commit=False)
+                
+                # If admin is creating for another user specified in the form
+                if not target_user and request.user.is_staff and 'user_id' in request.POST and request.POST['user_id']:
+                    try:
+                        selected_user_id = request.POST['user_id']
+                        target_user = User.objects.get(id=selected_user_id)
+                        plan.user = target_user
+                        success_message = f'برنامه غذایی برای {target_user.username} با موفقیت ایجاد شد!'
+                    except User.DoesNotExist:
+                        messages.error(request, 'کاربر مورد نظر یافت نشد.')
+                        return redirect('gym:diet_plans')
+                # If admin is creating for a user passed in URL
+                elif target_user and request.user.is_staff:
                     plan.user = target_user
                     success_message = f'برنامه غذایی برای {target_user.username} با موفقیت ایجاد شد!'
-                except User.DoesNotExist:
-                    messages.error(request, 'کاربر مورد نظر یافت نشد.')
-                    return redirect('gym:add_diet_plan')
-            # If admin is creating for a user passed in URL
-            elif target_user and request.user.is_staff:
-                plan.user = target_user
-                success_message = f'برنامه غذایی برای {target_user.username} با موفقیت ایجاد شد!'
-            # Normal user creating their own plan
-            else:
-                plan.user = request.user
-                success_message = 'برنامه غذایی با موفقیت ایجاد شد!'
-            
-            plan.save()
-            
-            # Mark the related request as completed if it exists
-            if plan_request:
-                plan_request.status = 'completed'
-                plan_request.save()
+                # Normal user creating their own plan
+                else:
+                    plan.user = request.user
+                    success_message = 'برنامه غذایی با موفقیت ایجاد شد!'
                 
-            messages.success(request, success_message)
-            return redirect('gym:diet_plans')
+                plan.save()
+                
+                # Mark the related request as completed if it exists
+                if plan_request:
+                    plan_request.status = 'completed'
+                    plan_request.save()
+                    
+                messages.success(request, success_message)
+                return redirect('gym:diet_plans')
+                
+            except Exception as e:
+                messages.error(request, f'خطا در ذخیره برنامه: {str(e)}')
+        else:
+            # Handle form validation errors
+            for field, errors in form.errors.items():
+                for error in errors:
+                    if field == 'image':
+                        messages.error(request, 'لطفاً تصویر برنامه را انتخاب کنید. این فیلد ضروری است.')
+                    else:
+                        field_name = form.fields[field].label or field
+                        messages.error(request, f'{field_name}: {error}')
     else:
         form = DietPlanForm()
     
@@ -887,26 +916,30 @@ def manage_plan_requests(request):
 
 @login_required
 def request_plan(request):
+    # First check if user has filled body information
+    try:
+        user_profile = request.user.userprofile
+        body_info = user_profile.body_information
+    except (UserProfile.DoesNotExist, BodyInformationUser.DoesNotExist):
+        messages.warning(request, "لطفاً ابتدا اطلاعات بدنی خود را تکمیل کنید تا بتوانیم برنامه مناسبی برای شما تهیه کنیم.")
+        return redirect("gym:body_information_form")
+
     """View for submitting a new plan request (workout or diet)"""
     if request.method == 'POST':
         plan_type = request.POST.get('plan_type')
         description = request.POST.get('description')
         
         if plan_type in ['workout', 'diet'] and description:
-            # Create a new plan request
-            plan_request = PlanRequest.objects.create(
-                user=request.user,
-                plan_type=plan_type,
-                description=description
-            )
+            # Store plan request data in session for later processing after payment
+            request.session['pending_plan_request'] = {
+                'plan_type': plan_type,
+                'description': description
+            }
             
-            messages.success(request, 'درخواست شما با موفقیت ثبت شد و در انتظار بررسی است.')
+            messages.info(request, 'لطفاً برای تکمیل درخواست، مبلغ مربوطه را پرداخت کرده و رسید آن را آپلود کنید.')
             
-            # Redirect to appropriate page based on plan type
-            if plan_type == 'workout':
-                return redirect('gym:workout_plans')
-            else:
-                return redirect('gym:diet_plans')
+            # Redirect to payment page for plan request
+            return redirect('gym:plan_request_payment')
         else:
             messages.error(request, 'اطلاعات ارسالی نامعتبر است.')
             
@@ -992,6 +1025,93 @@ def add_payment(request):
         form = PaymentForm()
     
     return render(request, 'gym/add_payment.html', {'form': form})
+
+@login_required
+def plan_request_payment(request):
+    """Payment view specifically for plan requests"""
+    # Check if there's a pending plan request in session
+    if 'pending_plan_request' not in request.session:
+        messages.error(request, 'درخواست برنامه‌ای در انتظار پرداخت یافت نشد.')
+        return redirect('gym:profile')
+    
+    plan_data = request.session['pending_plan_request']
+    
+    # Get active payment card
+    payment_card = PaymentCard.objects.filter(is_active=True).first()
+    if not payment_card:
+        messages.error(request, 'در حال حاضر امکان پرداخت وجود ندارد. لطفاً با پشتیبانی تماس بگیرید.')
+        return redirect('gym:profile')
+    
+    # Get price based on plan type
+    plan_price = payment_card.get_price_for_plan_type(plan_data['plan_type'])
+    
+    # Check if user's profile is complete
+    try:
+        user_profile = request.user.userprofile
+        is_complete, missing_field = is_profile_complete_for_payment(user_profile)
+        
+        if not is_complete:
+            messages.warning(request, f'برای انجام پرداخت، لطفاً اطلاعات پروفایل خود را کامل کنید. فیلد "{missing_field}" خالی است.')
+            # Store the payment redirect in session
+            request.session['payment_redirect_url'] = 'gym:plan_request_payment'
+            return redirect('gym:edit_profile')
+    except UserProfile.DoesNotExist:
+        messages.error(request, 'پروفایل شما یافت نشد.')
+        return redirect('gym:profile')
+    
+    if request.method == 'POST':
+        form = PaymentForm(request.POST, request.FILES)
+        if form.is_valid():
+            # Create the payment
+            payment = form.save(commit=False)
+            payment.user = request.user
+            # Set payment type based on plan type
+            payment.payment_type = 'workout_plan' if plan_data['plan_type'] == 'workout' else 'diet_plan'
+            payment.save()
+            
+            # Create the plan request after successful payment upload
+            plan_request = PlanRequest.objects.create(
+                user=request.user,
+                plan_type=plan_data['plan_type'],
+                description=plan_data['description']
+            )
+            
+            # Store plan data for status display and clear pending request
+            request.session['completed_plan_request'] = {
+                'plan_type': plan_data['plan_type'],
+                'description': plan_data['description'],
+                'request_id': plan_request.id
+            }
+            del request.session['pending_plan_request']
+            
+            messages.success(request, 'پرداخت شما با موفقیت ثبت شد و درخواست برنامه شما در انتظار بررسی است.')
+            
+            # Clear the success message immediately to prevent it from showing repeatedly
+            storage = messages.get_messages(request)
+            for message in storage:
+                pass  # This consumes and clears the messages
+            
+            # Redirect to status step
+            return redirect('gym:plan_request_flow', step='status')
+        else:
+            # Invalid form, errors will be shown to the user
+            pass
+    else:
+        # Pre-fill the form with plan type and amount
+        initial_data = {
+            'payment_type': 'workout_plan' if plan_data['plan_type'] == 'workout' else 'diet_plan',
+            'amount': plan_price
+        }
+        form = PaymentForm(initial=initial_data)
+    
+    context = {
+        'form': form,
+        'plan_data': plan_data,
+        'payment_card': payment_card,
+        'plan_price': plan_price,
+        'plan_type_display': 'برنامه تمرینی' if plan_data['plan_type'] == 'workout' else 'برنامه غذایی'
+    }
+    return render(request, 'gym/plan_request_payment.html', context)
 
 def password_reset(request):
     """Handle user password reset requests"""
@@ -1293,6 +1413,7 @@ def progress_analysis(request):
         user_id = request.GET.get('user_id')
         search_query = request.GET.get('search', '')
         
+        
         # Apply filters
         if measurement_type:
             progress_data = progress_data.filter(measurement_type=measurement_type)
@@ -1356,16 +1477,357 @@ def progress_analysis(request):
 
 @login_required
 def delete_progress_entry(request, entry_id):
-    """Delete a progress analysis entry"""
-    entry = get_object_or_404(ProgressAnalysis, id=entry_id)
-    
-    # Check permissions
-    if not request.user.is_staff and request.user != entry.user:
-        messages.error(request, 'شما دسترسی لازم برای حذف این اندازه‌گیری را ندارید.')
-        return redirect('gym:progress_analysis')
-    
+    entry = get_object_or_404(ProgressAnalysis, id=entry_id, user=request.user)
     if request.method == 'POST':
         entry.delete()
-        messages.success(request, 'اندازه‌گیری با موفقیت حذف شد.')
+        messages.success(request, 'رکورد با موفقیت حذف شد.')
+        return redirect('gym:progress_analysis')
+        return redirect('gym:progress_analysis')
+
+@login_required
+def body_information_form(request):
+    try:
+        user_profile = request.user.userprofile
+    except UserProfile.DoesNotExist:
+        messages.error(request, 'پروفایل شما یافت نشد.')
+        return redirect('gym:profile')
+    
+    try:
+        body_info = user_profile.body_information
+        form = BodyInformationUserForm(instance=body_info)
+        is_edit = True
+    except BodyInformationUser.DoesNotExist:
+        form = BodyInformationUserForm()
+        is_edit = False
+    
+    if request.method == 'POST':
+        if is_edit:
+            form = BodyInformationUserForm(request.POST, request.FILES, instance=body_info)
+        else:
+            form = BodyInformationUserForm(request.POST, request.FILES)
         
-    return redirect('gym:progress_analysis')
+        if form.is_valid():
+            body_info = form.save(commit=False)
+            body_info.user_profile = user_profile
+            body_info.save()
+            messages.success(request, 'اطلاعات بدنی شما با موفقیت ذخیره شد.')
+            
+            # Check if user is in the middle of a plan request process
+            if 'pending_plan_request' in request.session:
+                return redirect('gym:plan_request_flow', step='profile_check')
+            
+            # Redirect to the page that originally requested this form
+            next_url = request.GET.get('next')
+            if next_url:
+                return redirect(next_url)
+            return redirect('gym:profile')
+    
+    context = {
+        'form': form,
+        'is_edit': is_edit
+    }
+    return render(request, 'gym/body_information_form.html', context)
+
+@login_required 
+def check_body_information_required(request, plan_type):
+    """Check if user has filled body information before allowing plan request"""
+    try:
+        user_profile = request.user.userprofile
+        body_info = user_profile.body_information
+        # Body information exists, redirect to plan request
+        return redirect('gym:request_plan')
+    except (UserProfile.DoesNotExist, BodyInformationUser.DoesNotExist):
+        # Body information doesn't exist, redirect to fill it first
+        messages.warning(request, 'لطفاً ابتدا اطلاعات بدنی خود را تکمیل کنید.')
+        return redirect(f'gym:body_information_form?next=gym:request_plan')
+
+@login_required
+def plan_request_flow(request, step=None):
+    """Continuous 5-step plan request flow"""
+    
+    # Define the steps
+    STEPS = {
+        'request': {'name': 'ثبت درخواست', 'order': 1},
+        'body_info': {'name': 'بررسی و تکمیل اطلاعات بدنی', 'order': 2},
+        'profile_check': {'name': 'بررسی و تکمیل اطلاعات شخصی', 'order': 3},
+        'payment': {'name': 'صفحه پرداخت و آپلود فیش', 'order': 4},
+        'status': {'name': 'نشان دادن وضعیت درخواست', 'order': 5}
+    }
+    
+    # If no step provided, start from beginning
+    if not step:
+        step = 'request'
+    
+    # Handle Step 1: Request submission
+    if step == 'request':
+        if request.method == 'POST':
+            plan_type = request.POST.get('plan_type')
+            description = request.POST.get('description')
+            
+            if plan_type in ['workout', 'diet'] and description:
+                # Store plan request data in session
+                request.session['pending_plan_request'] = {
+                    'plan_type': plan_type,
+                    'description': description,
+                    'current_step': 'body_info'
+                }
+                messages.success(request, 'درخواست شما ثبت شد. لطفاً مراحل بعدی را تکمیل کنید.')
+                return redirect('gym:plan_request_flow', step='body_info')
+            else:
+                messages.error(request, 'لطفاً تمام فیلدهای مورد نیاز را پر کنید.')
+        
+        context = {
+            'steps': STEPS,
+            'current_step': step,
+            'step_data': STEPS[step]
+        }
+        return render(request, 'gym/plan_request_flow.html', context)
+    
+    # Check if plan request exists in session for steps that require it
+    if 'pending_plan_request' not in request.session and step not in ['request', 'status']:
+        # Only show error if user came from a step that requires session data and it's not a direct access
+        messages.error(request, 'درخواستی در حال انجام یافت نشد. لطفاً مجدداً درخواست دهید.')
+        return redirect('gym:plan_request_flow', step='request')
+    
+    # For status step, handle it even without session data (in case user completed payment)
+    if step == 'status':
+        # Check if we have completed plan request data
+        if 'completed_plan_request' in request.session:
+            completed_data = request.session['completed_plan_request']
+            # Clear the completed data from session
+            del request.session['completed_plan_request']
+        
+        # Clear any remaining session data
+        if 'pending_plan_request' in request.session:
+            del request.session['pending_plan_request']
+        
+        # Add a final success message and redirect to profile
+        messages.success(request, 'درخواست شما با موفقیت ثبت شد! شما به صفحه پروفایل منتقل شدید.')
+        return redirect('gym:profile')
+    
+    # Get plan data from session (only for steps that need it)
+    plan_data = request.session.get('pending_plan_request', {})
+    
+    # Handle Step 2: Body information check
+    if step == 'body_info':
+        try:
+            user_profile = request.user.userprofile
+            body_info = user_profile.body_information
+            # Body information exists, move to next step
+            plan_data['current_step'] = 'profile_check'
+            request.session['pending_plan_request'] = plan_data
+            return redirect('gym:plan_request_flow', step='profile_check')
+        except (UserProfile.DoesNotExist, BodyInformationUser.DoesNotExist):
+            # Need to fill body information
+            messages.warning(request, 'لطفاً اطلاعات بدنی خود را تکمیل کنید.')
+            return redirect('gym:body_information_form')
+    
+    # Handle Step 3: Profile completeness check
+    elif step == 'profile_check':
+        try:
+            user_profile = request.user.userprofile
+            is_complete, missing_field = is_profile_complete_for_payment(user_profile)
+            
+            if is_complete:
+                # Profile is complete, move to payment
+                plan_data['current_step'] = 'payment'
+                request.session['pending_plan_request'] = plan_data
+                return redirect('gym:plan_request_flow', step='payment')
+            else:
+                # Need to complete profile
+                messages.warning(request, f'لطفاً اطلاعات پروفایل خود را کامل کنید. فیلد "{missing_field}" خالی است.')
+                request.session['payment_redirect_url'] = 'gym:plan_request_flow'
+                request.session['payment_redirect_step'] = 'payment'
+                return redirect('gym:edit_profile')
+        except UserProfile.DoesNotExist:
+            messages.error(request, 'پروفایل شما یافت نشد.')
+            return redirect('gym:profile')
+    
+    # Handle Step 4: Payment
+    elif step == 'payment':
+        return redirect('gym:plan_request_payment')
+    
+    # Default context for progress display
+    context = {
+        'steps': STEPS,
+        'current_step': step,
+        'step_data': STEPS[step],
+        'plan_data': plan_data
+    }
+    return render(request, 'gym/plan_request_flow.html', context)
+
+@login_required
+@staff_member_required
+def plan_request_management_detail(request, request_id):
+    """Comprehensive management view for a single plan request"""
+    plan_request = get_object_or_404(PlanRequest, id=request_id)
+    
+    # Get related data
+    user_profile = plan_request.user.userprofile
+    
+    # Get user's payment for this plan type
+    payment_type = 'workout_plan' if plan_request.plan_type == 'workout' else 'diet_plan'
+    related_payments = Payment.objects.filter(
+        user=plan_request.user,
+        payment_type=payment_type
+    ).order_by('-payment_date')
+    
+    # Get body information
+    try:
+        body_info = user_profile.body_information
+    except BodyInformationUser.DoesNotExist:
+        body_info = None
+    
+    # Get existing plans for this user and type
+    if plan_request.plan_type == 'workout':
+        existing_plans = WorkoutPlan.objects.filter(user=plan_request.user).order_by('-created_at')
+    else:
+        existing_plans = DietPlan.objects.filter(user=plan_request.user).order_by('-created_at')
+    
+    # Handle form submission
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'approve_payment':
+            payment_id = request.POST.get('payment_id')
+            payment = get_object_or_404(Payment, id=payment_id)
+            payment.status = 'approved'
+            payment.admin_note = request.POST.get('admin_note', '')
+            payment.save()
+            messages.success(request, 'پرداخت تایید شد.')
+            
+        elif action == 'reject_payment':
+            payment_id = request.POST.get('payment_id')
+            payment = get_object_or_404(Payment, id=payment_id)
+            payment.status = 'rejected'
+            payment.admin_note = request.POST.get('admin_note', '')
+            payment.save()
+            messages.success(request, 'پرداخت رد شد.')
+            
+        elif action == 'approve_request':
+            plan_request.status = 'approved'
+            plan_request.admin_response = request.POST.get('admin_response', '')
+            plan_request.save()
+            messages.success(request, 'درخواست تایید شد.')
+            
+        elif action == 'reject_request':
+            plan_request.status = 'rejected'
+            plan_request.admin_response = request.POST.get('admin_response', '')
+            plan_request.save()
+            messages.success(request, 'درخواست رد شد.')
+            
+        elif action == 'complete_request':
+            plan_request.status = 'completed'
+            plan_request.save()
+            messages.success(request, 'درخواست به عنوان تکمیل شده علامت‌گذاری شد.')
+        
+        return redirect('gym:plan_request_management_detail', request_id=request_id)
+    
+    context = {
+        'plan_request': plan_request,
+        'user_profile': user_profile,
+        'body_info': body_info,
+        'related_payments': related_payments,
+        'existing_plans': existing_plans,
+        'is_profile_complete': is_profile_complete_for_payment(user_profile)[0],
+    }
+    
+    return render(request, 'gym/admin/plan_request_management_detail.html', context)
+
+@login_required
+@staff_member_required
+def update_payment_status(request, payment_id):
+    """Update payment status (approve/reject)"""
+    payment = get_object_or_404(Payment, id=payment_id)
+    
+    if request.method == 'POST':
+        status = request.POST.get('status')
+        admin_note = request.POST.get('admin_note', '')
+        
+        if status in ['approved', 'rejected']:
+            payment.status = status
+            payment.admin_note = admin_note
+            payment.save()
+            
+            status_display = "تایید شد" if status == "approved" else "رد شد"
+            messages.success(request, f'پرداخت {status_display}.')
+    
+    # Redirect back to referring page
+    return redirect(request.META.get('HTTP_REFERER', 'gym:payments'))
+
+@login_required
+@staff_member_required
+def comprehensive_plan_management(request):
+    """Main dashboard for plan management with all functionalities"""
+    
+    # Get filter parameters
+    plan_type = request.GET.get('plan_type', '')
+    status = request.GET.get('status', '')
+    payment_status = request.GET.get('payment_status', '')
+    search_query = request.GET.get('search', '')
+    
+    # Base queryset with related data
+    plan_requests = PlanRequest.objects.select_related('user', 'user__userprofile').prefetch_related(
+        'user__payments'
+    ).all().order_by('-created_at')
+    
+    # Apply filters
+    if plan_type:
+        plan_requests = plan_requests.filter(plan_type=plan_type)
+    
+    if status:
+        plan_requests = plan_requests.filter(status=status)
+    
+    if search_query:
+        plan_requests = plan_requests.filter(
+            Q(description__icontains=search_query) |
+            Q(user__username__icontains=search_query) |
+            Q(user__userprofile__name__icontains=search_query)
+        )
+    
+    # Filter by payment status if specified
+    if payment_status:
+        user_ids_with_payment_status = Payment.objects.filter(
+            status=payment_status,
+            payment_type__in=['workout_plan', 'diet_plan']
+        ).values_list('user_id', flat=True)
+        plan_requests = plan_requests.filter(user_id__in=user_ids_with_payment_status)
+    
+    # Prepare data for each request
+    request_data = []
+    for req in plan_requests:
+        payment_type = 'workout_plan' if req.plan_type == 'workout' else 'diet_plan'
+        latest_payment = req.user.payments.filter(payment_type=payment_type).first()
+        
+        # Check body information
+        try:
+            body_info_exists = hasattr(req.user.userprofile, 'body_information') and req.user.userprofile.body_information is not None
+        except:
+            body_info_exists = False
+        
+        # Check profile completeness
+        profile_complete = is_profile_complete_for_payment(req.user.userprofile)[0]
+        
+        # Get existing plans count
+        if req.plan_type == 'workout':
+            plans_count = WorkoutPlan.objects.filter(user=req.user).count()
+        else:
+            plans_count = DietPlan.objects.filter(user=req.user).count()
+        
+        request_data.append({
+            'request': req,
+            'latest_payment': latest_payment,
+            'body_info_exists': body_info_exists,
+            'profile_complete': profile_complete,
+            'plans_count': plans_count,
+        })
+    
+    context = {
+        'request_data': request_data,
+        'plan_type': plan_type,
+        'status': status,
+        'payment_status': payment_status,
+        'search_query': search_query,
+    }
+    
+    return render(request, 'gym/admin/comprehensive_plan_management.html', context)
