@@ -63,6 +63,7 @@ urlpatterns = [
     path('monthly-goals/add/', views.add_monthly_goal, name='add_monthly_goal'),
     path('monthly-goals/<int:goal_id>/edit/', views.edit_monthly_goal, name='edit_monthly_goal'),
     path('monthly-goals/<int:goal_id>/delete/', views.delete_monthly_goal, name='delete_monthly_goal'),
+    path('api/user-measurements/<int:user_id>/', views.get_user_measurements, name='get_user_measurements'),
     
     # Progress Analysis
     path('progress/', views.progress_analysis, name='progress_analysis'),

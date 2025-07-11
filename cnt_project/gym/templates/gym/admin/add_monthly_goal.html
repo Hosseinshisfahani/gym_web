@@ -1,6 +1,7 @@
 {% extends 'gym/base.html' %}
 {% load widget_tweaks %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}{{ page_title }} - پلتفرم جامع ورزشی{% endblock %}
 
@@ -48,7 +49,7 @@
                                 <label for="{{ form.user.id_for_label }}" class="form-label text-dark">
                                     <i class="fas fa-user me-1"></i>انتخاب کاربر *
                                 </label>
-                                {% render_field form.user class="form-select" %}
+                                {% render_field form.user class="form-select" id="user-select" %}
                                 {% if form.user.errors %}
                                     <div class="text-danger small mt-1">{{ form.user.errors.0 }}</div>
                                 {% endif %}
@@ -64,6 +65,67 @@
                             </div>
                         </div>
 
+                        <!-- User Measurements Display -->
+                        <div id="user-measurements-section" style="display: none;">
+                            <div class="card mb-4">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        اطلاعات فعلی کاربر
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-3">
+                                            <div class="text-center p-3 bg-light rounded border">
+                                                <i class="fas fa-weight fa-2x text-primary mb-2"></i>
+                                                <h6 class="mb-1">وزن فعلی</h6>
+                                                <strong id="current-weight" class="text-primary">-</strong>
+                                                <div class="small text-muted mt-1">
+                                                    <i class="fas fa-calendar-alt me-1"></i>
+                                                    <span id="current-weight-date">-</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center p-3 bg-light rounded border">
+                                                <i class="fas fa-percentage fa-2x text-warning mb-2"></i>
+                                                <h6 class="mb-1">درصد چربی</h6>
+                                                <strong id="current-body-fat" class="text-warning">-</strong>
+                                                <div class="small text-muted mt-1">
+                                                    <i class="fas fa-calendar-alt me-1"></i>
+                                                    <span id="current-body-fat-date">-</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center p-3 bg-light rounded border">
+                                                <i class="fas fa-dumbbell fa-2x text-success mb-2"></i>
+                                                <h6 class="mb-1">توده عضلانی</h6>
+                                                <strong id="current-muscle-mass" class="text-success">-</strong>
+                                                <div class="small text-muted mt-1">
+                                                    <i class="fas fa-calendar-alt me-1"></i>
+                                                    <span id="current-muscle-mass-date">-</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center p-3 bg-light rounded border">
+                                                <i class="fas fa-info fa-2x text-secondary mb-2"></i>
+                                                <h6 class="mb-1">اطلاعات کلی</h6>
+                                                <div class="small">
+                                                    <div>سن: <span id="user-age">-</span></div>
+                                                    <div>قد: <span id="user-height">-</span> سم</div>
+                                                    <div>وزن اولیه: <span id="initial-weight">-</span> کگ</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
 
 
                         <div class="row mb-3">
@@ -71,7 +133,11 @@
                                 <label for="{{ form.start_date.id_for_label }}" class="form-label text-dark">
                                     <i class="fas fa-calendar-alt me-1"></i>تاریخ شروع *
                                 </label>
-                                {% render_field form.start_date class="form-control" type="date" %}
+                                {% render_field form.start_date class="form-control" type="date" id="start-date-input" %}
+                                {% if goal.start_date %}
+                                    <small class="text-muted">تاریخ شمسی: {{ goal.start_date|persian_date:"j F Y" }}</small>
+                                {% endif %}
+                                <div id="start-date-persian" class="small text-success mt-1" style="display: none;"></div>
                                 {% if form.start_date.errors %}
                                     <div class="text-danger small mt-1">{{ form.start_date.errors.0 }}</div>
                                 {% endif %}
@@ -80,7 +146,11 @@
                                 <label for="{{ form.end_date.id_for_label }}" class="form-label text-dark">
                                     <i class="fas fa-calendar-check me-1"></i>تاریخ پایان *
                                 </label>
-                                {% render_field form.end_date class="form-control" type="date" %}
+                                {% render_field form.end_date class="form-control" type="date" id="end-date-input" %}
+                                {% if goal.end_date %}
+                                    <small class="text-muted">تاریخ شمسی: {{ goal.end_date|persian_date:"j F Y" }}</small>
+                                {% endif %}
+                                <div id="end-date-persian" class="small text-success mt-1" style="display: none;"></div>
                                 {% if form.end_date.errors %}
                                     <div class="text-danger small mt-1">{{ form.end_date.errors.0 }}</div>
                                 {% endif %}
@@ -179,11 +249,7 @@
                                     </div>
                                 </div>
 
-                                <div class="alert alert-info mt-3 mb-0">
-                                    <i class="fas fa-info-circle me-2"></i>
-                                    <strong>مهم:</strong> مشخص کردن نوع هدف (کاهش/افزایش/حفظ) برای محاسبه صحیح درصد پیشرفت ضروری است. 
-                                    بر اساس این تنظیمات، پیشرفت ورزشکار به سمت اهداف تعیین شده محاسبه می‌شود.
-                                </div>
+
                             </div>
                         </div>
 
@@ -218,19 +284,64 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set today as default start date if adding new goal
     {% if not goal %}
     const today = new Date().toISOString().split('T')[0];
-    const startDateField = document.getElementById('{{ form.start_date.id_for_label }}');
+    const startDateField = document.getElementById('start-date-input');
     if (startDateField && !startDateField.value) {
         startDateField.value = today;
+        updatePersianDate('start-date-input', 'start-date-persian');
     }
     
     // Set end date to 30 days from start date
-    const endDateField = document.getElementById('{{ form.end_date.id_for_label }}');
+    const endDateField = document.getElementById('end-date-input');
     if (endDateField && !endDateField.value) {
         const endDate = new Date();
         endDate.setDate(endDate.getDate() + 30);
         endDateField.value = endDate.toISOString().split('T')[0];
+        updatePersianDate('end-date-input', 'end-date-persian');
     }
     {% endif %}
+
+    // Add event listeners to date inputs to show Persian dates
+    const startDateInput = document.getElementById('start-date-input');
+    const endDateInput = document.getElementById('end-date-input');
+    
+    if (startDateInput) {
+        startDateInput.addEventListener('change', function() {
+            updatePersianDate('start-date-input', 'start-date-persian');
+        });
+        // Show Persian date on page load if date exists
+        if (startDateInput.value) {
+            updatePersianDate('start-date-input', 'start-date-persian');
+        }
+    }
+    
+    if (endDateInput) {
+        endDateInput.addEventListener('change', function() {
+            updatePersianDate('end-date-input', 'end-date-persian');
+        });
+        // Show Persian date on page load if date exists
+        if (endDateInput.value) {
+            updatePersianDate('end-date-input', 'end-date-persian');
+        }
+    }
+
+    // Function to update Persian date display
+    function updatePersianDate(inputId, displayId) {
+        const input = document.getElementById(inputId);
+        const display = document.getElementById(displayId);
+        
+        if (input && display && input.value) {
+            const date = new Date(input.value);
+            const persianDate = date.toLocaleDateString('fa-IR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            display.textContent = 'تاریخ شمسی: ' + persianDate;
+            display.style.display = 'block';
+        } else if (display) {
+            display.style.display = 'none';
+        }
+    }
 
     // Calculate remaining days for existing goals
     {% if goal %}
@@ -252,10 +363,94 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     {% endif %}
 
+    // User selection handler for fetching measurements
+    const userSelect = document.getElementById('user-select');
+    const measurementsSection = document.getElementById('user-measurements-section');
+    
+    if (userSelect && measurementsSection) {
+        userSelect.addEventListener('change', function() {
+            const userId = this.value;
+            if (userId) {
+                fetchUserMeasurements(userId);
+            } else {
+                measurementsSection.style.display = 'none';
+            }
+        });
+    }
+
+    // Function to fetch user measurements
+    function fetchUserMeasurements(userId) {
+        fetch(`/api/user-measurements/${userId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Error fetching measurements:', data.error);
+                    return;
+                }
+                
+                // Update measurements display
+                updateMeasurementDisplay(data);
+                measurementsSection.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+    }
+
+    // Function to update measurement display
+    function updateMeasurementDisplay(data) {
+        // Helper function to format Persian date
+        function formatPersianDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            
+            // Convert to Persian calendar
+            const persianMonths = [
+                'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
+                'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'
+            ];
+            
+            // Simple conversion to Persian date format
+            const persianDate = date.toLocaleDateString('fa-IR', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            return persianDate;
+        }
+
+        // Update current weight
+        document.getElementById('current-weight').textContent = 
+            data.current_weight ? data.current_weight + ' کگ' : 'اندازه‌گیری نشده';
+        document.getElementById('current-weight-date').textContent = 
+            formatPersianDate(data.current_weight_date);
+
+        // Update body fat
+        document.getElementById('current-body-fat').textContent = 
+            data.current_body_fat ? data.current_body_fat + '%' : 'اندازه‌گیری نشده';
+        document.getElementById('current-body-fat-date').textContent = 
+            formatPersianDate(data.current_body_fat_date);
+
+        // Update muscle mass
+        document.getElementById('current-muscle-mass').textContent = 
+            data.current_muscle_mass ? data.current_muscle_mass + ' کگ' : 'اندازه‌گیری نشده';
+        document.getElementById('current-muscle-mass-date').textContent = 
+            formatPersianDate(data.current_muscle_mass_date);
+
+        // Update general info
+        document.getElementById('user-age').textContent = 
+            data.age ? data.age + ' سال' : 'نامشخص';
+        document.getElementById('user-height').textContent = 
+            data.height ? data.height : 'نامشخص';
+        document.getElementById('initial-weight').textContent = 
+            data.initial_weight ? data.initial_weight : 'نامشخص';
+    }
+
     // Form validation
     document.getElementById('goalForm').addEventListener('submit', function(e) {
-        const startDate = new Date(document.getElementById('{{ form.start_date.id_for_label }}').value);
-        const endDate = new Date(document.getElementById('{{ form.end_date.id_for_label }}').value);
+        const startDate = new Date(document.getElementById('start-date-input').value);
+        const endDate = new Date(document.getElementById('end-date-input').value);
         
         if (endDate <= startDate) {
             e.preventDefault();
@@ -263,10 +458,10 @@ document.addEventListener('DOMContentLoaded', function() {
             return false;
         }
         
-        const title = document.getElementById('{{ form.title.id_for_label }}').value.trim();
-        if (title.length < 5) {
+        const userSelect = document.getElementById('user-select');
+        if (!userSelect.value) {
             e.preventDefault();
-            alert('عنوان هدف باید حداقل ۵ کاراکتر باشد.');
+            alert('لطفاً یک کاربر انتخاب کنید.');
             return false;
         }
     });

@@ -91,39 +91,7 @@
                 </div>
             </div>
             
-            {% if recent_progress %}
-            <!-- Recent Progress Preview -->
-            <div class="card mb-4">
-                <div class="card-header text-white" style="background-color: var(--secondary-color);">
-                    آخرین اندازه‌گیری‌های شما
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>نوع اندازه‌گیری</th>
-                                    <th>مقدار</th>
-                                    <th>تاریخ</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for entry in recent_progress %}
-                                <tr>
-                                    <td>{{ entry.get_measurement_type_display }}</td>
-                                    <td>{{ entry.value }} {{ entry.unit }}</td>
-                                    <td>{{ entry.measurement_date|date:"Y/m/d" }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="text-center mt-2">
-                        <a href="{% url 'gym:progress_analysis' %}" class="btn btn-primary btn-sm">مشاهده همه و ثبت مقادیر جدید</a>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
+
         </div>
         <!-- Personal Info Section -->
         <div class="col-md-4">

@@ -26,20 +26,20 @@
         </div>
     </div>
 
-    {% if goals %}
+            {% if goals %}
         {% for goal_data in goals_with_data %}
         {% with goal=goal_data.goal current_measurements=goal_data.current_measurements progress_data=goal_data.progress_data %}
         <div class="card mb-4">
             <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">{{ goal.title }}</h5>
                 <div>
-                    {% if goal.status == 'not_started' %}
+                                {% if goal.status == 'not_started' %}
                         <span class="badge bg-secondary"><i class="fas fa-pause me-1"></i>شروع نشده</span>
-                    {% elif goal.status == 'in_progress' %}
+                                {% elif goal.status == 'in_progress' %}
                         <span class="badge bg-light text-primary"><i class="fas fa-play me-1"></i>در حال انجام</span>
-                    {% elif goal.status == 'completed' %}
+                                {% elif goal.status == 'completed' %}
                         <span class="badge bg-success"><i class="fas fa-check me-1"></i>تکمیل شده</span>
-                    {% else %}
+                                {% else %}
                         <span class="badge bg-danger"><i class="fas fa-times me-1"></i>ناموفق</span>
                     {% endif %}
                 </div>
@@ -79,22 +79,22 @@
                             <strong><i class="fas fa-comment me-1"></i>یادداشت مربی:</strong>
                             <p class="mt-2 text-muted">{{ goal.coach_notes }}</p>
                         </div>
-                        {% endif %}
+                                {% endif %}
                     </div>
                     <div class="col-md-4">
                         <div class="text-center">
                             <h6>پیشرفت کلی</h6>
                             <div class="progress mb-3" style="height: 25px;">
-                                <div class="progress-bar {% if goal.progress >= 100 %}bg-success{% elif goal.progress >= 50 %}bg-info{% else %}bg-warning{% endif %}" 
-                                     role="progressbar" 
-                                     style="width: {{ goal.progress }}%;" 
-                                     aria-valuenow="{{ goal.progress }}" 
-                                     aria-valuemin="0" 
-                                     aria-valuemax="100">{{ goal.progress }}%</div>
-                            </div>
+                                    <div class="progress-bar {% if goal.progress >= 100 %}bg-success{% elif goal.progress >= 50 %}bg-info{% else %}bg-warning{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ goal.progress }}%;" 
+                                         aria-valuenow="{{ goal.progress }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100">{{ goal.progress }}%</div>
+                                </div>
                             <a href="{% url 'gym:monthly_goal_detail' goal.id %}" class="btn btn-primary">
                                 <i class="fas fa-edit me-2"></i>به‌روزرسانی پیشرفت
-                            </a>
+                                </a>
                         </div>
                     </div>
                 </div>
@@ -102,12 +102,12 @@
         </div>
         {% endwith %}
         {% endfor %}
-    {% else %}
-        <div class="alert alert-warning">
-            <i class="fas fa-exclamation-triangle me-2"></i>
-            هنوز هیچ هدفی توسط مربی شما تعیین نشده است. برای دریافت اهداف، با مربی خود تماس بگیرید.
-        </div>
-    {% endif %}
+            {% else %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                هنوز هیچ هدفی توسط مربی شما تعیین نشده است. برای دریافت اهداف، با مربی خود تماس بگیرید.
+            </div>
+            {% endif %}
     
     <!-- Quick link to body measurements -->
     <div class="card mt-4">

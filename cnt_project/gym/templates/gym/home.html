@@ -7,163 +7,760 @@
 {% block title %}صفحه اصلی - پلتفرم جامع ورزشی{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-10">
-            <div class="card mb-4 welcome-card">
-                <div class="card-body text-center p-5">
-                    <h1 class="display-4 fw-bold">به پلتفرم جامع ورزشی خوش آمدید</h1>
-                    {% if not user.is_authenticated %}
-                        <div class="mt-4">
-                            <a href="{% url 'gym:register' %}" class="btn btn-primary btn-lg me-2">ثبت نام کنید</a>
-                            <a href="{% url 'gym:login' %}" class="btn btn-outline-primary btn-lg">ورود</a>
-                        </div>
-                    {% else %}
-                        <div class="mt-4">
-                            <a href="{% url 'gym:profile' %}" class="btn btn-primary btn-lg">برو به پروفایل</a>
-                        </div>
-                    {% endif %}
+<!-- Corner Decorations -->
+<div class="corner-decoration corner-top-left"></div>
+<div class="corner-decoration corner-top-right"></div>
+<div class="corner-decoration corner-bottom-left"></div>
+<div class="corner-decoration corner-bottom-right"></div>
+
+<div class="split-screen-container">
+    <!-- Left Section - Shop Entrance -->
+    <div class="split-section shop-section">
+        <div class="section-overlay"></div>
+        <div class="section-content">
+            <div class="section-header">
+                <div class="animated-icon shop-icon">
+                    <i class="fas fa-store"></i>
+                    <div class="icon-particles">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
                 </div>
+                <h1 class="section-title">فروشگاه</h1>
+                <p class="section-subtitle">تجهیزات و لباس ورزشی</p>
+            </div>
+            
+            <div class="features-list">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-weight-hanging"></i>
+                    </div>
+                    <span>تجهیزات ورزشی حرفه‌ای</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-running"></i>
+                    </div>
+                    <span>لباس‌های ورزشی با کیفیت</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-capsules"></i>
+                    </div>
+                    <span>مکمل‌ها و تغذیه ورزشی</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <span>ارسال سریع و امن</span>
+                </div>
+            </div>
+            
+            <div class="section-buttons">
+                <a href="{% url 'gym_shop:home' %}" class="btn btn-shop-primary">
+                    <i class="fas fa-store me-2"></i>
+                    ورود به فروشگاه
+                </a>
+                <a href="{% url 'gym_shop:product_list' %}" class="btn btn-shop-secondary">
+                    <i class="fas fa-list me-2"></i>
+                    مشاهده محصولات
+                </a>
             </div>
         </div>
     </div>
-
-    <div class="row mt-5">
-        <div class="col-md-4">
-            <div class="card h-100 section-card">
-                <div class="card-body text-center">
-                    <div class="icon-circle mb-3">
-                        <i class="fas fa-dumbbell fa-2x"></i>
+    
+    <!-- Right Section - Dashboard Entrance -->
+    <div class="split-section dashboard-section">
+        <div class="section-overlay"></div>
+        <div class="section-content">
+            <div class="section-header">
+                <div class="animated-icon dashboard-icon">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <div class="icon-glow"></div>
+                </div>
+                <h1 class="section-title">پنل کاربری</h1>
+                <p class="section-subtitle">مدیریت تمرینات و پیشرفت</p>
+            </div>
+            
+            <div class="features-list">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-heartbeat"></i>
                     </div>
-                    <h3>برنامه‌های تمرینی</h3>
-                    <p>دسترسی به برنامه‌های تمرینی شخصی‌سازی شده متناسب با اهداف تناسب اندام شما.</p>
+                    <span>برنامه‌های تمرینی شخصی</span>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100 section-card">
-                <div class="card-body text-center">
-                    <div class="icon-circle mb-3">
-                        <i class="fas fa-utensils fa-2x"></i>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-apple-alt"></i>
                     </div>
-                    <h3>برنامه‌های غذایی</h3>
-                    <p>راهنمایی تغذیه و برنامه‌های غذایی برای تکمیل سفر تناسب اندام شما.</p>
+                    <span>برنامه‌های غذایی</span>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100 section-card">
-                <div class="card-body text-center">
-                    <div class="icon-circle mb-3">
-                        <i class="fas fa-chart-line fa-2x"></i>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-bar"></i>
                     </div>
-                    <h3>پیگیری پیشرفت</h3>
-                    <p>پیگیری حضور، پرداخت‌ها و دستاوردهای تناسب اندام شما.</p>
+                    <span>پیگیری پیشرفت</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                    <span>ارتباط با مربی</span>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div class="row mt-4">
-        <div class="col-md-6">
-            <div class="card h-100 section-card">
-                <div class="card-body">
-                    <h3>درباره ما</h3>
-                    <p>
-                        ما متعهد به کمک به علاقه‌مندان به تناسب اندام و ورزشکاران برای دستیابی به اهداف خود
-                        از طریق مدیریت جامع سفر تناسب اندام آنها هستیم. پلتفرم ما ابزارهایی برای
-                        پیگیری پیشرفت، مدیریت برنامه‌های تمرینی و حفظ رژیم غذایی سالم ارائه می‌دهد.
-                    </p>
-                    <p>
-                        با رابط کاربری آسان ما، می‌توانید به راحتی به برنامه‌های تمرینی،
-                        برنامه‌های غذایی، گواهینامه‌ها و ارتباط با مربیان خود دسترسی داشته باشید.
-                    </p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card h-100 section-card">
-                <div class="card-body">
-                    <h3>ویژگی‌ها</h3>
-                    <ul>
-                        <li>برنامه‌های تمرینی و غذایی شخصی‌سازی شده</li>
-                        <li>مدیریت گواهینامه‌ها</li>
-                        <li>پیگیری پیشرفت</li>
-                        <li>ثبت حضور و غیاب</li>
-                        <li>تاریخچه و مدیریت پرداخت‌ها</li>
-                        <li>سیستم ارتباط با مربی</li>
-                        <li>دسترسی به اسناد با گزینه‌های پرداخت</li>
-                    </ul>
-                </div>
+            
+            <div class="section-buttons">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'gym:profile' %}" class="btn btn-dashboard-primary">
+                        <i class="fas fa-tachometer-alt me-2"></i>
+                        ورود به پنل
+                    </a>
+                    <a href="{% url 'gym:monthly_goals' %}" class="btn btn-dashboard-secondary">
+                        <i class="fas fa-bullseye me-2"></i>
+                        اهداف من
+                    </a>
+                {% else %}
+                    <a href="{% url 'gym:login' %}" class="btn btn-dashboard-primary">
+                        <i class="fas fa-sign-in-alt me-2"></i>
+                        ورود
+                    </a>
+                    <a href="{% url 'gym:register' %}" class="btn btn-dashboard-secondary">
+                        <i class="fas fa-user-plus me-2"></i>
+                        ثبت نام
+                    </a>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
+<!-- Top Brand Logo -->
+<div class="brand-logo-top">
+    <div class="logo-content">
+        <i class="fas fa-dumbbell"></i>
+        <span>پلتفرم جامع ورزشی</span>
+    </div>
+</div>
+
 <style>
-    .welcome-card {
-        border: none;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        background: var(--section-bg-gradient);
-        color: white;
+/* Reset and Base Styles */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Vazir', sans-serif;
+    overflow-x: hidden;
+}
+
+.split-screen-container {
+    display: flex;
+    min-height: 100vh;
+    position: relative;
+    border: 2px solid rgba(255, 0, 0, 0.1);
+    margin: 10px;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: inset 0 0 50px rgba(255, 0, 0, 0.1);
+}
+
+/* Split Sections */
+.split-section {
+    flex: 1;
+    min-height: 100vh;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2.5rem;
+    margin: 0 1rem;
+    transition: all 0.5s ease;
+}
+
+.split-section:hover {
+    flex: 1.1;
+}
+
+.split-section:hover + .split-section {
+    flex: 0.9;
+}
+
+/* Shop Section */
+.shop-section {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d1b1b 50%, #1a1a1a 100%);
+    border-right: 3px solid #ff0000;
+}
+
+.shop-section .section-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, rgba(255, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.3) 100%);
+    pointer-events: none;
+}
+
+/* Dashboard Section */
+.dashboard-section {
+    background: linear-gradient(135deg, #2d1b1b 0%, #1a1a1a 50%, #2d1b1b 100%);
+    border-left: 3px solid #ff0000;
+}
+
+.dashboard-section .section-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(-45deg, rgba(255, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.3) 100%);
+    pointer-events: none;
+}
+
+/* Section Content */
+.section-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    max-width: 520px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+}
+
+.section-header {
+    margin-bottom: 3.5rem;
+    padding-bottom: 1rem;
+}
+
+/* Animated Icons */
+.animated-icon {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 2rem auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.animated-icon i {
+    font-size: 4rem;
+    color: #ff0000;
+    z-index: 2;
+    position: relative;
+    animation: iconBounce 2s ease-in-out infinite;
+}
+
+/* Shop Icon Animation */
+.shop-icon {
+    animation: shopFloat 3s ease-in-out infinite;
+}
+
+.shop-icon .icon-particles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.shop-icon .icon-particles span {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #ff0000;
+    border-radius: 50%;
+    opacity: 0.7;
+    animation: particleFloat 2s ease-in-out infinite;
+}
+
+.shop-icon .icon-particles span:nth-child(1) {
+    top: 20%;
+    left: 20%;
+    animation-delay: 0s;
+}
+
+.shop-icon .icon-particles span:nth-child(2) {
+    top: 30%;
+    right: 20%;
+    animation-delay: 0.7s;
+}
+
+.shop-icon .icon-particles span:nth-child(3) {
+    bottom: 20%;
+    left: 30%;
+    animation-delay: 1.4s;
+}
+
+/* Dashboard Icon Animation */
+.dashboard-icon {
+    animation: dashboardPulse 2.5s ease-in-out infinite;
+}
+
+.dashboard-icon .icon-glow {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255, 0, 0, 0.3) 0%, transparent 70%);
+    border-radius: 50%;
+    animation: glowPulse 2s ease-in-out infinite;
+}
+
+/* Feature Icons */
+.feature-icon {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    margin-left: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.feature-icon i {
+    color: #ff0000;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+}
+
+.feature-item:hover .feature-icon {
+    background: rgba(255, 0, 0, 0.2);
+    transform: scale(1.1) rotate(5deg);
+}
+
+.feature-item:hover .feature-icon i {
+    color: #ffffff;
+    animation: iconSpin 0.6s ease-in-out;
+}
+
+/* Keyframe Animations */
+@keyframes iconBounce {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+@keyframes shopFloat {
+    0%, 100% { transform: rotate(0deg) translateY(0px); }
+    25% { transform: rotate(1deg) translateY(-5px); }
+    50% { transform: rotate(0deg) translateY(-8px); }
+    75% { transform: rotate(-1deg) translateY(-5px); }
+}
+
+@keyframes particleFloat {
+    0%, 100% { 
+        transform: translateY(0px) scale(1);
+        opacity: 0.7;
+    }
+    50% { 
+        transform: translateY(-15px) scale(1.2);
+        opacity: 1;
+    }
+}
+
+@keyframes dashboardPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes glowPulse {
+    0%, 100% { 
+        transform: scale(1);
+        opacity: 0.3;
+    }
+    50% { 
+        transform: scale(1.2);
+        opacity: 0.6;
+    }
+}
+
+@keyframes iconSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.section-title {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 1rem;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.section-subtitle {
+    font-size: 1.2rem;
+    color: #cccccc;
+    margin-bottom: 0;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Features List */
+.features-list {
+    margin-bottom: 3.5rem;
+    padding: 0 0.5rem;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    margin-bottom: 1.2rem;
+    padding: 1.2rem 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 0, 0, 0.2);
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+}
+
+.feature-item:hover {
+    background: rgba(255, 0, 0, 0.1);
+    border-color: rgba(255, 0, 0, 0.4);
+    transform: translateX(10px);
+}
+
+
+
+.feature-item span {
+    color: #ffffff;
+    font-size: 1rem;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Buttons */
+.section-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-top: 2rem;
+    padding: 0 1rem;
+}
+
+.btn {
+    padding: 1.2rem 2.5rem;
+    border: none;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+}
+
+.btn-shop-primary {
+    background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+    color: white;
+}
+
+.btn-shop-primary:hover {
+    background: linear-gradient(135deg, #cc0000 0%, #990000 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 0, 0, 0.4);
+}
+
+.btn-shop-secondary {
+    background: transparent;
+    color: #ff0000;
+    border: 2px solid #ff0000;
+}
+
+.btn-shop-secondary:hover {
+    background: #ff0000;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 0, 0, 0.4);
+}
+
+.btn-dashboard-primary {
+    background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+    color: white;
+}
+
+.btn-dashboard-primary:hover {
+    background: linear-gradient(135deg, #cc0000 0%, #990000 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 0, 0, 0.4);
+}
+
+.btn-dashboard-secondary {
+    background: transparent;
+    color: #ff0000;
+    border: 2px solid #ff0000;
+}
+
+.btn-dashboard-secondary:hover {
+    background: #ff0000;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 0, 0, 0.4);
+}
+
+/* Brand Logo */
+.brand-logo-top {
+    position: fixed;
+    top: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #ff0000;
+    border-radius: 20px;
+    padding: 1rem 2rem;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(255, 0, 0, 0.3);
+    animation: logoFloat 3s ease-in-out infinite;
+}
+
+@keyframes logoFloat {
+    0%, 100% { transform: translateX(-50%) translateY(0px); }
+    50% { transform: translateX(-50%) translateY(-5px); }
+}
+
+.logo-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: #ffffff;
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.logo-content i {
+    color: #ff0000;
+    font-size: 1.5rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .split-screen-container {
+        flex-direction: column;
+        margin: 5px;
+        border-radius: 10px;
     }
     
-    .welcome-card h1 {
-        color: white;
+    .split-section {
+        min-height: 50vh;
+        padding: 2rem 1.5rem;
+        margin: 0.5rem;
     }
     
-    .section-card {
-        border: none;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        background: var(--section-bg-gradient);
-        color: white;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    .split-section:hover {
+        flex: 1;
     }
     
-    .section-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+    .section-content {
+        padding: 1.5rem 1rem;
+        max-width: 100%;
     }
     
-    .section-card h3 {
-        color: white;
+    .section-header {
+        margin-bottom: 2.5rem;
     }
     
-    .btn-primary {
-        background-color: var(--primary-color) !important;
-        border-color: var(--primary-color) !important;
+    .section-title {
+        font-size: 2.2rem;
+        letter-spacing: 1px;
     }
     
-    .btn-outline-primary {
-        color: var(--primary-color) !important;
-        border-color: var(--primary-color) !important;
-        background-color: transparent !important;
+    .features-list {
+        margin-bottom: 2.5rem;
+        padding: 0;
     }
     
-    .btn-outline-primary:hover {
-        background-color: var(--primary-color) !important;
-        color: white !important;
+    .feature-item {
+        padding: 1rem 1.2rem;
+        margin-bottom: 1rem;
     }
     
-    .icon-circle {
+    .section-buttons {
+        flex-direction: column;
+        gap: 1rem;
+        margin-top: 1.5rem;
+        padding: 0;
+    }
+    
+    .btn {
+        padding: 1rem 2rem;
+        font-size: 1rem;
+        letter-spacing: 0.5px;
+    }
+    
+    .brand-logo-top {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .animated-icon {
         width: 80px;
         height: 80px;
-        background-color: rgba(255, 0, 0, 0.2);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto;
-        transition: all 0.3s ease;
+        margin-bottom: 1rem;
     }
     
-    .icon-circle i {
-        color: var(--primary-color);
+    .animated-icon i {
+        font-size: 2.5rem;
     }
     
-    .section-card:hover .icon-circle {
-        transform: scale(1.1);
-        background-color: rgba(255, 0, 0, 0.3);
+    /* Smaller corners for mobile */
+    .corner-decoration::before {
+        width: 30px !important;
+        height: 2px !important;
     }
+    
+    .corner-decoration::after {
+        width: 2px !important;
+        height: 30px !important;
+    }
+}
+
+/* Corner Decorations */
+.corner-decoration {
+    position: fixed;
+    width: 100px;
+    height: 100px;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.corner-decoration::before,
+.corner-decoration::after {
+    content: '';
+    position: absolute;
+    background: linear-gradient(45deg, #ff0000, #cc0000);
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.3);
+}
+
+/* Top Left Corner */
+.corner-top-left {
+    top: 0;
+    left: 0;
+}
+
+.corner-top-left::before {
+    top: 0;
+    left: 0;
+    width: 50px;
+    height: 3px;
+    border-radius: 0 3px 3px 0;
+}
+
+.corner-top-left::after {
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 50px;
+    border-radius: 0 0 3px 3px;
+}
+
+/* Top Right Corner */
+.corner-top-right {
+    top: 0;
+    right: 0;
+}
+
+.corner-top-right::before {
+    top: 0;
+    right: 0;
+    width: 50px;
+    height: 3px;
+    border-radius: 3px 0 3px 3px;
+}
+
+.corner-top-right::after {
+    top: 0;
+    right: 0;
+    width: 3px;
+    height: 50px;
+    border-radius: 0 0 3px 3px;
+}
+
+/* Bottom Left Corner */
+.corner-bottom-left {
+    bottom: 0;
+    left: 0;
+}
+
+.corner-bottom-left::before {
+    bottom: 0;
+    left: 0;
+    width: 50px;
+    height: 3px;
+    border-radius: 3px 3px 0 3px;
+}
+
+.corner-bottom-left::after {
+    bottom: 0;
+    left: 0;
+    width: 3px;
+    height: 50px;
+    border-radius: 3px 3px 0 0;
+}
+
+/* Bottom Right Corner */
+.corner-bottom-right {
+    bottom: 0;
+    right: 0;
+}
+
+.corner-bottom-right::before {
+    bottom: 0;
+    right: 0;
+    width: 50px;
+    height: 3px;
+    border-radius: 3px 3px 3px 0;
+}
+
+.corner-bottom-right::after {
+    bottom: 0;
+    right: 0;
+    width: 3px;
+    height: 50px;
+    border-radius: 3px 3px 0 0;
+}
+
+/* Corner Animation */
+.corner-decoration {
+    animation: cornerGlow 3s ease-in-out infinite;
+}
+
+@keyframes cornerGlow {
+    0%, 100% { 
+        opacity: 0.7;
+        filter: brightness(1);
+    }
+    50% { 
+        opacity: 1;
+        filter: brightness(1.2);
+    }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #ff0000;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #cc0000;
+}
 </style>
 {% endblock %} 

@@ -1572,6 +1572,53 @@ def add_monthly_goal(request):
 
 @login_required
 @staff_member_required
+def get_user_measurements(request, user_id):
+    """API endpoint to get user's current measurements for goal setting"""
+    try:
+        user = User.objects.get(id=user_id)
+        measurements = {}
+        
+        # Get body information (initial/baseline measurements)
+        try:
+            body_info = user.userprofile.body_information
+            measurements['initial_weight'] = float(body_info.weight_kg)
+            measurements['height'] = body_info.height_cm
+            measurements['age'] = None
+            if body_info.birth_date:
+                from datetime import date
+                age = date.today().year - body_info.birth_date.year
+                measurements['age'] = age
+        except:
+            pass
+        
+        # Get latest progress measurements
+        latest_weight = user.progress_analyses.filter(measurement_type='weight').order_by('-measurement_date').first()
+        if latest_weight:
+            measurements['current_weight'] = float(latest_weight.value)
+            measurements['current_weight_date'] = latest_weight.measurement_date.strftime('%Y-%m-%d')
+        
+        latest_body_fat = user.progress_analyses.filter(measurement_type='body_fat').order_by('-measurement_date').first()
+        if latest_body_fat:
+            measurements['current_body_fat'] = float(latest_body_fat.value)
+            measurements['current_body_fat_date'] = latest_body_fat.measurement_date.strftime('%Y-%m-%d')
+        
+        latest_muscle_mass = user.progress_analyses.filter(measurement_type='muscle_mass').order_by('-measurement_date').first()
+        if latest_muscle_mass:
+            measurements['current_muscle_mass'] = float(latest_muscle_mass.value)
+            measurements['current_muscle_mass_date'] = latest_muscle_mass.measurement_date.strftime('%Y-%m-%d')
+        
+        # Get user's name
+        measurements['user_name'] = user.userprofile.name if hasattr(user, 'userprofile') and user.userprofile.name else user.username
+        
+        return JsonResponse(measurements)
+    
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'کاربر یافت نشد'}, status=404)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+@login_required
+@staff_member_required
 def edit_monthly_goal(request, goal_id):
     """Admin view to edit an existing monthly goal"""
     goal = get_object_or_404(MonthlyGoal, id=goal_id)
