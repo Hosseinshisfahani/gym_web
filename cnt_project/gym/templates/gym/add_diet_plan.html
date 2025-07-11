@@ -38,12 +38,12 @@
                             <p><strong>تاریخ درخواست:</strong> {{ plan_request.created_at|date:"Y/m/d" }}</p>
                             <div class="mb-3">
                                 <strong>توضیحات کاربر:</strong>
-                                <div class="p-3 bg-light rounded">{{ plan_request.description|linebreaks }}</div>
+                                <div class="p-3 bg-light rounded text-dark">{{ plan_request.description|linebreaks }}</div>
                             </div>
                             {% if plan_request.admin_response %}
                             <div class="mb-0">
                                 <strong>پاسخ مدیر:</strong>
-                                <div class="p-3 bg-light rounded">{{ plan_request.admin_response|linebreaks }}</div>
+                                <div class="p-3 bg-light rounded text-dark">{{ plan_request.admin_response|linebreaks }}</div>
                             </div>
                             {% endif %}
                         </div>

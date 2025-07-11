@@ -1,5 +1,6 @@
 {% extends 'gym/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}مدیریت جامع برنامه‌ها{% endblock %}
 
@@ -220,7 +221,7 @@
                                             </button>
                                         {% endif %}
                                     </div>
-                                    <small class="text-muted d-block">{{ payment.amount|floatformat:0 }} تومان</small>
+                                    <small class="text-muted d-block">{{ payment.amount|format_price }} تومان</small>
                                 {% else %}
                                     <span class="badge bg-secondary">بدون پرداخت</span>
                                 {% endif %}

@@ -151,19 +151,23 @@ admin_site.register(Cart, CartAdmin)
 admin_site.register(Order, OrderAdmin)
 admin_site.register(ProductImage, ProductImageAdmin)
 
-@admin.register(PaymentCard)
 class PaymentCardAdmin(admin.ModelAdmin):
+    verbose_name = 'کارت پرداخت'
+    verbose_name_plural = 'کارت‌های پرداخت'
     list_display = ['card_holder_name', 'get_formatted_card_number', 'price_workout', 'price_diet', 'price_both', 'is_active', 'created_at']
     list_filter = ['is_active', 'created_at']
     search_fields = ['card_holder_name', 'card_number']
     readonly_fields = ['created_at', 'updated_at']
+    ordering = ['-created_at']
     
     fieldsets = [
         ('اطلاعات کارت', {
-            'fields': ['card_number', 'card_holder_name', 'is_active']
+            'fields': ['card_number', 'card_holder_name', 'is_active'],
+            'description': 'شماره کارت باید 16 رقم باشد'
         }),
-        ('قیمت‌گذاری', {
-            'fields': ['price_workout', 'price_diet', 'price_both']
+        ('قیمت‌گذاری (تومان)', {
+            'fields': ['price_workout', 'price_diet', 'price_both'],
+            'description': 'قیمت‌ها به تومان وارد شوند'
         }),
         ('تاریخ‌ها', {
             'fields': ['created_at', 'updated_at'],

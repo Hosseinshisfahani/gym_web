@@ -1,5 +1,6 @@
 {% extends 'gym/base.html' %}
 {% load widget_tweaks %}
+{% load custom_filters %}
 
 {% block title %}پرداخت {{ plan_type_display }} - پلتفرم جامع ورزشی{% endblock %}
 
@@ -33,19 +34,24 @@
                             <strong>شماره کارت برای واریز:</strong>
                             <div class="card bg-light p-3 mt-2">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h5 class="mb-1 text-primary">{{ payment_card.get_formatted_card_number }}</h5>
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex align-items-center">
+                                            <h5 class="mb-1 text-primary me-2" id="cardNumber">{{ payment_card.get_formatted_card_number }}</h5>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="copyCardNumber()" title="کپی شماره کارت">
+                                                <i class="fas fa-copy"></i>
+                                            </button>
+                                        </div>
                                         <small class="text-muted">{{ payment_card.card_holder_name }}</small>
                                     </div>
                                     <div class="text-end">
-                                        <h4 class="mb-0 text-success">{{ plan_price|floatformat:0 }} تومان</h4>
+                                        <h4 class="mb-0 text-success">{{ plan_price|format_price }} تومان</h4>
                                         <small class="text-muted">{{ plan_type_display }}</small>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <ul class="mb-0 small">
-                            <li>مبلغ <strong>{{ plan_price|floatformat:0 }} تومان</strong> را به شماره کارت بالا واریز کنید</li>
+                            <li>مبلغ <strong>{{ plan_price|format_price }} تومان</strong> را به شماره کارت بالا واریز کنید</li>
                             <li>رسید پرداخت خود را عکس بگیرید</li>
                             <li>تصویر رسید را در فرم زیر آپلود کنید</li>
                             <li>پس از تایید پرداخت، درخواست شما بررسی خواهد شد</li>
@@ -142,4 +148,76 @@
         border-left: 4px solid #ffc107;
     }
 </style>
+
+<script>
+function copyCardNumber() {
+    const cardNumberText = document.getElementById('cardNumber').textContent;
+    // Remove hyphens for easier pasting
+    const cleanCardNumber = cardNumberText.replace(/-/g, '');
+    
+    navigator.clipboard.writeText(cleanCardNumber).then(function() {
+        // Show success feedback
+        const button = event.target.closest('button');
+        const originalIcon = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check text-success"></i>';
+        button.classList.add('btn-success');
+        button.classList.remove('btn-outline-primary');
+        
+        // Show toast message
+        showToast('شماره کارت کپی شد!', 'success');
+        
+        // Reset button after 2 seconds
+        setTimeout(function() {
+            button.innerHTML = originalIcon;
+            button.classList.remove('btn-success');
+            button.classList.add('btn-outline-primary');
+        }, 2000);
+    }).catch(function(err) {
+        console.error('خطا در کپی کردن: ', err);
+        showToast('خطا در کپی کردن شماره کارت', 'error');
+    });
+}
+
+function showToast(message, type) {
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} toast-message`;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 250px;
+        animation: slideIn 0.3s ease;
+    `;
+    toast.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+        ${message}
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Remove toast after 3 seconds
+    setTimeout(function() {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(function() {
+            document.body.removeChild(toast);
+        }, 300);
+    }, 3000);
+}
+
+// Add CSS for toast animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+</script>
 {% endblock %} 

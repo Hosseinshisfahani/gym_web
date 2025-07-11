@@ -1,5 +1,6 @@
 {% extends 'gym/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}جزئیات هدف ماهانه - پلتفرم جامع ورزشی{% endblock %}
 
@@ -16,8 +17,8 @@
                     <div class="row mb-4">
                         <div class="col-md-6">
                             <p><strong>عنوان:</strong> {{ goal.title }}</p>
-                            <p><strong>تاریخ شروع:</strong> {{ goal.start_date|date:"Y/m/d" }}</p>
-                            <p><strong>تاریخ پایان:</strong> {{ goal.end_date|date:"Y/m/d" }}</p>
+                            <p><strong>تاریخ شروع:</strong> {{ goal.start_date|persian_date:"Y/m/d" }}</p>
+                            <p><strong>تاریخ پایان:</strong> {{ goal.end_date|persian_date:"Y/m/d" }}</p>
                             <p>
                                 <strong>وضعیت:</strong> 
                                 {% if goal.status == 'not_started' %}

@@ -113,6 +113,7 @@ class Payment(models.Model):
     description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
     status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default='pending', verbose_name='وضعیت')
     admin_note = models.TextField(blank=True, null=True, verbose_name='توضیحات مدیر')
+    card_number = models.CharField(max_length=16, blank=True, null=True, verbose_name='شماره کارت')
     
     class Meta:
         verbose_name = 'پرداخت'
@@ -210,8 +211,6 @@ class PlanRequest(models.Model):
     def __str__(self):
         return f"{self.get_plan_type_display()} - {self.user.username}"
 
-# New models for the dashboard sections
-
 class BodyAnalysisReport(models.Model):
     STATUS_CHOICES = [
         ('pending', 'در انتظار بررسی'),
@@ -232,8 +231,12 @@ class BodyAnalysisReport(models.Model):
         ordering = ['-report_date']
     
     def __str__(self):
-        return f"آنالیز بدن {self.user.userprofile.name} - {self.report_date}"
+        try:
+            return f"آنالیز بدن {self.user.userprofile.name} - {self.report_date}"
+        except:
+            return f"آنالیز بدن {self.user.username} - {self.report_date}"
 
+# اهداف ماهانه (Monthly Goals) - Main section for goal setting
 class MonthlyGoal(models.Model):
     STATUS_CHOICES = [
         ('not_started', 'شروع نشده'),
@@ -243,13 +246,29 @@ class MonthlyGoal(models.Model):
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='monthly_goals')
-    title = models.CharField(max_length=200, verbose_name='عنوان هدف')
-    description = models.TextField(verbose_name='توضیحات')
+    title = models.CharField(max_length=200, blank=True, null=True, verbose_name='عنوان هدف')
+    description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
     start_date = models.DateField(default=timezone.now, verbose_name='تاریخ شروع')
     end_date = models.DateField(verbose_name='تاریخ پایان')
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='not_started', verbose_name='وضعیت')
     progress = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)], verbose_name='پیشرفت (درصد)')
     coach_notes = models.TextField(blank=True, null=True, verbose_name='یادداشت مربی')
+    
+    # Target measurements - set by admin
+    target_weight = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True, verbose_name='هدف وزن (کیلوگرم)')
+    target_body_fat_percentage = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True, verbose_name='هدف درصد چربی بدن (%)')
+    target_muscle_mass = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True, verbose_name='هدف توده عضلانی (کیلوگرم)')
+    
+    # Goal directions - specify if target is to lose or gain
+    GOAL_DIRECTION_CHOICES = [
+        ('lose', 'کاهش'),
+        ('gain', 'افزایش'),
+        ('maintain', 'حفظ'),
+    ]
+    
+    weight_goal_direction = models.CharField(max_length=10, choices=GOAL_DIRECTION_CHOICES, blank=True, null=True, verbose_name='جهت هدف وزن')
+    body_fat_goal_direction = models.CharField(max_length=10, choices=GOAL_DIRECTION_CHOICES, blank=True, null=True, verbose_name='جهت هدف چربی')
+    muscle_mass_goal_direction = models.CharField(max_length=10, choices=GOAL_DIRECTION_CHOICES, blank=True, null=True, verbose_name='جهت هدف عضله')
     
     class Meta:
         verbose_name = 'هدف ماهانه'
@@ -257,8 +276,140 @@ class MonthlyGoal(models.Model):
         ordering = ['-start_date']
     
     def __str__(self):
-        return f"{self.title} - {self.user.userprofile.name}"
+        try:
+            return f"{self.title} - {self.user.userprofile.name}"
+        except:
+            return f"{self.title} - {self.user.username}"
+    
+    def get_current_measurements(self):
+        """Get user's most recent measurements for comparison with targets"""
+        measurements = {}
+        
+        # Get latest weight measurement
+        latest_weight = self.user.progress_analyses.filter(measurement_type='weight').order_by('-measurement_date').first()
+        if latest_weight:
+            measurements['current_weight'] = latest_weight.value
+            measurements['current_weight_date'] = latest_weight.measurement_date
+        
+        # Get latest body fat measurement
+        latest_body_fat = self.user.progress_analyses.filter(measurement_type='body_fat').order_by('-measurement_date').first()
+        if latest_body_fat:
+            measurements['current_body_fat'] = latest_body_fat.value
+            measurements['current_body_fat_date'] = latest_body_fat.measurement_date
+        
+        # Get latest muscle mass measurement
+        latest_muscle_mass = self.user.progress_analyses.filter(measurement_type='muscle_mass').order_by('-measurement_date').first()
+        if latest_muscle_mass:
+            measurements['current_muscle_mass'] = latest_muscle_mass.value
+            measurements['current_muscle_mass_date'] = latest_muscle_mass.measurement_date
+        
+        return measurements
+    
+    def calculate_progress_towards_targets(self):
+        """Calculate progress towards each target based on current measurements and goal directions"""
+        current = self.get_current_measurements()
+        progress_data = {}
+        
+        # Calculate weight progress with direction awareness
+        if self.target_weight and 'current_weight' in current and self.weight_goal_direction:
+            current_weight = float(current['current_weight'])
+            target_weight = float(self.target_weight)
+            
+            # Get initial weight (earliest measurement or user's body info weight)
+            try:
+                initial_weight = float(self.user.userprofile.body_information.weight_kg)
+            except:
+                # Fallback to earliest weight measurement
+                earliest_weight = self.user.progress_analyses.filter(measurement_type='weight').order_by('measurement_date').first()
+                initial_weight = float(earliest_weight.value) if earliest_weight else current_weight
+            
+            if self.weight_goal_direction == 'lose':
+                # For weight loss: progress = (initial - current) / (initial - target) * 100
+                if initial_weight > target_weight:
+                    weight_progress = ((initial_weight - current_weight) / (initial_weight - target_weight)) * 100
+                else:
+                    weight_progress = 100 if current_weight <= target_weight else 0
+            elif self.weight_goal_direction == 'gain':
+                # For weight gain: progress = (current - initial) / (target - initial) * 100
+                if target_weight > initial_weight:
+                    weight_progress = ((current_weight - initial_weight) / (target_weight - initial_weight)) * 100
+                else:
+                    weight_progress = 100 if current_weight >= target_weight else 0
+            else:  # maintain
+                # For maintaining: calculate how close to target
+                tolerance = 2.0  # 2kg tolerance
+                if abs(current_weight - target_weight) <= tolerance:
+                    weight_progress = 100
+                else:
+                    weight_progress = max(0, 100 - (abs(current_weight - target_weight) / tolerance) * 100)
+            
+            progress_data['weight_progress'] = max(0, min(100, weight_progress))
+        
+        # Calculate body fat progress with direction awareness
+        if self.target_body_fat_percentage and 'current_body_fat' in current and self.body_fat_goal_direction:
+            current_bf = float(current['current_body_fat'])
+            target_bf = float(self.target_body_fat_percentage)
+            
+            # Get initial body fat measurement
+            earliest_bf = self.user.progress_analyses.filter(measurement_type='body_fat').order_by('measurement_date').first()
+            initial_bf = float(earliest_bf.value) if earliest_bf else current_bf
+            
+            if self.body_fat_goal_direction == 'lose':
+                # For body fat loss: progress = (initial - current) / (initial - target) * 100
+                if initial_bf > target_bf:
+                    bf_progress = ((initial_bf - current_bf) / (initial_bf - target_bf)) * 100
+                else:
+                    bf_progress = 100 if current_bf <= target_bf else 0
+            elif self.body_fat_goal_direction == 'gain':
+                # For body fat gain: progress = (current - initial) / (target - initial) * 100
+                if target_bf > initial_bf:
+                    bf_progress = ((current_bf - initial_bf) / (target_bf - initial_bf)) * 100
+                else:
+                    bf_progress = 100 if current_bf >= target_bf else 0
+            else:  # maintain
+                # For maintaining: calculate how close to target
+                tolerance = 2.0  # 2% tolerance
+                if abs(current_bf - target_bf) <= tolerance:
+                    bf_progress = 100
+                else:
+                    bf_progress = max(0, 100 - (abs(current_bf - target_bf) / tolerance) * 100)
+            
+            progress_data['body_fat_progress'] = max(0, min(100, bf_progress))
+        
+        # Calculate muscle mass progress with direction awareness
+        if self.target_muscle_mass and 'current_muscle_mass' in current and self.muscle_mass_goal_direction:
+            current_mm = float(current['current_muscle_mass'])
+            target_mm = float(self.target_muscle_mass)
+            
+            # Get initial muscle mass measurement
+            earliest_mm = self.user.progress_analyses.filter(measurement_type='muscle_mass').order_by('measurement_date').first()
+            initial_mm = float(earliest_mm.value) if earliest_mm else current_mm
+            
+            if self.muscle_mass_goal_direction == 'lose':
+                # For muscle mass loss: progress = (initial - current) / (initial - target) * 100
+                if initial_mm > target_mm:
+                    mm_progress = ((initial_mm - current_mm) / (initial_mm - target_mm)) * 100
+                else:
+                    mm_progress = 100 if current_mm <= target_mm else 0
+            elif self.muscle_mass_goal_direction == 'gain':
+                # For muscle mass gain: progress = (current - initial) / (target - initial) * 100
+                if target_mm > initial_mm:
+                    mm_progress = ((current_mm - initial_mm) / (target_mm - initial_mm)) * 100
+                else:
+                    mm_progress = 100 if current_mm >= target_mm else 0
+            else:  # maintain
+                # For maintaining: calculate how close to target
+                tolerance = 1.0  # 1kg tolerance
+                if abs(current_mm - target_mm) <= tolerance:
+                    mm_progress = 100
+                else:
+                    mm_progress = max(0, 100 - (abs(current_mm - target_mm) / tolerance) * 100)
+            
+            progress_data['muscle_mass_progress'] = max(0, min(100, mm_progress))
+        
+        return progress_data
 
+# آنالیز پیشرفت (Progress Analysis) - Main section for tracking measurements
 class ProgressAnalysis(models.Model):
     MEASUREMENT_TYPES = [
         ('weight', 'وزن'),
@@ -284,7 +435,10 @@ class ProgressAnalysis(models.Model):
         ordering = ['-measurement_date']
     
     def __str__(self):
-        return f"{self.get_measurement_type_display()} - {self.user.userprofile.name} - {self.measurement_date}"
+        try:
+            return f"{self.get_measurement_type_display()} - {self.user.userprofile.name} - {self.measurement_date}"
+        except:
+            return f"{self.get_measurement_type_display()} - {self.user.username} - {self.measurement_date}"
 
 class BodyInformationUser(models.Model):
     GENDER_CHOICES = [
@@ -347,9 +501,10 @@ class PaymentCard(models.Model):
     
     def get_formatted_card_number(self):
         """Return complete formatted card number like: 1234-5678-9012-3456"""
-        if len(self.card_number) == 16:
-            return f"{self.card_number[:4]}-{self.card_number[4:8]}-{self.card_number[8:12]}-{self.card_number[12:]}"
-        return self.card_number
+        card_str = str(self.card_number)
+        if len(card_str) == 16:
+            return f"{card_str[:4]}-{card_str[4:8]}-{card_str[8:12]}-{card_str[12:]}"
+        return card_str
     
     def get_price_for_plan_type(self, plan_type):
         """Return price based on plan type"""
@@ -359,3 +514,44 @@ class PaymentCard(models.Model):
             return self.price_diet
         else:
             return self.price_both
+
+# Additional models for Booklet functionality
+class Booklet(models.Model):
+    title = models.CharField(max_length=200, verbose_name='عنوان')
+    price = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='قیمت (تومان)')
+    file = models.FileField(upload_to='booklets/', verbose_name='فایل')
+    description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
+    is_active = models.BooleanField(default=True, verbose_name='فعال')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    
+    class Meta:
+        verbose_name = 'جزوه'
+        verbose_name_plural = 'جزوات'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return self.title
+
+class BookletPayment(models.Model):
+    PAYMENT_STATUS_CHOICES = [
+        ('pending', 'در انتظار تایید'),
+        ('approved', 'تایید شده'),
+        ('rejected', 'رد شده'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='booklet_payments')
+    booklet = models.ForeignKey(Booklet, on_delete=models.CASCADE, related_name='payments')
+    amount = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='مبلغ (تومان)')
+    payment_date = models.DateField(default=timezone.now, verbose_name='تاریخ پرداخت')
+    proof_image = models.ImageField(upload_to='booklet_payment_proofs/', verbose_name='تصویر رسید پرداخت')
+    status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default='pending', verbose_name='وضعیت')
+    admin_note = models.TextField(blank=True, null=True, verbose_name='توضیحات مدیر')
+    card_number = models.CharField(max_length=16, blank=True, null=True, verbose_name='شماره کارت')
+    
+    class Meta:
+        verbose_name = 'پرداخت جزوه'
+        verbose_name_plural = 'پرداخت‌های جزوه'
+        ordering = ['-payment_date']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.booklet.title} - {self.amount} تومان"

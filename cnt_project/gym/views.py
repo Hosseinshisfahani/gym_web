@@ -17,7 +17,7 @@ from .models import (
     Payment, Ticket, TicketResponse, Document, PlanRequest,
     BodyAnalysisReport, MonthlyGoal, ProgressAnalysis, BodyInformationUser, PaymentCard
 )
-from django.db.models import Q, Avg
+from django.db.models import Q, Avg, Sum, Count
 import datetime
 import os
 from django.utils import timezone
@@ -34,6 +34,7 @@ import random
 from django.core.mail import send_mail
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
+from datetime import timedelta
 
 # Home view
 def home(request):
@@ -69,14 +70,11 @@ def login_view(request):
         name = request.POST.get('name')
         password = request.POST.get('password')
         
-        # Try to find the user by their name
+        # Try to find the user by their name in UserProfile
         try:
-            # First, get the profile by name
             profile = UserProfile.objects.get(name=name)
-            # Then, get the user object
-            user = profile.user
-            # Finally, authenticate with username (phone_number) and password
-            authenticated_user = authenticate(request, username=user.username, password=password)
+            # Get the associated User and authenticate with their username (which is now the name)
+            authenticated_user = authenticate(request, username=profile.user.username, password=password)
             
             if authenticated_user is not None:
                 login(request, authenticated_user)
@@ -86,7 +84,7 @@ def login_view(request):
         except UserProfile.DoesNotExist:
             messages.error(request, 'کاربری با این نام یافت نشد.')
         except UserProfile.MultipleObjectsReturned:
-            # In case there are multiple users with the same name
+            # In case there are multiple users with the same name (should not happen with our validation)
             messages.error(request, 'چندین کاربر با این نام وجود دارد. لطفاً با پشتیبانی تماس بگیرید.')
     
     return render(request, 'gym/login.html')
@@ -985,14 +983,146 @@ def payments(request):
     if request.user.is_staff:
         # For admin users, get all payments
         payments = Payment.objects.all().order_by('-payment_date')
+        
+        # Chart data for admin dashboard
+        import json
+        
+        # Get filter parameters
+        chart_period = request.GET.get('chart_period', 'monthly')  # monthly, weekly, yearly
+        chart_type_filter = request.GET.get('chart_type_filter', 'all')  # all, membership, workout_plan, diet_plan, other
+        chart_status_filter = request.GET.get('chart_status_filter', 'approved')  # all, pending, approved, rejected
+        
+        # Base queryset for charts
+        chart_payments = Payment.objects.all()
+        
+        # Apply status filter
+        if chart_status_filter != 'all':
+            chart_payments = chart_payments.filter(status=chart_status_filter)
+        
+        # Apply type filter
+        if chart_type_filter != 'all':
+            chart_payments = chart_payments.filter(payment_type=chart_type_filter)
+        
+        # Prepare chart data based on period
+        chart_data = {}
+        
+        if chart_period == 'monthly':
+            # Last 12 months
+            months_data = []
+            labels = []
+            now = datetime.datetime.now()
+            for i in range(11, -1, -1):
+                month_start = now.replace(day=1) - timedelta(days=30*i)
+                month_end = (month_start.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
+                
+                month_payments = chart_payments.filter(
+                    payment_date__gte=month_start.date(),
+                    payment_date__lte=month_end.date()
+                )
+                
+                total_amount = month_payments.aggregate(total=Sum('amount'))['total'] or 0
+                labels.append(month_start.strftime('%Y/%m'))
+                months_data.append(int(total_amount))
+            
+            chart_data = {
+                'labels': labels,
+                'data': months_data,
+                'label': 'درآمد ماهانه (تومان)'
+            }
+        
+        elif chart_period == 'weekly':
+            # Last 8 weeks
+            weeks_data = []
+            labels = []
+            now = datetime.datetime.now()
+            for i in range(7, -1, -1):
+                week_start = now - timedelta(days=now.weekday() + 7*i)
+                week_end = week_start + timedelta(days=6)
+                
+                week_payments = chart_payments.filter(
+                    payment_date__gte=week_start.date(),
+                    payment_date__lte=week_end.date()
+                )
+                
+                total_amount = week_payments.aggregate(total=Sum('amount'))['total'] or 0
+                labels.append(f"{week_start.strftime('%m/%d')} - {week_end.strftime('%m/%d')}")
+                weeks_data.append(int(total_amount))
+            
+            chart_data = {
+                'labels': labels,
+                'data': weeks_data,
+                'label': 'درآمد هفتگی (تومان)'
+            }
+        
+        elif chart_period == 'yearly':
+            # Last 3 years
+            years_data = []
+            labels = []
+            current_year = datetime.datetime.now().year
+            for year in range(current_year-2, current_year+1):
+                year_payments = chart_payments.filter(payment_date__year=year)
+                total_amount = year_payments.aggregate(total=Sum('amount'))['total'] or 0
+                labels.append(str(year))
+                years_data.append(int(total_amount))
+            
+            chart_data = {
+                'labels': labels,
+                'data': years_data,
+                'label': 'درآمد سالانه (تومان)'
+            }
+        
+        # Payment type breakdown chart (pie chart)
+        type_breakdown = chart_payments.values('payment_type').annotate(
+            total=Sum('amount'),
+            count=Count('id')
+        ).order_by('-total')
+        
+        type_chart_data = {
+            'labels': [dict(Payment.PAYMENT_TYPE_CHOICES)[item['payment_type']] for item in type_breakdown],
+            'data': [int(item['total']) for item in type_breakdown],
+            'counts': [item['count'] for item in type_breakdown]
+        }
+        
+        # Status breakdown chart (pie chart)
+        status_breakdown = Payment.objects.values('status').annotate(
+            total=Sum('amount'),
+            count=Count('id')
+        ).order_by('-total')
+        
+        status_chart_data = {
+            'labels': [dict(Payment.PAYMENT_STATUS_CHOICES)[item['status']] for item in status_breakdown],
+            'data': [int(item['total']) for item in status_breakdown],
+            'counts': [item['count'] for item in status_breakdown]
+        }
+        
+        # Total statistics
+        total_income = chart_payments.aggregate(total=Sum('amount'))['total'] or 0
+        total_count = chart_payments.count()
+        avg_payment = (total_income / total_count) if total_count > 0 else 0
+        
+        context = {
+            'payments': payments,
+            'is_admin': True,
+            'chart_data': json.dumps(chart_data),
+            'type_chart_data': json.dumps(type_chart_data),
+            'status_chart_data': json.dumps(status_chart_data),
+            'chart_period': chart_period,
+            'chart_type_filter': chart_type_filter,
+            'chart_status_filter': chart_status_filter,
+            'total_income': total_income,
+            'total_count': total_count,
+            'avg_payment': avg_payment,
+        }
+        return render(request, 'gym/payments.html', context)
+    
     else:
         # For regular users, get only their payments
         payments = Payment.objects.filter(user=request.user).order_by('-payment_date')
-    
-    return render(request, 'gym/payments.html', {
-        'payments': payments,
-        'is_admin': request.user.is_staff
-    })
+        
+        context = {
+            'payments': payments,
+        }
+        return render(request, 'gym/payments.html', context)
 
 @login_required
 def add_payment(request):
@@ -1326,8 +1456,20 @@ def monthly_goals(request):
                 Q(user__userprofile__name__icontains=search_query)
             )
             
+        # Add current measurements and progress data to each goal
+        goals_with_data = []
+        for goal in goals:
+            current_measurements = goal.get_current_measurements()
+            progress_data = goal.calculate_progress_towards_targets()
+            goals_with_data.append({
+                'goal': goal,
+                'current_measurements': current_measurements,
+                'progress_data': progress_data
+            })
+        
         context = {
             'goals': goals,
+            'goals_with_data': goals_with_data,
             'status': status,
             'user_id': user_id,
             'search_query': search_query,
@@ -1337,24 +1479,24 @@ def monthly_goals(request):
         return render(request, 'gym/admin/monthly_goals.html', context)
     
     else:
-        # For regular users, get only their goals
+        # For regular users, get only their goals (read-only)
         goals = MonthlyGoal.objects.filter(user=request.user).order_by('-start_date')
         
-        if request.method == 'POST':
-            form = MonthlyGoalForm(request.POST)
-            if form.is_valid():
-                goal = form.save(commit=False)
-                goal.user = request.user
-                goal.status = 'not_started'  # Default status for new goals
-                goal.save()
-                messages.success(request, 'هدف ماهانه جدید با موفقیت ثبت شد.')
-                return redirect('gym:monthly_goals')
-        else:
-            form = MonthlyGoalForm()
+        # Add current measurements and progress data for user's goals
+        goals_with_data = []
+        for goal in goals:
+            current_measurements = goal.get_current_measurements()
+            progress_data = goal.calculate_progress_towards_targets()
+            goals_with_data.append({
+                'goal': goal,
+                'current_measurements': current_measurements,
+                'progress_data': progress_data
+            })
         
         context = {
             'goals': goals,
-            'form': form
+            'goals_with_data': goals_with_data,
+            'is_user_view': True
         }
         
         return render(request, 'gym/monthly_goals.html', context)
@@ -1399,63 +1541,228 @@ def monthly_goal_detail(request, goal_id):
     
     return render(request, 'gym/monthly_goal_detail.html', context)
 
+@login_required
+@staff_member_required
+def add_monthly_goal(request):
+    """Admin view to add a new monthly goal for a user"""
+    if request.method == 'POST':
+        form = MonthlyGoalForm(request.POST)
+        if form.is_valid():
+            goal = form.save(commit=False)
+            
+            # Set default title only
+            if not goal.title:
+                goal.title = f"هدف ماهانه {goal.user.userprofile.name or goal.user.username}"
+            
+            goal.save()
+            messages.success(request, f'هدف ماهانه برای {goal.user.userprofile.name or goal.user.username} با موفقیت ایجاد شد.')
+            return redirect('gym:monthly_goals')
+    else:
+        form = MonthlyGoalForm()
+    
+    # Get list of users for the form
+    users = User.objects.exclude(is_staff=True).order_by('username')
+    
+    context = {
+        'form': form,
+        'users': users,
+        'page_title': 'افزودن هدف ماهانه جدید'
+    }
+    return render(request, 'gym/admin/add_monthly_goal.html', context)
+
+@login_required
+@staff_member_required
+def edit_monthly_goal(request, goal_id):
+    """Admin view to edit an existing monthly goal"""
+    goal = get_object_or_404(MonthlyGoal, id=goal_id)
+    
+    if request.method == 'POST':
+        form = MonthlyGoalForm(request.POST, instance=goal)
+        if form.is_valid():
+            goal = form.save()
+            messages.success(request, 'هدف ماهانه با موفقیت به‌روزرسانی شد.')
+            return redirect('gym:monthly_goals')
+    else:
+        form = MonthlyGoalForm(instance=goal)
+    
+    # Get list of users for the form
+    users = User.objects.exclude(is_staff=True).order_by('username')
+    
+    context = {
+        'form': form,
+        'goal': goal,
+        'users': users,
+        'page_title': 'ویرایش هدف ماهانه'
+    }
+    return render(request, 'gym/admin/add_monthly_goal.html', context)
+
+@login_required
+@staff_member_required
+def delete_monthly_goal(request, goal_id):
+    """Admin view to delete a monthly goal"""
+    goal = get_object_or_404(MonthlyGoal, id=goal_id)
+    
+    if request.method == 'POST':
+        user_name = goal.user.userprofile.name or goal.user.username
+        goal_title = goal.title
+        goal.delete()
+        messages.success(request, f'هدف "{goal_title}" برای {user_name} با موفقیت حذف شد.')
+        return redirect('gym:monthly_goals')
+    
+    context = {
+        'goal': goal,
+        'page_title': 'حذف هدف ماهانه'
+    }
+    return render(request, 'gym/admin/delete_monthly_goal.html', context)
+
 # Progress Analysis
 @login_required
 def progress_analysis(request):
-    """View and manage progress measurements for a user or all progress for admin"""
+    """آنالیز پیشرفت - Three-color charts for admin, progress percentage for users"""
     
     if request.user.is_staff:
-        # For admin, get all progress measurements with filters
-        progress_data = ProgressAnalysis.objects.all().order_by('-measurement_date')
+        # Admin View: Three-color line charts showing progress towards monthly goals
+        
+        # Get all users with active monthly goals
+        users_with_goals = User.objects.filter(monthly_goals__isnull=False).distinct()
         
         # Get filter parameters
-        measurement_type = request.GET.get('measurement_type')
         user_id = request.GET.get('user_id')
-        search_query = request.GET.get('search', '')
-        
-        
-        # Apply filters
-        if measurement_type:
-            progress_data = progress_data.filter(measurement_type=measurement_type)
-        
         if user_id:
-            progress_data = progress_data.filter(user_id=user_id)
+            users_with_goals = users_with_goals.filter(id=user_id)
         
-        if search_query:
-            progress_data = progress_data.filter(
-                Q(user__username__icontains=search_query) |
-                Q(user__userprofile__name__icontains=search_query) |
-                Q(notes__icontains=search_query)
-            )
+        # Prepare chart data for each user
+        users_chart_data = []
+        
+        for user in users_with_goals:
+            # Get user's active goals
+            active_goals = MonthlyGoal.objects.filter(
+                user=user,
+                status__in=['not_started', 'in_progress']
+            ).order_by('-start_date')
             
+            if not active_goals.exists():
+                continue
+                
+            # Get progress data for key measurements
+            progress_data = ProgressAnalysis.objects.filter(
+                user=user,
+                measurement_type__in=['weight', 'body_fat', 'muscle_mass']
+            ).order_by('measurement_date')
+            
+            if not progress_data.exists():
+                continue
+            
+            # Calculate progress percentages for latest goal
+            latest_goal = active_goals.first()
+            goal_progress = latest_goal.calculate_progress_towards_targets()
+            current_measurements = latest_goal.get_current_measurements()
+            
+            # Prepare three-color chart data
+            chart_dates = []
+            weight_progress = []
+            body_fat_progress = []
+            muscle_mass_progress = []
+            
+            # Group measurements by date and calculate progress over time
+            measurement_dates = progress_data.values_list('measurement_date', flat=True).distinct().order_by('measurement_date')
+            
+            for date in measurement_dates:
+                chart_dates.append(date.strftime('%Y-%m-%d'))
+                
+                # Get measurements for this date
+                date_measurements = progress_data.filter(measurement_date=date)
+                
+                # Calculate progress percentage for each measurement type on this date
+                weight_entry = date_measurements.filter(measurement_type='weight').first()
+                body_fat_entry = date_measurements.filter(measurement_type='body_fat').first() 
+                muscle_mass_entry = date_measurements.filter(measurement_type='muscle_mass').first()
+                
+                # Weight progress calculation
+                if weight_entry and latest_goal.target_weight:
+                    try:
+                        initial_weight = float(user.userprofile.body_information.weight_kg)
+                    except:
+                        initial_weight = float(progress_data.filter(measurement_type='weight').first().value)
+                    
+                    current_weight = float(weight_entry.value)
+                    target_weight = float(latest_goal.target_weight)
+                    
+                    if initial_weight != target_weight:
+                        progress_pct = ((current_weight - initial_weight) / (target_weight - initial_weight)) * 100
+                        weight_progress.append(max(0, min(100, progress_pct)))
+                    else:
+                        weight_progress.append(100 if current_weight == target_weight else 0)
+                else:
+                    weight_progress.append(0)
+                
+                # Body fat progress calculation  
+                if body_fat_entry and latest_goal.target_body_fat_percentage:
+                    initial_bf = float(progress_data.filter(measurement_type='body_fat').first().value)
+                    current_bf = float(body_fat_entry.value)
+                    target_bf = float(latest_goal.target_body_fat_percentage)
+                    
+                    if initial_bf != target_bf:
+                        progress_pct = ((current_bf - initial_bf) / (target_bf - initial_bf)) * 100
+                        body_fat_progress.append(max(0, min(100, progress_pct)))
+                    else:
+                        body_fat_progress.append(100 if current_bf == target_bf else 0)
+                else:
+                    body_fat_progress.append(0)
+                
+                # Muscle mass progress calculation
+                if muscle_mass_entry and latest_goal.target_muscle_mass:
+                    initial_mm = float(progress_data.filter(measurement_type='muscle_mass').first().value)
+                    current_mm = float(muscle_mass_entry.value)
+                    target_mm = float(latest_goal.target_muscle_mass)
+                    
+                    if initial_mm != target_mm:
+                        progress_pct = ((current_mm - initial_mm) / (target_mm - initial_mm)) * 100
+                        muscle_mass_progress.append(max(0, min(100, progress_pct)))
+                    else:
+                        muscle_mass_progress.append(100 if current_mm == target_mm else 0)
+                else:
+                    muscle_mass_progress.append(0)
+            
+            users_chart_data.append({
+                'user': user,
+                'user_name': user.userprofile.name if hasattr(user, 'userprofile') and user.userprofile.name else user.username,
+                'goal': latest_goal,
+                'chart_data': json.dumps({
+                    'dates': chart_dates,
+                    'weight_progress': weight_progress,
+                    'body_fat_progress': body_fat_progress,
+                    'muscle_mass_progress': muscle_mass_progress,
+                }),
+                'current_measurements': current_measurements,
+                'goal_progress': goal_progress
+            })
+        
+        # Get all users for filter dropdown
+        all_users = User.objects.filter(monthly_goals__isnull=False).distinct()
+        
         context = {
-            'progress_data': progress_data,
-            'measurement_type': measurement_type,
-            'user_id': user_id,
-            'search_query': search_query,
+            'users_chart_data': users_chart_data,
+            'all_users': all_users,
+            'selected_user_id': int(user_id) if user_id else None,
             'is_admin': True
         }
         
         return render(request, 'gym/admin/progress_analysis.html', context)
     
     else:
-        # For regular users, get only their progress data
-        progress_data = ProgressAnalysis.objects.filter(user=request.user).order_by('-measurement_date')
+        # User View: Personal progress percentage charts comparing to their goals
         
-        # Group data by measurement type for charts
-        chart_data = {}
-        measurement_types = ProgressAnalysis.MEASUREMENT_TYPES
+        # Get user's goals
+        user_goals = MonthlyGoal.objects.filter(user=request.user).order_by('-start_date')
         
-        for m_type, m_label in measurement_types:
-            type_data = progress_data.filter(measurement_type=m_type).order_by('measurement_date')
-            if type_data.exists():
-                chart_data[m_type] = {
-                    'label': m_label,
-                    'dates': [entry.measurement_date.strftime('%Y-%m-%d') for entry in type_data],
-                    'values': [float(entry.value) for entry in type_data],
-                    'unit': type_data.first().unit
-                }
+        # Get user's progress data
+        progress_data = ProgressAnalysis.objects.filter(
+            user=request.user,
+            measurement_type__in=['weight', 'body_fat', 'muscle_mass']
+        ).order_by('measurement_date')
         
+        # Handle new measurement form
         if request.method == 'POST':
             form = ProgressAnalysisForm(request.POST)
             if form.is_valid():
@@ -1467,10 +1774,95 @@ def progress_analysis(request):
         else:
             form = ProgressAnalysisForm()
         
+        # Prepare progress percentage chart data
+        chart_data = {
+            'dates': [],
+            'weight_progress': [],
+            'body_fat_progress': [],
+            'muscle_mass_progress': []
+        }
+        
+        goals_info = []
+        
+        if user_goals.exists() and progress_data.exists():
+            # Get latest goal for calculations
+            latest_goal = user_goals.first()
+            
+            # Get unique measurement dates
+            measurement_dates = progress_data.values_list('measurement_date', flat=True).distinct().order_by('measurement_date')
+            
+            for date in measurement_dates:
+                chart_data['dates'].append(date.strftime('%Y-%m-%d'))
+                
+                # Get measurements for this date
+                date_measurements = progress_data.filter(measurement_date=date)
+                
+                # Calculate progress percentages (same logic as admin view)
+                # Weight progress
+                weight_entry = date_measurements.filter(measurement_type='weight').first()
+                if weight_entry and latest_goal.target_weight:
+                    try:
+                        initial_weight = float(request.user.userprofile.body_information.weight_kg)
+                    except:
+                        initial_weight = float(progress_data.filter(measurement_type='weight').first().value)
+                    
+                    current_weight = float(weight_entry.value)
+                    target_weight = float(latest_goal.target_weight)
+                    
+                    if initial_weight != target_weight:
+                        progress_pct = ((current_weight - initial_weight) / (target_weight - initial_weight)) * 100
+                        chart_data['weight_progress'].append(max(0, min(100, progress_pct)))
+                    else:
+                        chart_data['weight_progress'].append(100 if current_weight == target_weight else 0)
+                else:
+                    chart_data['weight_progress'].append(0)
+                
+                # Body fat progress
+                body_fat_entry = date_measurements.filter(measurement_type='body_fat').first()
+                if body_fat_entry and latest_goal.target_body_fat_percentage:
+                    initial_bf = float(progress_data.filter(measurement_type='body_fat').first().value)
+                    current_bf = float(body_fat_entry.value)
+                    target_bf = float(latest_goal.target_body_fat_percentage)
+                    
+                    if initial_bf != target_bf:
+                        progress_pct = ((current_bf - initial_bf) / (target_bf - initial_bf)) * 100
+                        chart_data['body_fat_progress'].append(max(0, min(100, progress_pct)))
+                    else:
+                        chart_data['body_fat_progress'].append(100 if current_bf == target_bf else 0)
+                else:
+                    chart_data['body_fat_progress'].append(0)
+                
+                # Muscle mass progress
+                muscle_mass_entry = date_measurements.filter(measurement_type='muscle_mass').first()
+                if muscle_mass_entry and latest_goal.target_muscle_mass:
+                    initial_mm = float(progress_data.filter(measurement_type='muscle_mass').first().value)
+                    current_mm = float(muscle_mass_entry.value)
+                    target_mm = float(latest_goal.target_muscle_mass)
+                    
+                    if initial_mm != target_mm:
+                        progress_pct = ((current_mm - initial_mm) / (target_mm - initial_mm)) * 100
+                        chart_data['muscle_mass_progress'].append(max(0, min(100, progress_pct)))
+                    else:
+                        chart_data['muscle_mass_progress'].append(100 if current_mm == target_mm else 0)
+                else:
+                    chart_data['muscle_mass_progress'].append(0)
+            
+            # Prepare goals info for display
+            for goal in user_goals[:3]:  # Show last 3 goals
+                goal_info = {
+                    'goal': goal,
+                    'current_measurements': goal.get_current_measurements(),
+                    'progress_data': goal.calculate_progress_towards_targets()
+                }
+                goals_info.append(goal_info)
+        
         context = {
-            'progress_data': progress_data,
             'chart_data': json.dumps(chart_data),
-            'form': form
+            'goals_info': goals_info,
+            'progress_data': progress_data,
+            'form': form,
+            'has_goals': user_goals.exists(),
+            'has_measurements': progress_data.exists()
         }
         
         return render(request, 'gym/progress_analysis.html', context)
@@ -1571,7 +1963,7 @@ def plan_request_flow(request, step=None):
                     'description': description,
                     'current_step': 'body_info'
                 }
-                messages.success(request, 'درخواست شما ثبت شد. لطفاً مراحل بعدی را تکمیل کنید.')
+                # Don't show success message here as user hasn't completed the process yet
                 return redirect('gym:plan_request_flow', step='body_info')
             else:
                 messages.error(request, 'لطفاً تمام فیلدهای مورد نیاز را پر کنید.')
@@ -1602,7 +1994,7 @@ def plan_request_flow(request, step=None):
             del request.session['pending_plan_request']
         
         # Add a final success message and redirect to profile
-        messages.success(request, 'درخواست شما با موفقیت ثبت شد! شما به صفحه پروفایل منتقل شدید.')
+        messages.success(request, 'درخواست شما با موفقیت ثبت شد! پس از بررسی پرداخت توسط ادمین، وضعیت درخواست شما به‌روزرسانی خواهد شد.')
         return redirect('gym:profile')
     
     # Get plan data from session (only for steps that need it)

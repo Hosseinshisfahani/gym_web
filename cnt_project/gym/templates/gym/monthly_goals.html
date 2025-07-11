@@ -1,101 +1,155 @@
 {% extends 'gym/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
-{% block title %}اهداف ماهانه - پلتفرم جامع ورزشی{% endblock %}
+{% block title %}
+{% if is_user_view %}
+اهداف ماهانه - پلتفرم جامع ورزشی
+{% else %}
+مدیریت اهداف ماهانه - پلتفرم جامع ورزشی
+{% endif %}
+{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <div class="row">
-        <div class="col-md-4">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">ثبت هدف جدید</h5>
-                </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="mb-3">
-                            <label for="id_title" class="form-label">عنوان هدف</label>
-                            <input type="text" class="form-control" id="id_title" name="title" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="id_description" class="form-label">توضیحات</label>
-                            {{ form.description }}
-                        </div>
-                        <div class="mb-3">
-                            <label for="id_start_date" class="form-label">تاریخ شروع</label>
-                            {{ form.start_date }}
-                        </div>
-                        <div class="mb-3">
-                            <label for="id_end_date" class="form-label">تاریخ پایان</label>
-                            {{ form.end_date }}
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">ثبت هدف</button>
-                    </form>
-                </div>
-            </div>
+    {% if is_user_view %}
+    <!-- User View: Shows goals set by trainer directly -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="mb-0"><i class="fas fa-bullseye me-2"></i>اهداف ماهانه</h2>
+            <p class="text-muted">این اهداف توسط مربی شما تعیین شده‌اند. شما می‌توانید پیشرفت خود را به‌روزرسانی کنید.</p>
         </div>
-        
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">اهداف ماهانه شما</h5>
-                </div>
-                <div class="card-body">
-                    {% if goals %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>عنوان</th>
-                                    <th>بازه زمانی</th>
-                                    <th>وضعیت</th>
-                                    <th>پیشرفت</th>
-                                    <th>عملیات</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for goal in goals %}
-                                <tr>
-                                    <td>{{ goal.title }}</td>
-                                    <td>{{ goal.start_date|date:"Y/m/d" }} تا {{ goal.end_date|date:"Y/m/d" }}</td>
-                                    <td>
-                                        {% if goal.status == 'not_started' %}
-                                            <span class="badge bg-secondary">شروع نشده</span>
-                                        {% elif goal.status == 'in_progress' %}
-                                            <span class="badge bg-primary">در حال انجام</span>
-                                        {% elif goal.status == 'completed' %}
-                                            <span class="badge bg-success">تکمیل شده</span>
-                                        {% else %}
-                                            <span class="badge bg-danger">ناموفق</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div class="progress" style="height: 20px;">
-                                            <div class="progress-bar {{ goal.progress|yesno:'bg-success,bg-warning' }}" 
-                                                 role="progressbar" 
-                                                 style="width: {{ goal.progress }}%;" 
-                                                 aria-valuenow="{{ goal.progress }}" 
-                                                 aria-valuemin="0" 
-                                                 aria-valuemax="100">{{ goal.progress }}%</div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <a href="{% url 'gym:monthly_goal_detail' goal.id %}" class="btn btn-sm btn-primary">مشاهده / ویرایش</a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+        <div class="col-auto">
+            <a href="{% url 'gym:profile' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-right me-2"></i>بازگشت به پروفایل
+            </a>
+        </div>
+    </div>
+
+    {% if goals %}
+        {% for goal_data in goals_with_data %}
+        {% with goal=goal_data.goal current_measurements=goal_data.current_measurements progress_data=goal_data.progress_data %}
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">{{ goal.title }}</h5>
+                <div>
+                    {% if goal.status == 'not_started' %}
+                        <span class="badge bg-secondary"><i class="fas fa-pause me-1"></i>شروع نشده</span>
+                    {% elif goal.status == 'in_progress' %}
+                        <span class="badge bg-light text-primary"><i class="fas fa-play me-1"></i>در حال انجام</span>
+                    {% elif goal.status == 'completed' %}
+                        <span class="badge bg-success"><i class="fas fa-check me-1"></i>تکمیل شده</span>
                     {% else %}
-                    <div class="alert alert-info">
-                        هنوز هیچ هدفی ثبت نکرده‌اید. می‌توانید از فرم سمت راست استفاده کنید تا اولین هدف ماهانه خود را ثبت کنید.
-                    </div>
+                        <span class="badge bg-danger"><i class="fas fa-times me-1"></i>ناموفق</span>
                     {% endif %}
                 </div>
             </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="mb-3">
+                            <strong><i class="fas fa-calendar me-1"></i>بازه زمانی:</strong>
+                            {{ goal.start_date|persian_date:"Y/m/d" }} تا {{ goal.end_date|persian_date:"Y/m/d" }}
+                        </div>
+                        
+                        {% if goal.target_weight or goal.target_body_fat_percentage or goal.target_muscle_mass %}
+                        <div class="mb-3">
+                            <strong><i class="fas fa-crosshairs me-1"></i>اهداف اندازه‌گیری:</strong>
+                            <div class="mt-2">
+                                {% if goal.target_weight %}<span class="badge bg-primary text-white me-1">وزن: {{ goal.target_weight }}kg</span>{% endif %}
+                                {% if goal.target_body_fat_percentage %}<span class="badge bg-warning text-dark me-1">چربی: {{ goal.target_body_fat_percentage }}%</span>{% endif %}
+                                {% if goal.target_muscle_mass %}<span class="badge bg-success text-white me-1">عضله: {{ goal.target_muscle_mass }}kg</span>{% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if current_measurements %}
+                        <div class="mb-3">
+                            <strong><i class="fas fa-chart-line me-1"></i>اندازه‌گیری‌های فعلی:</strong>
+                            <div class="mt-2">
+                                {% if current_measurements.current_weight %}<span class="badge bg-primary text-white me-1">وزن: {{ current_measurements.current_weight }}kg</span>{% endif %}
+                                {% if current_measurements.current_body_fat %}<span class="badge bg-warning text-dark me-1">چربی: {{ current_measurements.current_body_fat }}%</span>{% endif %}
+                                {% if current_measurements.current_muscle_mass %}<span class="badge bg-success text-white me-1">عضله: {{ current_measurements.current_muscle_mass }}kg</span>{% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if goal.coach_notes %}
+                        <div class="mb-3">
+                            <strong><i class="fas fa-comment me-1"></i>یادداشت مربی:</strong>
+                            <p class="mt-2 text-muted">{{ goal.coach_notes }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <h6>پیشرفت کلی</h6>
+                            <div class="progress mb-3" style="height: 25px;">
+                                <div class="progress-bar {% if goal.progress >= 100 %}bg-success{% elif goal.progress >= 50 %}bg-info{% else %}bg-warning{% endif %}" 
+                                     role="progressbar" 
+                                     style="width: {{ goal.progress }}%;" 
+                                     aria-valuenow="{{ goal.progress }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">{{ goal.progress }}%</div>
+                            </div>
+                            <a href="{% url 'gym:monthly_goal_detail' goal.id %}" class="btn btn-primary">
+                                <i class="fas fa-edit me-2"></i>به‌روزرسانی پیشرفت
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            هنوز هیچ هدفی توسط مربی شما تعیین نشده است. برای دریافت اهداف، با مربی خود تماس بگیرید.
+        </div>
+    {% endif %}
+    
+    <!-- Quick link to body measurements -->
+    <div class="card mt-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>آنالیز پیشرفت - ثبت اندازه‌گیری</h5>
+        </div>
+        <div class="card-body">
+            <p class="mb-3">برای رسیدن به اهداف خود، اندازه‌گیری‌های بدنی خود را منظم ثبت کنید:</p>
+            <div class="row text-center">
+                <div class="col-md-4 mb-3">
+                    <div class="p-3 bg-light rounded">
+                        <i class="fas fa-weight fa-2x text-primary mb-2"></i>
+                        <h6>وزن</h6>
+                        <small class="text-muted">کیلوگرم</small>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="p-3 bg-light rounded">
+                        <i class="fas fa-percentage fa-2x text-warning mb-2"></i>
+                        <h6>درصد چربی</h6>
+                        <small class="text-muted">درصد</small>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="p-3 bg-light rounded">
+                        <i class="fas fa-dumbbell fa-2x text-success mb-2"></i>
+                        <h6>توده عضلانی</h6>
+                        <small class="text-muted">کیلوگرم</small>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center">
+                <a href="{% url 'gym:progress_analysis' %}" class="btn btn-success">
+                    <i class="fas fa-plus me-2"></i>ثبت اندازه‌گیری جدید
+                </a>
+            </div>
         </div>
     </div>
+    
+    {% else %}
+    <!-- Admin View: Shows all goals with management functions -->
+    {% include 'gym/admin/monthly_goals.html' %}
+    {% endif %}
 </div>
 {% endblock %} 

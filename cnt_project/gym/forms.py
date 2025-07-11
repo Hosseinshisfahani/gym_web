@@ -11,7 +11,7 @@ class UserRegistrationForm(UserCreationForm):
     name = forms.CharField(
         max_length=200, 
         required=True, 
-        label='نام',
+        label='نام و نام خانوادگی',
         error_messages={
             'required': 'لطفا نام خود را وارد کنید.'
         }
@@ -26,7 +26,7 @@ class UserRegistrationForm(UserCreationForm):
         }
     )
     password1 = forms.CharField(
-        widget=forms.PasswordInput(),
+        widget=forms.PasswordInput(attrs={'placeholder': 'رمز عبور شما'}),
         label='رمز عبور',
         required=True,
         help_text='رمز عبور شما باید حداقل ۸ کاراکتر داشته باشد و نمی‌تواند کاملاً عددی یا شبیه اطلاعات شخصی شما باشد.',
@@ -35,7 +35,7 @@ class UserRegistrationForm(UserCreationForm):
         }
     )
     password2 = forms.CharField(
-        widget=forms.PasswordInput(),
+        widget=forms.PasswordInput(attrs={'placeholder': 'تکرار رمز عبور'}),
         label='تکرار رمز عبور',
         required=True,
         help_text='رمز عبور مشابه بالا را وارد کنید.',
@@ -48,20 +48,16 @@ class UserRegistrationForm(UserCreationForm):
         model = User
         fields = ['name', 'phone_number', 'password1', 'password2']
     
-    def clean_phone_number(self):
-        phone_number = self.cleaned_data.get('phone_number')
-        if not phone_number.isdigit():
-            raise forms.ValidationError('شماره تلفن باید فقط شامل اعداد باشد.')
-        # Check for non-English characters in phone number
-        import re
-        if not re.match(r'^[0-9]+$', phone_number):
-            raise forms.ValidationError('زبان کیبورد شما باید انگلیسی باشد')
-        if User.objects.filter(username=phone_number).exists():
-            raise forms.ValidationError('این شماره تلفن قبلا ثبت شده است.')
-        return phone_number
-    
     def clean_name(self):
         name = self.cleaned_data.get('name')
+        if not name:
+            raise forms.ValidationError('لطفا نام خود را وارد کنید.')
+            
+        # Check if this name is already used by another user
+        from .models import UserProfile
+        if UserProfile.objects.filter(name=name).exists():
+            raise forms.ValidationError('این نام قبلاً استفاده شده است. لطفاً نام دیگری انتخاب کنید.')
+        
         import re
         # Allow English letters, numbers, spaces, and common symbols
         if not re.match(r'^[A-Za-z0-9\s\.\-\_]+$', name):
@@ -71,6 +67,25 @@ class UserRegistrationForm(UserCreationForm):
         if re.search(persian_pattern, name):
             raise forms.ValidationError('لطفاً از حروف انگلیسی استفاده کنید')
         return name
+    
+    def clean_phone_number(self):
+        phone_number = self.cleaned_data.get('phone_number')
+        if not phone_number:
+            raise forms.ValidationError('لطفا شماره تلفن خود را وارد کنید.')
+            
+        if not phone_number.isdigit():
+            raise forms.ValidationError('شماره تلفن باید فقط شامل اعداد باشد.')
+        # Check for non-English characters in phone number
+        import re
+        if not re.match(r'^[0-9]+$', phone_number):
+            raise forms.ValidationError('زبان کیبورد شما باید انگلیسی باشد')
+        # Check if phone number is already used by another user - import here to avoid circular import
+        from .models import UserProfile
+        if UserProfile.objects.filter(phone_number=phone_number).exists():
+            raise forms.ValidationError('این شماره تلفن قبلا ثبت شده است.')
+        return phone_number
+    
+
     
     def clean_password1(self):
         password1 = self.cleaned_data.get('password1')
@@ -101,7 +116,7 @@ class UserRegistrationForm(UserCreationForm):
     
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.username = self.cleaned_data['phone_number']  # Set username to phone_number
+        user.username = self.cleaned_data['name']  # Set username to name instead of phone number
         
         if commit:
             user.save()
@@ -237,12 +252,57 @@ class BodyAnalysisResponseForm(forms.ModelForm):
 class MonthlyGoalForm(forms.ModelForm):
     class Meta:
         model = MonthlyGoal
-        fields = ['title', 'description', 'start_date', 'end_date']
+        fields = [
+            'user', 'start_date', 'end_date', 'status', 
+            'target_weight', 'weight_goal_direction',
+            'target_body_fat_percentage', 'body_fat_goal_direction',
+            'target_muscle_mass', 'muscle_mass_goal_direction',
+            'coach_notes'
+        ]
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date'}),
             'end_date': forms.DateInput(attrs={'type': 'date'}),
-            'description': forms.Textarea(attrs={'rows': 3, 'placeholder': 'جزئیات هدف خود را وارد کنید...'}),
+            'coach_notes': forms.Textarea(attrs={'rows': 3, 'placeholder': 'توصیه‌ها، راهنمایی‌ها و نکات مربی...'}),
+            'target_weight': forms.NumberInput(attrs={'min': 30, 'max': 200, 'step': 0.1, 'placeholder': 'مثال: 70.5'}),
+            'target_body_fat_percentage': forms.NumberInput(attrs={'min': 5, 'max': 50, 'step': 0.1, 'placeholder': 'مثال: 15.5'}),
+            'target_muscle_mass': forms.NumberInput(attrs={'min': 20, 'max': 100, 'step': 0.1, 'placeholder': 'مثال: 45.2'}),
+            'weight_goal_direction': forms.Select(attrs={'class': 'form-select'}),
+            'body_fat_goal_direction': forms.Select(attrs={'class': 'form-select'}),
+            'muscle_mass_goal_direction': forms.Select(attrs={'class': 'form-select'}),
         }
+        labels = {
+            'user': 'انتخاب کاربر',
+            'start_date': 'تاریخ شروع',
+            'end_date': 'تاریخ پایان',
+            'status': 'وضعیت',
+            'target_weight': 'هدف وزن (کیلوگرم)',
+            'weight_goal_direction': 'نوع هدف وزن',
+            'target_body_fat_percentage': 'هدف درصد چربی بدن (%)',
+            'body_fat_goal_direction': 'نوع هدف چربی',
+            'target_muscle_mass': 'هدف توده عضلانی (کیلوگرم)',
+            'muscle_mass_goal_direction': 'نوع هدف عضله',
+            'coach_notes': 'یادداشت مربی',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Filter users to show only non-staff users with their names
+        from django.contrib.auth.models import User
+        user_choices = []
+        users = User.objects.exclude(is_staff=True).select_related('userprofile').order_by('username')
+        for user in users:
+            try:
+                name = user.userprofile.name if user.userprofile.name else user.username
+                user_choices.append((user.id, f"{name} ({user.username})"))
+            except:
+                user_choices.append((user.id, user.username))
+        
+        self.fields['user'].choices = user_choices
+        self.fields['user'].widget.attrs.update({'class': 'form-select'})
+        
+        # Set default values for new goals
+        if not self.instance.pk:
+            self.fields['status'].initial = 'not_started'
 
 class MonthlyGoalUpdateForm(forms.ModelForm):
     class Meta:

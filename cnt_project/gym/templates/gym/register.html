@@ -23,13 +23,13 @@
                         <label for="id_name" class="form-label">نام و نام خانوادگی</label>
                         {{ form.name.errors }}
                         {{ form.name|add_class:"form-control" }}
+                        <small class="form-text text-muted">از این نام برای ورود به سیستم استفاده خواهد شد.</small>
                     </div>
                     
                     <div class="mb-3">
                         <label for="id_phone_number" class="form-label">شماره تلفن</label>
                         {{ form.phone_number.errors }}
                         {{ form.phone_number|add_class:"form-control" }}
-                        <small class="form-text text-muted">از این شماره برای ورود به سیستم استفاده خواهد شد.</small>
                     </div>
                     
                     <div class="mb-3">
@@ -72,10 +72,27 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="p-3">
-                    <p class="lead">توافقنامه کاربر:</p>
-                    <p>این سامانه به صورت خصوصی و بدون تعلق به هرگونه نهاد حقوقی و حقیقی میباشد و تمام مفاد اعم ازمادی و معنوی سامانه در قالب آموزش و ورزش با توافق کاربر میباشد.</p>
-                    <p>این سامانه هیچ گونه مسئولیتی در قبال خدمات ارائه شده در اماکن غیر ندارد.</p>
+                <div class="p-3" style="background-color: #f8f9fa; border-radius: 8px;">
+                    <h5 class="text-primary mb-3">توافقنامه کاربر</h5>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-secondary">1. درباره سامانه:</h6>
+                        <p class="text-dark">این سامانه به صورت خصوصی و بدون تعلق به هرگونه نهاد حقوقی و حقیقی میباشد و تمام مفاد اعم از مادی و معنوی سامانه در قالب آموزش و ورزش با توافق کاربر میباشد.</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-secondary">2. مسئولیت‌ها:</h6>
+                        <p class="text-dark">این سامانه هیچ گونه مسئولیتی در قبال خدمات ارائه شده در اماکن غیر ندارد.</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6 class="text-secondary">3. حریم خصوصی:</h6>
+                        <p class="text-dark">اطلاعات شخصی شما محفوظ خواهد ماند و صرفاً برای ارائه خدمات مورد استفاده قرار می‌گیرد.</p>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <small><strong>توجه:</strong> با ثبت‌نام در این سامانه، شما موافقت خود را با تمام شرایط فوق اعلام می‌نمایید.</small>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -150,6 +167,24 @@
         border-color: #333 !important;
     }
     
+    /* Make form help text visible and readable */
+    .form-text, .text-muted {
+        color: #6c757d !important;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+        font-weight: 500;
+    }
+    
+    /* Ensure help text is visible in dark backgrounds */
+    .form-text.text-muted, small.form-text {
+        color: #868e96 !important;
+        background-color: rgba(255, 255, 255, 0.1);
+        padding: 2px 6px;
+        border-radius: 4px;
+        display: inline-block;
+        margin-top: 4px;
+    }
+    
     .modal-content {
         border: none;
         border-radius: 8px;
@@ -161,16 +196,32 @@
     
     .modal-body {
         color: #222 !important;
+        background-color: #fff !important;
     }
     
     .modal-body p {
         color: #333 !important;
         margin-bottom: 1rem;
+        line-height: 1.6;
     }
     
     .modal-body .lead {
         color: #000 !important;
         font-weight: 600;
+    }
+    
+    .modal-content {
+        background-color: #fff !important;
+    }
+    
+    .modal-body .p-3 {
+        background-color: #fff !important;
+    }
+    
+    .modal-body .p-3 p {
+        color: #444 !important;
+        font-size: 0.95rem;
+        text-align: justify;
     }
 </style>
 {% endblock %}

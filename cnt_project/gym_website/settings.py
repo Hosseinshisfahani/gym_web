@@ -82,7 +82,8 @@ WSGI_APPLICATION = 'gym_website.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
+# PostgreSQL configuration (for production)
+DATABASES_POSTGRESQL = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'gymdb',
@@ -98,31 +99,19 @@ DATABASES = {
     }
 }
 
+# SQLite configuration (for development)
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-        'OPTIONS': {
-            'user_attributes': ('username', 'first_name', 'last_name', 'email'),
-            'max_similarity': 0.7,
-        }
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-        'OPTIONS': {
-            'min_length': 8,
-        }
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
+AUTH_PASSWORD_VALIDATORS = []
 
 # Persian password validation error messages
 AUTH_PASSWORD_VALIDATORS_HELP_TEXTS = [
@@ -136,9 +125,9 @@ AUTH_PASSWORD_VALIDATORS_HELP_TEXTS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'fa'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Tehran'
 
 USE_I18N = True
 

@@ -1,13 +1,143 @@
 {% extends 'gym/base.html' %}
+{% load custom_filters %}
 {% load static %}
 
 {% block title %}پرداخت‌ها - پلتفرم جامع آموزشی{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
+    {% if is_admin %}
+    <!-- Admin Income Dashboard Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header text-white" style="background-color: var(--secondary-color);">
+                    <h3 class="mb-0"><i class="fas fa-chart-line me-2"></i>داشبورد درآمد وب‌سایت</h3>
+                </div>
+                <div class="card-body bg-light">
+                    <!-- Filter Controls -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <label for="chartPeriod" class="form-label text-dark">بازه زمانی:</label>
+                            <select id="chartPeriod" class="form-select">
+                                <option value="monthly" {% if chart_period == 'monthly' %}selected{% endif %}>ماهانه</option>
+                                <option value="weekly" {% if chart_period == 'weekly' %}selected{% endif %}>هفتگی</option>
+                                <option value="yearly" {% if chart_period == 'yearly' %}selected{% endif %}>سالانه</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="chartTypeFilter" class="form-label text-dark">نوع پرداخت:</label>
+                            <select id="chartTypeFilter" class="form-select">
+                                <option value="all" {% if chart_type_filter == 'all' %}selected{% endif %}>همه</option>
+                                <option value="membership" {% if chart_type_filter == 'membership' %}selected{% endif %}>حق عضویت</option>
+                                <option value="workout_plan" {% if chart_type_filter == 'workout_plan' %}selected{% endif %}>برنامه تمرینی</option>
+                                <option value="diet_plan" {% if chart_type_filter == 'diet_plan' %}selected{% endif %}>برنامه غذایی</option>
+                                <option value="other" {% if chart_type_filter == 'other' %}selected{% endif %}>سایر</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="chartStatusFilter" class="form-label text-dark">وضعیت پرداخت:</label>
+                            <select id="chartStatusFilter" class="form-select">
+                                <option value="approved" {% if chart_status_filter == 'approved' %}selected{% endif %}>تایید شده</option>
+                                <option value="all" {% if chart_status_filter == 'all' %}selected{% endif %}>همه</option>
+                                <option value="pending" {% if chart_status_filter == 'pending' %}selected{% endif %}>در انتظار</option>
+                                <option value="rejected" {% if chart_status_filter == 'rejected' %}selected{% endif %}>رد شده</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Statistics Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h4 class="card-title">{{ total_income|format_price }}</h4>
+                                    <p class="card-text">کل درآمد (تومان)</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h4 class="card-title">{{ total_count }}</h4>
+                                    <p class="card-text">تعداد پرداخت‌ها</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body text-center">
+                                    <h4 class="card-title">{{ avg_payment|floatformat:0|format_price }}</h4>
+                                    <p class="card-text">میانگین پرداخت (تومان)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts -->
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0 text-dark">نمودار درآمد بر اساس زمان</h5>
+                                </div>
+                                <div class="card-body bg-white">
+                                    <canvas id="incomeChart" width="400" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0 text-dark">تقسیم‌بندی نوع پرداخت</h5>
+                                </div>
+                                <div class="card-body bg-white">
+                                    <canvas id="typeChart" width="300" height="300"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-lg-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0 text-dark">وضعیت پرداخت‌ها</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="statusChart" width="300" height="300"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0 text-dark">عملیات سریع</h5>
+                                </div>
+                                <div class="card-body text-dark">
+                                    <button class="btn btn-primary btn-sm mb-2" onclick="updateCharts()">
+                                        <i class="fas fa-sync-alt"></i> بروزرسانی نمودارها
+                                    </button>
+                                    <br>
+                                    <button class="btn btn-outline-success btn-sm mb-2" onclick="exportData()">
+                                        <i class="fas fa-download"></i> صادرات داده‌ها
+                                    </button>
+                                    <br>
+                                    <small class="text-muted">آخرین بروزرسانی: {{ "now"|date:"Y/m/d H:i" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Payments Table Section -->
     <div class="card">
         <div class="card-header text-white d-flex justify-content-between align-items-center" style="background-color: var(--secondary-color);">
-            <h3 class="mb-0">پرداخت‌ها</h3>
+            <h3 class="mb-0">{% if is_admin %}همه پرداخت‌ها{% else %}پرداخت‌ها{% endif %}</h3>
             <a href="{% url 'gym:profile' %}" class="btn btn-light">
                 <i class="fas fa-arrow-right"></i> بازگشت به داشبورد
             </a>
@@ -31,6 +161,7 @@
                             <th>کاربر</th>
                             {% endif %}
                             <th>مبلغ</th>
+                            <th>نوع</th>
                             <th>توضیحات</th>
                             <th>وضعیت</th>
                             <th>رسید</th>
@@ -39,26 +170,21 @@
                     <tbody>
                         {% for payment in payments %}
                         <tr>
-                            <td>{{ payment.date|date:"Y/m/d" }}</td>
+                            <td>{{ payment.payment_date|date:"Y/m/d" }}</td>
                             {% if is_admin %}
-                            <td>{{ payment.user }}</td>
+                            <td>{{ payment.user.userprofile.name|default:payment.user.username }}</td>
                             {% endif %}
-                            <td>{{ payment.amount }} تومان</td>
-                            <td>{{ payment.description }}</td>
+                            <td>{{ payment.amount|format_price }} تومان</td>
+                            <td>{{ payment.get_payment_type_display }}</td>
+                            <td>{{ payment.description|default:"---" }}</td>
                             <td>
                                 <span class="badge {% if payment.status == 'approved' %}bg-success{% elif payment.status == 'rejected' %}bg-danger{% else %}bg-warning{% endif %}">
-                                    {% if payment.status == 'approved' %}
-                                        تایید شده
-                                    {% elif payment.status == 'rejected' %}
-                                        رد شده
-                                    {% else %}
-                                        در انتظار تایید
-                                    {% endif %}
+                                    {{ payment.get_status_display }}
                                 </span>
                             </td>
                             <td>
-                                {% if payment.receipt %}
-                                    <a href="{{ payment.receipt.url }}" target="_blank" class="btn btn-sm btn-info">
+                                {% if payment.proof_image %}
+                                    <a href="{{ payment.proof_image.url }}" target="_blank" class="btn btn-sm btn-info">
                                         <i class="fas fa-eye"></i> مشاهده
                                     </a>
                                 {% else %}
@@ -68,7 +194,7 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="{% if is_admin %}6{% else %}5{% endif %}" class="text-center">هیچ پرداختی ثبت نشده است.</td>
+                            <td colspan="{% if is_admin %}7{% else %}6{% endif %}" class="text-center">هیچ پرداختی ثبت نشده است.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -77,4 +203,200 @@
         </div>
     </div>
 </div>
+
+{% if is_admin %}
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Chart data from Django
+    const chartData = {{ chart_data|safe }};
+    const typeChartData = {{ type_chart_data|safe }};
+    const statusChartData = {{ status_chart_data|safe }};
+    
+    // Function to format numbers with Persian separators
+    function formatPrice(value) {
+        return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "/");
+    }
+    
+    // Income Chart (Line Chart)
+    const incomeCtx = document.getElementById('incomeChart').getContext('2d');
+    const incomeChart = new Chart(incomeCtx, {
+        type: 'line',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                label: chartData.label,
+                data: chartData.data,
+                borderColor: '#ff0000',
+                backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return formatPrice(value) + ' تومان';
+                        }
+                    }
+                }
+            },
+            elements: {
+                point: {
+                    radius: 6,
+                    hoverRadius: 8
+                }
+            }
+        }
+    });
+    
+    // Payment Type Chart (Pie Chart)
+    const typeCtx = document.getElementById('typeChart').getContext('2d');
+    const typeChart = new Chart(typeCtx, {
+        type: 'pie',
+        data: {
+            labels: typeChartData.labels,
+            datasets: [{
+                data: typeChartData.data,
+                backgroundColor: [
+                    '#ff0000',
+                    '#ff5555', 
+                    '#cc0000',
+                    '#ff8888',
+                    '#990000'
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = formatPrice(context.parsed);
+                            const count = typeChartData.counts[context.dataIndex];
+                            return label + ': ' + value + ' تومان (' + count + ' پرداخت)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Payment Status Chart (Doughnut Chart)
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    const statusChart = new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: statusChartData.labels,
+            datasets: [{
+                data: statusChartData.data,
+                backgroundColor: [
+                    '#28a745',  // Green for approved
+                    '#ffc107',  // Yellow for pending
+                    '#dc3545'   // Red for rejected
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = formatPrice(context.parsed);
+                            const count = statusChartData.counts[context.dataIndex];
+                            return label + ': ' + value + ' تومان (' + count + ' پرداخت)';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Filter change handlers
+    function updateCharts() {
+        const period = document.getElementById('chartPeriod').value;
+        const typeFilter = document.getElementById('chartTypeFilter').value;
+        const statusFilter = document.getElementById('chartStatusFilter').value;
+        
+        const url = new URL(window.location);
+        url.searchParams.set('chart_period', period);
+        url.searchParams.set('chart_type_filter', typeFilter);
+        url.searchParams.set('chart_status_filter', statusFilter);
+        window.location.href = url.toString();
+    }
+    
+    // Add event listeners to filters
+    document.getElementById('chartPeriod').addEventListener('change', updateCharts);
+    document.getElementById('chartTypeFilter').addEventListener('change', updateCharts);
+    document.getElementById('chartStatusFilter').addEventListener('change', updateCharts);
+    
+    // Export functionality
+    window.exportData = function() {
+        // Simple CSV export (can be enhanced)
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "تاریخ,مبلغ\n";
+        
+        for (let i = 0; i < chartData.labels.length; i++) {
+            csvContent += chartData.labels[i] + "," + chartData.data[i] + "\n";
+        }
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "income_data.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+    
+    // Update charts function for refresh button
+    window.updateCharts = updateCharts;
+});
+</script>
+
+<style>
+    .card {
+        margin-bottom: 1rem;
+    }
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+    .bg-light,
+    .bg-light *,
+    .card-body .text-dark {
+        color: #212529 !important;
+    }
+</style>
+{% endif %}
 {% endblock %} 

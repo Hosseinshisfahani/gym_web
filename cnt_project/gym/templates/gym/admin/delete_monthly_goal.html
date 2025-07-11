@@ -1,0 +1,250 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - پلتفرم جامع ورزشی{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="mb-0 text-danger"><i class="fas fa-trash me-2"></i>{{ page_title }}</h2>
+            <p class="text-muted">تأیید حذف هدف ماهانه</p>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'gym:monthly_goals' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-right me-2"></i>بازگشت به لیست اهداف
+            </a>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Section -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        هشدار حذف
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle me-2"></i>
+                        این عمل غیرقابل بازگشت است و تمام اطلاعات مرتبط با این هدف حذف خواهد شد.
+                    </div>
+
+                    <!-- Goal Information -->
+                    <div class="bg-light p-4 rounded mb-4">
+                        <h5 class="text-dark mb-3">اطلاعات هدف مورد نظر برای حذف:</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td class="text-dark"><strong>کاربر:</strong></td>
+                                        <td class="text-dark">
+                                            <i class="fas fa-user-circle text-primary me-1"></i>
+                                            {{ goal.user.userprofile.name|default:goal.user.username }}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-dark"><strong>عنوان:</strong></td>
+                                        <td class="text-dark">{{ goal.title }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-dark"><strong>وضعیت:</strong></td>
+                                        <td>
+                                            {% if goal.status == 'not_started' %}
+                                                <span class="badge bg-secondary">شروع نشده</span>
+                                            {% elif goal.status == 'in_progress' %}
+                                                <span class="badge bg-primary">در حال انجام</span>
+                                            {% elif goal.status == 'completed' %}
+                                                <span class="badge bg-success">تکمیل شده</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">ناموفق</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td class="text-dark"><strong>تاریخ شروع:</strong></td>
+                                        <td class="text-dark">{{ goal.start_date|date:"Y/m/d" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-dark"><strong>تاریخ پایان:</strong></td>
+                                        <td class="text-dark">{{ goal.end_date|date:"Y/m/d" }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-dark"><strong>پیشرفت:</strong></td>
+                                        <td>
+                                            <div class="progress" style="height: 20px; width: 100px;">
+                                                <div class="progress-bar bg-{% if goal.progress >= 100 %}success{% elif goal.progress >= 50 %}info{% else %}warning{% endif %}" 
+                                                     role="progressbar" 
+                                                     style="width: {{ goal.progress }}%;" 
+                                                     aria-valuenow="{{ goal.progress }}" 
+                                                     aria-valuemin="0" 
+                                                     aria-valuemax="100">{{ goal.progress }}%</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        {% if goal.description %}
+                        <div class="mt-3">
+                            <strong class="text-dark">توضیحات:</strong>
+                            <p class="text-dark mt-2">{{ goal.description }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% if goal.coach_notes %}
+                        <div class="mt-3">
+                            <strong class="text-dark">یادداشت مربی:</strong>
+                            <p class="text-dark mt-2">{{ goal.coach_notes }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Consequences Warning -->
+                    <div class="alert alert-danger">
+                        <h6><i class="fas fa-exclamation-triangle me-2"></i>عواقب حذف این هدف:</h6>
+                        <ul class="mb-0">
+                            <li>تمام اطلاعات مربوط به این هدف برای همیشه حذف خواهد شد</li>
+                            <li>پیشرفت ثبت شده کاربر در این هدف از بین خواهد رفت</li>
+                            <li>یادداشت‌های مربی مرتبط با این هدف حذف خواهد شد</li>
+                            <li>گزارش‌های مرتبط ممکن است تحت تأثیر قرار گیرند</li>
+                        </ul>
+                    </div>
+
+                    <!-- Confirmation Form -->
+                    <form method="post" id="deleteForm">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                                <label class="form-check-label text-dark" for="confirmDelete">
+                                    من از حذف این هدف و عواقب آن آگاهم و تأیید می‌کنم
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <a href="{% url 'gym:monthly_goals' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-right me-2"></i>انصراف و بازگشت
+                                </a>
+                                <a href="{% url 'gym:edit_monthly_goal' goal.id %}" class="btn btn-outline-primary ms-2">
+                                    <i class="fas fa-edit me-2"></i>ویرایش به جای حذف
+                                </a>
+                            </div>
+                            <button type="submit" class="btn btn-danger" id="deleteBtn" disabled>
+                                <i class="fas fa-trash me-2"></i>حذف قطعی هدف
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Info Sidebar -->
+    <div class="row mt-4">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>پیشنهاد</h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <strong>به جای حذف، در نظر بگیرید:</strong>
+                    </p>
+                    <ul class="small">
+                        <li><strong>تغییر وضعیت:</strong> وضعیت هدف را به "ناموفق" یا "متوقف شده" تغییر دهید</li>
+                        <li><strong>آرشیو:</strong> هدف را برای مراجع آینده نگه دارید</li>
+                        <li><strong>ویرایش:</strong> تاریخ پایان یا محتوای هدف را تعدیل کنید</li>
+                        <li><strong>یادداشت:</strong> دلیل عدم موفقیت را در یادداشت مربی بنویسید</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmCheckbox = document.getElementById('confirmDelete');
+    const deleteBtn = document.getElementById('deleteBtn');
+    
+    confirmCheckbox.addEventListener('change', function() {
+        deleteBtn.disabled = !this.checked;
+        if (this.checked) {
+            deleteBtn.classList.remove('btn-danger');
+            deleteBtn.classList.add('btn-danger');
+        }
+    });
+
+    document.getElementById('deleteForm').addEventListener('submit', function(e) {
+        if (!confirmCheckbox.checked) {
+            e.preventDefault();
+            alert('لطفاً ابتدا تأیید حذف را علامت بزنید.');
+            return false;
+        }
+        
+        const confirmAction = confirm(
+            'آیا واقعاً از حذف این هدف اطمینان دارید؟\n\n' +
+            'هدف: {{ goal.title }}\n' +
+            'کاربر: {{ goal.user.userprofile.name|default:goal.user.username }}\n\n' +
+            'این عمل غیرقابل بازگشت است!'
+        );
+        
+        if (!confirmAction) {
+            e.preventDefault();
+            return false;
+        }
+    });
+});
+</script>
+
+<style>
+.card.border-danger {
+    border-width: 2px;
+}
+
+.progress {
+    border-radius: 10px;
+}
+
+.table-borderless td {
+    padding: 0.375rem 0.75rem;
+}
+
+.form-check-input:checked {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.bg-light,
+.bg-light * {
+    color: #212529 !important;
+}
+
+.alert-warning,
+.alert-danger {
+    border-left: 4px solid;
+}
+
+.alert-warning {
+    border-left-color: #ffc107;
+}
+
+.alert-danger {
+    border-left-color: #dc3545;
+}
+</style>
+{% endblock %} 

@@ -60,6 +60,9 @@ urlpatterns = [
     # Monthly Goals
     path('monthly-goals/', views.monthly_goals, name='monthly_goals'),
     path('monthly-goals/<int:goal_id>/', views.monthly_goal_detail, name='monthly_goal_detail'),
+    path('monthly-goals/add/', views.add_monthly_goal, name='add_monthly_goal'),
+    path('monthly-goals/<int:goal_id>/edit/', views.edit_monthly_goal, name='edit_monthly_goal'),
+    path('monthly-goals/<int:goal_id>/delete/', views.delete_monthly_goal, name='delete_monthly_goal'),
     
     # Progress Analysis
     path('progress/', views.progress_analysis, name='progress_analysis'),

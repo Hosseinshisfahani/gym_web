@@ -20,3 +20,6 @@ python-dotenv==1.1.0  # For loading environment variables from .env file
 
 # Character Encoding
 chardet==5.2.0  # Character encoding detector 
+
+# Persian Date Support
+jdatetime==5.2.0  # Persian (Jalali) date and datetime support

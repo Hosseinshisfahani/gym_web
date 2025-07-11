@@ -1,88 +1,224 @@
 {% extends 'gym/base.html' %}
 {% load static %}
 
-{% block title %}مدیریت نمودارهای پیشرفت - پلتفرم جامع ورزشی{% endblock %}
+{% block title %}آنالیز پیشرفت - نمودارهای سه‌رنگ - پلتفرم جامع ورزشی{% endblock %}
+
+{% block extrahead %}
+<!-- Simple progress bars - no Chart.js needed -->
+{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <h2 class="mb-4">مدیریت نمودارهای پیشرفت</h2>
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="mb-0"><i class="fas fa-chart-line me-2"></i>آنالیز پیشرفت - نمودارهای سه‌رنگ</h2>
+            <p class="text-muted">مشاهده پیشرفت کاربران نسبت به اهداف ماهانه در سه شاخص کلیدی</p>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'gym:profile' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-right me-2"></i>بازگشت به داشبورد
+            </a>
+        </div>
+    </div>
 
-    <!-- Filter Form -->
+    <!-- Filter -->
     <div class="card mb-4">
         <div class="card-body">
             <form method="get" class="row g-3">
-                <div class="col-md-3">
-                    <label for="measurement_type" class="form-label">نوع اندازه‌گیری</label>
-                    <select class="form-select" id="measurement_type" name="measurement_type">
-                        <option value="">همه</option>
-                        <option value="weight" {% if measurement_type == 'weight' %}selected{% endif %}>وزن</option>
-                        <option value="body_fat" {% if measurement_type == 'body_fat' %}selected{% endif %}>درصد چربی بدن</option>
-                        <option value="muscle_mass" {% if measurement_type == 'muscle_mass' %}selected{% endif %}>توده عضلانی</option>
-                        <option value="waist" {% if measurement_type == 'waist' %}selected{% endif %}>دور کمر</option>
-                        <option value="chest" {% if measurement_type == 'chest' %}selected{% endif %}>دور سینه</option>
-                        <option value="arm" {% if measurement_type == 'arm' %}selected{% endif %}>دور بازو</option>
-                        <option value="thigh" {% if measurement_type == 'thigh' %}selected{% endif %}>دور ران</option>
-                        <option value="other" {% if measurement_type == 'other' %}selected{% endif %}>سایر</option>
-                    </select>
-                </div>
                 <div class="col-md-4">
-                    <label for="search" class="form-label">جستجو</label>
-                    <input type="text" class="form-control" id="search" name="search" value="{{ search_query }}" placeholder="جستجو در نام کاربر یا یادداشت">
+                    <label for="user_id" class="form-label">انتخاب کاربر</label>
+                    <select class="form-select" id="user_id" name="user_id">
+                        <option value="">همه کاربران</option>
+                        {% for user in all_users %}
+                        <option value="{{ user.id }}" {% if user.id == selected_user_id %}selected{% endif %}>
+                            {{ user.userprofile.name|default:user.username }}
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
                 <div class="col-md-3 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary w-100">اعمال فیلتر</button>
                 </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <a href="{% url 'gym:progress_analysis' %}" class="btn btn-outline-secondary w-100">پاک کردن</a>
+                <div class="col-md-3 d-flex align-items-end">
+                    <a href="{% url 'gym:progress_analysis' %}" class="btn btn-outline-secondary w-100">نمایش همه</a>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Progress Analysis Table -->
-    <div class="card">
+
+
+    {% if users_chart_data %}
+    <!-- User Charts -->
+    {% for user_data in users_chart_data %}
+    <div class="card mb-4">
         <div class="card-header">
-            <h4 class="mb-0">اندازه‌گیری‌های پیشرفت</h4>
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user me-2"></i>{{ user_data.user_name }}
+                    </h5>
+                    <small class="text-muted">هدف فعال: {{ user_data.goal.title }} ({{ user_data.goal.start_date|date:"Y/m/d" }} تا {{ user_data.goal.end_date|date:"Y/m/d" }})</small>
+                </div>
+                <div class="col-auto">
+                    <span class="badge bg-{{ user_data.goal.status|default:'secondary' }}">
+                        {{ user_data.goal.get_status_display }}
+                    </span>
+                </div>
+            </div>
         </div>
         <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead>
-                        <tr>
-                            <th>کاربر</th>
-                            <th>نوع اندازه‌گیری</th>
-                            <th>مقدار</th>
-                            <th>تاریخ</th>
-                            <th>یادداشت</th>
-                            <th>عملیات</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for entry in progress_data %}
-                        <tr>
-                            <td>{{ entry.user.userprofile.name|default:entry.user.username }}</td>
-                            <td>{{ entry.get_measurement_type_display }}</td>
-                            <td>{{ entry.value }} {{ entry.unit }}</td>
-                            <td>{{ entry.measurement_date|date:"Y/m/d" }}</td>
-                            <td>{{ entry.notes|default:"-"|truncatechars:50 }}</td>
-                            <td>
-                                <form method="post" action="{% url 'gym:delete_progress_entry' entry.id %}" style="display: inline;" onsubmit="return confirm('آیا از حذف این اندازه‌گیری اطمینان دارید؟');">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-sm btn-danger">
-                                        <i class="fas fa-trash"></i> حذف
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="6" class="text-center">هیچ اندازه‌گیری پیشرفتی یافت نشد.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <!-- Current Status Overview -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="text-center p-3 bg-light rounded">
+                        <i class="fas fa-weight fa-2x text-primary mb-2"></i>
+                        <h6>وزن فعلی</h6>
+                        {% if user_data.current_measurements.current_weight %}
+                        <strong>{{ user_data.current_measurements.current_weight }} کیلوگرم</strong>
+                        <br><small class="text-muted">هدف: {{ user_data.goal.target_weight|default:"تعیین نشده" }} کگ</small>
+                        {% else %}
+                        <span class="text-muted">اندازه‌گیری نشده</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center p-3 bg-light rounded">
+                        <i class="fas fa-percentage fa-2x text-warning mb-2"></i>
+                        <h6>درصد چربی فعلی</h6>
+                        {% if user_data.current_measurements.current_body_fat %}
+                        <strong>{{ user_data.current_measurements.current_body_fat }}%</strong>
+                        <br><small class="text-muted">هدف: {{ user_data.goal.target_body_fat_percentage|default:"تعیین نشده" }}%</small>
+                        {% else %}
+                        <span class="text-muted">اندازه‌گیری نشده</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center p-3 bg-light rounded">
+                        <i class="fas fa-dumbbell fa-2x text-success mb-2"></i>
+                        <h6>توده عضلانی فعلی</h6>
+                        {% if user_data.current_measurements.current_muscle_mass %}
+                        <strong>{{ user_data.current_measurements.current_muscle_mass }} کیلوگرم</strong>
+                        <br><small class="text-muted">هدف: {{ user_data.goal.target_muscle_mass|default:"تعیین نشده" }} کگ</small>
+                        {% else %}
+                        <span class="text-muted">اندازه‌گیری نشده</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simple Progress Bars instead of Chart -->
+            <div class="row">
+                <div class="col-12">
+                    <h6><i class="fas fa-chart-area me-2"></i>درصد پیشرفت به سمت اهداف</h6>
+                    
+                    <!-- Calculate final progress percentages -->
+                    {% if user_data.goal_progress %}
+                    <div class="mb-4">
+                        <!-- Weight Progress -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span><i class="fas fa-weight text-primary me-2"></i>پیشرفت وزن</span>
+                                <strong>{{ user_data.goal_progress.weight_progress|default:0|floatformat:1 }}%</strong>
+                            </div>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-primary" 
+                                     style="width: {{ user_data.goal_progress.weight_progress|default:0 }}%"
+                                     aria-valuenow="{{ user_data.goal_progress.weight_progress|default:0 }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                            <small class="text-muted">
+                                فعلی: {{ user_data.current_measurements.current_weight|default:"نامشخص" }} کگ | 
+                                هدف: {{ user_data.goal.target_weight|default:"تعیین نشده" }} کگ
+                            </small>
+                        </div>
+
+                        <!-- Body Fat Progress -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span><i class="fas fa-percentage text-warning me-2"></i>پیشرفت درصد چربی</span>
+                                <strong>{{ user_data.goal_progress.body_fat_progress|default:0|floatformat:1 }}%</strong>
+                            </div>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-warning" 
+                                     style="width: {{ user_data.goal_progress.body_fat_progress|default:0 }}%"
+                                     aria-valuenow="{{ user_data.goal_progress.body_fat_progress|default:0 }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                            <small class="text-muted">
+                                فعلی: {{ user_data.current_measurements.current_body_fat|default:"نامشخص" }}% | 
+                                هدف: {{ user_data.goal.target_body_fat_percentage|default:"تعیین نشده" }}%
+                            </small>
+                        </div>
+
+                        <!-- Muscle Mass Progress -->
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span><i class="fas fa-dumbbell text-success me-2"></i>پیشرفت توده عضلانی</span>
+                                <strong>{{ user_data.goal_progress.muscle_mass_progress|default:0|floatformat:1 }}%</strong>
+                            </div>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-success" 
+                                     style="width: {{ user_data.goal_progress.muscle_mass_progress|default:0 }}%"
+                                     aria-valuenow="{{ user_data.goal_progress.muscle_mass_progress|default:0 }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                            <small class="text-muted">
+                                فعلی: {{ user_data.current_measurements.current_muscle_mass|default:"نامشخص" }} کگ | 
+                                هدف: {{ user_data.goal.target_muscle_mass|default:"تعیین نشده" }} کگ
+                            </small>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        برای محاسبه درصد پیشرفت، ابتدا اندازه‌گیری‌های اولیه مورد نیاز است.
+                    </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Simple progress bars - no JavaScript needed -->
+                        {% endfor %}
+
+    {% else %}
+    <!-- No Data Message -->
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+            <h4>هیچ داده‌ای برای نمایش وجود ندارد</h4>
+            <p class="text-muted mb-4">
+                برای نمایش نمودارهای پیشرفت، کاربران باید:
+            </p>
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <ul class="list-unstyled text-start">
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>اهداف ماهانه تعیین شده داشته باشند</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>اندازه‌گیری‌هایی در بخش آنالیز پیشرفت ثبت کرده باشند</li>
+                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i>حداقل یکی از شاخص‌های وزن، درصد چربی یا توده عضلانی را اندازه‌گیری کرده باشند</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mt-4">
+                <a href="{% url 'gym:monthly_goals' %}" class="btn btn-primary me-2">
+                    <i class="fas fa-bullseye me-2"></i>مدیریت اهداف ماهانه
+                </a>
+                <a href="{% url 'gym:admin_user_management' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-users me-2"></i>مدیریت کاربران
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %} 

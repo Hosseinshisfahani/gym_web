@@ -28,17 +28,11 @@
                                 <div><a href="{% url 'gym:workout_plans' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
                             </div>
                         </div>
+
                         <div class="col-md-4">
                             <div class="border rounded-3 p-3 text-center h-100">
-                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-money-bill-wave fa-2x"></i></div>
-                                پرداخت‌ها
-                                <div><a href="{% url 'gym:payments' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="border rounded-3 p-3 text-center h-100">
-                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-ticket-alt fa-2x"></i></div>
-                                تیکت‌های پشتیبانی
+                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-comments fa-2x"></i></div>
+                                ارتباط با مربی
                                 <div><a href="{% url 'gym:tickets' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
                             </div>
                         </div>
@@ -79,9 +73,10 @@
                         <div class="col-md-4">
                             <div class="border rounded-3 p-3 text-center h-100">
                                 <div class="icon-circle mb-2 mx-auto"><i class="fas fa-chart-line fa-2x"></i></div>
-                                نمودار پیشرفت
+                                آنالیز پیشرفت
                                 <div class="badge bg-primary mb-1">{{ stats.progress_entries }} اندازه‌گیری</div>
-                                <div><a href="{% url 'gym:progress_analysis' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
+                                <div class="small text-muted mb-2">وزن، چربی، عضله</div>
+                                <div><a href="{% url 'gym:progress_analysis' %}" class="btn btn-outline-primary btn-sm mt-2">ثبت/مشاهده <i class="fa fa-plus"></i></a></div>
                             </div>
                         </div>                        
                         <div class="col-md-4">
@@ -145,7 +140,6 @@
                              style="width: 100px; height: 100px; object-fit: cover;">
                     {% endif %}
                     <h4 class="mb-1">سلام {{ user_profile.name|default:"کاربر" }} عزیز!</h4>
-                    <p class="text-muted mb-2">خوش آمدید به پنل کاربری شما</p>
                     <ul class="list-unstyled text-end mb-3">
                         <li><strong>نام:</strong> {{ user_profile.name }}</li>
                         <li><strong>ایمیل:</strong> {{ user_profile.user.email }}</li>

@@ -84,12 +84,12 @@
             <!-- Ticket Information for Admin -->
             <div class="card mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0">اطلاعات تیکت</h5>
+                    <h5 class="mb-0">اطلاعات پیام</h5>
                 </div>
                 <div class="card-body">
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item">
-                            <strong>شماره تیکت:</strong> #{{ ticket.id }}
+                            <strong>شماره پیام:</strong> #{{ ticket.id }}
                         </li>
                         <li class="list-group-item">
                             <strong>کاربر:</strong> {{ ticket.user.get_full_name|default:ticket.user.username }}
@@ -118,8 +118,8 @@
                 <div class="card-body">
                     <div class="d-grid gap-2">
                         <button class="btn btn-success" onclick="updateStatus('resolved')">علامت‌گذاری به عنوان حل شده</button>
-                        <button class="btn btn-secondary" onclick="updateStatus('closed')">بستن تیکت</button>
-                        <a href="{% url 'gym:tickets' %}" class="btn btn-outline-primary">بازگشت به لیست تیکت‌ها</a>
+                        <button class="btn btn-secondary" onclick="updateStatus('closed')">بستن گفتگو</button>
+                        <a href="{% url 'gym:tickets' %}" class="btn btn-outline-primary">بازگشت به پیام‌ها</a>
                     </div>
                 </div>
             </div>
@@ -133,7 +133,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">به‌روزرسانی وضعیت تیکت</h5>
+                                    <h5 class="modal-title">به‌روزرسانی وضعیت پیام</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <form id="statusForm" method="post">

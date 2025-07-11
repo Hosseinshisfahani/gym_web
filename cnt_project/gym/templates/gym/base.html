@@ -266,6 +266,56 @@
             color: white;
         }
         
+        /* Global styling for form help text to ensure visibility */
+        .form-text, 
+        .text-muted, 
+        small.form-text, 
+        small.text-muted {
+            color: #c0c5ca !important;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            font-weight: 500;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 3px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            line-height: 1.4;
+        }
+        
+        /* Special styling for form help text in card bodies */
+        .card-body .form-text, 
+        .card-body .text-muted, 
+        .card-body small.form-text, 
+        .card-body small.text-muted {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: #d1d6db !important;
+        }
+        
+        /* Ensure text in light backgrounds is always dark and readable */
+        .bg-light, 
+        .bg-light *,
+        .alert-warning,
+        .alert-warning *,
+        .bg-warning,
+        .bg-warning * {
+            color: #212529 !important;
+        }
+        
+        /* Keep specific elements with their intended colors */
+        .bg-light .text-primary,
+        .bg-light .text-success,
+        .bg-light .text-danger,
+        .bg-light .text-warning,
+        .bg-light .text-info,
+        .bg-light .text-muted,
+        .alert-warning .text-primary,
+        .alert-warning .text-success,
+        .alert-warning .text-danger,
+        .alert-warning .text-warning,
+        .alert-warning .text-info {
+            color: inherit !important;
+        }
+        
         /* Card styles for non-section cards if needed */
         .card:not(.section-card) {
             background-color: rgba(0, 0, 0, 0.7);

@@ -1,5 +1,6 @@
 {% extends 'gym/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}مدیریت درخواست {{ plan_request.get_plan_type_display }} - {{ plan_request.user.userprofile.name|default:plan_request.user.username }}{% endblock %}
 
@@ -67,7 +68,7 @@
                     </div>
                     <div class="mt-3">
                         <strong>توضیحات درخواست:</strong>
-                        <div class="p-3 bg-light rounded mt-2">
+                        <div class="p-3 bg-light rounded mt-2 text-dark">
                             {{ plan_request.description|linebreaks }}
                         </div>
                     </div>
@@ -75,7 +76,7 @@
                     {% if plan_request.admin_response %}
                     <div class="mt-3">
                         <strong>پاسخ مدیر:</strong>
-                        <div class="p-3 bg-warning bg-opacity-25 rounded mt-2">
+                        <div class="p-3 bg-warning bg-opacity-25 rounded mt-2 text-dark">
                             {{ plan_request.admin_response|linebreaks }}
                         </div>
                     </div>
@@ -202,7 +203,7 @@
                                 </span>
                                 <small class="text-muted">{{ payment.payment_date|date:"Y/m/d" }}</small>
                             </div>
-                            <p class="mb-2"><strong>مبلغ:</strong> {{ payment.amount|floatformat:0 }} تومان</p>
+                            <p class="mb-2"><strong>مبلغ:</strong> {{ payment.amount|format_price }} تومان</p>
                             
                             {% if payment.proof_image %}
                             <div class="mb-3">

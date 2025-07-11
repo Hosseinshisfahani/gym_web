@@ -1,21 +1,278 @@
 {% extends 'gym/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
-{% block title %}نمودار پیشرفت - پلتفرم جامع ورزشی{% endblock %}
+{% block title %}آنالیز پیشرفت - نمودار درصد پیشرفت - پلتفرم جامع ورزشی{% endblock %}
 
 {% block extrahead %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- No Chart.js needed for simple progress bars -->
 {% endblock %}
 
 {% block content %}
 <div class="container mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="mb-0"><i class="fas fa-chart-line me-2"></i>آنالیز پیشرفت شما</h2>
+            <p class="text-muted">مشاهده درصد پیشرفت نسبت به اهداف ماهانه</p>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'gym:profile' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-right me-2"></i>بازگشت به پروفایل
+            </a>
+        </div>
+    </div>
+
+    {% if not has_goals %}
+    <!-- No Goals Message -->
+    <div class="alert alert-warning">
+        <div class="row align-items-center">
+            <div class="col">
+                <h5><i class="fas fa-exclamation-triangle me-2"></i>هنوز هدف ماهانه‌ای برای شما تعریف نشده است</h5>
+                <p class="mb-0">برای مشاهده آنالیز پیشرفت، ابتدا باید مربی شما اهداف ماهانه‌ای برای شما تعیین کند.</p>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'gym:monthly_goals' %}" class="btn btn-primary">
+                    <i class="fas fa-bullseye me-2"></i>مشاهده اهداف
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not has_measurements %}
+    <div class="alert alert-info">
+        <div class="row align-items-center">
+            <div class="col">
+                <h5><i class="fas fa-info-circle me-2"></i>هنوز اندازه‌گیری ثبت نکرده‌اید</h5>
+                <p class="mb-0">برای مشاهده نمودار پیشرفت، ابتدا اندازه‌گیری‌های خود را ثبت کنید.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Progress Chart Section -->
+    {% if has_goals and has_measurements %}
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h4 class="mb-0"><i class="fas fa-chart-area me-2"></i>درصد پیشرفت شما نسبت به اهداف</h4>
+        </div>
+        <div class="card-body">
+            {% if goals_info %}
+            {% for goal_data in goals_info|slice:":1" %}
+            <div class="mb-4">
+                <h6 class="text-center mb-3">{{ goal_data.goal.title }}</h6>
+                
+                <!-- Weight Progress -->
+                {% if goal_data.progress_data.weight_progress is not None %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span><i class="fas fa-weight text-primary me-2"></i>پیشرفت وزن</span>
+                        <strong>{{ goal_data.progress_data.weight_progress|floatformat:1 }}%</strong>
+                    </div>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar bg-primary" 
+                             style="width: {{ goal_data.progress_data.weight_progress }}%"
+                             aria-valuenow="{{ goal_data.progress_data.weight_progress }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                    <small class="text-muted">
+                        فعلی: {{ goal_data.current_measurements.current_weight|default:"نامشخص" }} کگ | 
+                        هدف: {{ goal_data.goal.target_weight }} کگ
+                    </small>
+                </div>
+                {% endif %}
+
+                <!-- Body Fat Progress -->
+                {% if goal_data.progress_data.body_fat_progress is not None %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span><i class="fas fa-percentage text-warning me-2"></i>پیشرفت درصد چربی</span>
+                        <strong>{{ goal_data.progress_data.body_fat_progress|floatformat:1 }}%</strong>
+                    </div>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar bg-warning" 
+                             style="width: {{ goal_data.progress_data.body_fat_progress }}%"
+                             aria-valuenow="{{ goal_data.progress_data.body_fat_progress }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                    <small class="text-muted">
+                        فعلی: {{ goal_data.current_measurements.current_body_fat|default:"نامشخص" }}% | 
+                        هدف: {{ goal_data.goal.target_body_fat_percentage }}%
+                    </small>
+                </div>
+                {% endif %}
+
+                <!-- Muscle Mass Progress -->
+                {% if goal_data.progress_data.muscle_mass_progress is not None %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span><i class="fas fa-dumbbell text-success me-2"></i>پیشرفت توده عضلانی</span>
+                        <strong>{{ goal_data.progress_data.muscle_mass_progress|floatformat:1 }}%</strong>
+                    </div>
+                    <div class="progress" style="height: 25px;">
+                        <div class="progress-bar bg-success" 
+                             style="width: {{ goal_data.progress_data.muscle_mass_progress }}%"
+                             aria-valuenow="{{ goal_data.progress_data.muscle_mass_progress }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="100">
+                        </div>
+                    </div>
+                    <small class="text-muted">
+                        فعلی: {{ goal_data.current_measurements.current_muscle_mass|default:"نامشخص" }} کگ | 
+                        هدف: {{ goal_data.goal.target_muscle_mass }} کگ
+                    </small>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                داده‌های پیشرفت در حال محاسبه است...
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Goals Information -->
+    {% if goals_info %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-bullseye me-2"></i>اهداف شما</h5>
+        </div>
+        <div class="card-body">
+            {% for goal_data in goals_info %}
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">{{ goal_data.goal.title }}</h6>
+                            <span class="badge bg-{{ goal_data.goal.status|default:'secondary' }}">
+                                {{ goal_data.goal.get_status_display }}
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>بازه زمانی:</strong> {{ goal_data.goal.start_date|persian_date:"Y/m/d" }} تا {{ goal_data.goal.end_date|persian_date:"Y/m/d" }}</p>
+                                    {% if goal_data.goal.description %}
+                                    <p><strong>توضیحات:</strong> {{ goal_data.goal.description }}</p>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-6">
+                                    {% if goal_data.goal.coach_notes %}
+                                    <p><strong>نکات مربی:</strong> {{ goal_data.goal.coach_notes }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Goal vs Current Comparison -->
+                            <div class="row mt-3">
+                                <div class="col-md-4">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <i class="fas fa-weight fa-2x text-primary mb-2"></i>
+                                        <h6>وزن</h6>
+                                        {% if goal_data.current_measurements.current_weight and goal_data.goal.target_weight %}
+                                        <div><strong>فعلی:</strong> {{ goal_data.current_measurements.current_weight }} کگ</div>
+                                        <div><strong>هدف:</strong> {{ goal_data.goal.target_weight }} کگ</div>
+                                        {% if goal_data.progress_data.weight_progress %}
+                                        <div class="mt-2">
+                                            <div class="progress">
+                                                <div class="progress-bar bg-primary" style="width: {{ goal_data.progress_data.weight_progress|floatformat:0 }}%">
+                                                    {{ goal_data.progress_data.weight_progress|floatformat:1 }}%
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        {% else %}
+                                        <span class="text-muted">داده ناکافی</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <i class="fas fa-percentage fa-2x text-warning mb-2"></i>
+                                        <h6>درصد چربی</h6>
+                                        {% if goal_data.current_measurements.current_body_fat and goal_data.goal.target_body_fat_percentage %}
+                                        <div><strong>فعلی:</strong> {{ goal_data.current_measurements.current_body_fat }}%</div>
+                                        <div><strong>هدف:</strong> {{ goal_data.goal.target_body_fat_percentage }}%</div>
+                                        {% if goal_data.progress_data.body_fat_progress %}
+                                        <div class="mt-2">
+                                            <div class="progress">
+                                                <div class="progress-bar bg-warning" style="width: {{ goal_data.progress_data.body_fat_progress|floatformat:0 }}%">
+                                                    {{ goal_data.progress_data.body_fat_progress|floatformat:1 }}%
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        {% else %}
+                                        <span class="text-muted">داده ناکافی</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="text-center p-3 bg-light rounded">
+                                        <i class="fas fa-dumbbell fa-2x text-success mb-2"></i>
+                                        <h6>توده عضلانی</h6>
+                                        {% if goal_data.current_measurements.current_muscle_mass and goal_data.goal.target_muscle_mass %}
+                                        <div><strong>فعلی:</strong> {{ goal_data.current_measurements.current_muscle_mass }} کگ</div>
+                                        <div><strong>هدف:</strong> {{ goal_data.goal.target_muscle_mass }} کگ</div>
+                                        {% if goal_data.progress_data.muscle_mass_progress %}
+                                        <div class="mt-2">
+                                            <div class="progress">
+                                                <div class="progress-bar bg-success" style="width: {{ goal_data.progress_data.muscle_mass_progress|floatformat:0 }}%">
+                                                    {{ goal_data.progress_data.muscle_mass_progress|floatformat:1 }}%
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        {% else %}
+                                        <span class="text-muted">داده ناکافی</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Add New Measurement Form -->
     <div class="row">
-        <div class="col-md-4">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">ثبت اندازه‌گیری جدید</h5>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-plus me-2"></i>ثبت اندازه‌گیری جدید</h5>
                 </div>
                 <div class="card-body">
+                    <!-- Quick Measurement Buttons -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <p class="text-muted mb-2">اندازه‌گیری‌های کلیدی:</p>
+                            <div class="btn-group w-100" role="group">
+                                <button type="button" class="btn btn-outline-primary" onclick="setMeasurementType('weight', 'kg')">
+                                    <i class="fas fa-weight"></i><br>وزن
+                                </button>
+                                <button type="button" class="btn btn-outline-warning" onclick="setMeasurementType('body_fat', '%')">
+                                    <i class="fas fa-percentage"></i><br>چربی
+                                </button>
+                                <button type="button" class="btn btn-outline-success" onclick="setMeasurementType('muscle_mass', 'kg')">
+                                    <i class="fas fa-dumbbell"></i><br>عضله
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <form method="post">
                         {% csrf_token %}
                         <div class="mb-3">
@@ -44,68 +301,43 @@
                             <label for="id_notes" class="form-label">یادداشت</label>
                             {{ form.notes }}
                         </div>
-                        <button type="submit" class="btn btn-primary w-100">ثبت اندازه‌گیری</button>
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fas fa-save me-2"></i>ثبت اندازه‌گیری
+                        </button>
                     </form>
                 </div>
             </div>
         </div>
         
-        <div class="col-md-8">
-            <!-- Charts Section -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h5 class="mb-0">نمودار پیشرفت</h5>
-                </div>
-                <div class="card-body">
-                    {% if chart_data != '{}' %}
-                    <div class="mb-3">
-                        <select id="chart-selector" class="form-select">
-                            {% for key, data in chart_data.items %}
-                            <option value="{{ key }}">{{ data.label }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div style="height: 300px;">
-                        <canvas id="progressChart"></canvas>
-                    </div>
-                    {% else %}
-                    <div class="alert alert-info">
-                        هنوز اندازه‌گیری‌ای ثبت نکرده‌اید. برای مشاهده نمودار، لطفا از فرم سمت راست استفاده کنید و اندازه‌گیری‌های خود را ثبت کنید.
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <!-- Data Table Section -->
+        <!-- Recent Measurements -->
+        <div class="col-md-6">
             <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">سوابق اندازه‌گیری</h5>
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-history me-2"></i>آخرین اندازه‌گیری‌ها</h5>
                 </div>
                 <div class="card-body">
                     {% if progress_data %}
                     <div class="table-responsive">
-                        <table class="table table-hover">
+                        <table class="table table-sm">
                             <thead>
                                 <tr>
-                                    <th>نوع اندازه‌گیری</th>
+                                    <th>نوع</th>
                                     <th>مقدار</th>
                                     <th>تاریخ</th>
-                                    <th>یادداشت</th>
-                                    <th>عملیات</th>
+                                    <th>عمل</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for entry in progress_data %}
+                                {% for entry in progress_data|slice:":10" %}
                                 <tr>
                                     <td>{{ entry.get_measurement_type_display }}</td>
                                     <td>{{ entry.value }} {{ entry.unit }}</td>
-                                    <td>{{ entry.measurement_date|date:"Y/m/d" }}</td>
-                                    <td>{{ entry.notes|default:"-"|truncatechars:50 }}</td>
+                                    <td>{{ entry.measurement_date|date:"m/d" }}</td>
                                     <td>
-                                        <form method="post" action="{% url 'gym:delete_progress_entry' entry.id %}" style="display: inline;" onsubmit="return confirm('آیا از حذف این اندازه‌گیری اطمینان دارید؟');">
+                                        <form method="post" action="{% url 'gym:delete_progress_entry' entry.id %}" style="display: inline;" onsubmit="return confirm('حذف شود؟');">
                                             {% csrf_token %}
-                                            <button type="submit" class="btn btn-sm btn-danger">
-                                                <i class="fas fa-trash"></i>
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash-alt"></i>
                                             </button>
                                         </form>
                                     </td>
@@ -115,8 +347,9 @@
                         </table>
                     </div>
                     {% else %}
-                    <div class="alert alert-info">
-                        هنوز هیچ اندازه‌گیری‌ای ثبت نکرده‌اید. می‌توانید از فرم سمت راست استفاده کنید تا اولین اندازه‌گیری خود را ثبت کنید.
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-chart-bar fa-2x mb-2"></i>
+                        <br>هنوز اندازه‌گیری ثبت نکرده‌اید
                     </div>
                     {% endif %}
                 </div>
@@ -125,76 +358,12 @@
     </div>
 </div>
 
-{% if chart_data != '{}' %}
+<!-- Simple progress bars - no Chart.js needed -->
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const chartData = JSON.parse('{{ chart_data|safe }}');
-        const ctx = document.getElementById('progressChart').getContext('2d');
-        const chartSelector = document.getElementById('chart-selector');
-        let chart;
-        
-        // Function to create or update chart
-        function updateChart(dataKey) {
-            const selectedData = chartData[dataKey];
-            
-            const data = {
-                labels: selectedData.dates,
-                datasets: [{
-                    label: `${selectedData.label} (${selectedData.unit})`,
-                    data: selectedData.values,
-                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 2,
-                    tension: 0.3,
-                    pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-                    pointRadius: 5
-                }]
-            };
-            
-            const config = {
-                type: 'line',
-                data: data,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: false
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            position: 'top'
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return `${context.dataset.label}: ${context.raw}`;
-                                }
-                            }
-                        }
-                    }
-                }
-            };
-            
-            if (chart) {
-                chart.data = data;
-                chart.update();
-            } else {
-                chart = new Chart(ctx, config);
-            }
-        }
-        
-        // Initial chart load
-        if (chartSelector.options.length > 0) {
-            updateChart(chartSelector.value);
-        }
-        
-        // Change chart when selector changes
-        chartSelector.addEventListener('change', function() {
-            updateChart(this.value);
-        });
-    });
+// Quick measurement type selector
+function setMeasurementType(type, unit) {
+    document.getElementById('id_measurement_type').value = type;
+    document.getElementById('id_unit').value = unit;
+}
 </script>
-{% endif %}
 {% endblock %} 
