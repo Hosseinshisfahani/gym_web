@@ -17,6 +17,7 @@ class UserProfile(models.Model):
     post_code = models.CharField(max_length=10, blank=True, null=True, verbose_name='کد پستی')
     home_address = models.TextField(blank=True, null=True, verbose_name='آدرس منزل')
     agreement_accepted = models.BooleanField(default=False, verbose_name='توافقنامه پذیرفته شده')
+    is_vip = models.BooleanField(default=False, verbose_name='کاربر VIP')
     
     class Meta:
         verbose_name = 'پروفایل کاربر'
@@ -280,7 +281,7 @@ class MonthlyGoal(models.Model):
             return f"{self.title} - {self.user.userprofile.name}"
         except:
             return f"{self.title} - {self.user.username}"
-    
+            
     def get_current_measurements(self):
         """Get user's most recent measurements for comparison with targets"""
         measurements = {}
@@ -555,3 +556,88 @@ class BookletPayment(models.Model):
     
     def __str__(self):
         return f"{self.user.username} - {self.booklet.title} - {self.amount} تومان"
+
+# Email Notification Settings Model
+class EmailNotificationSettings(models.Model):
+    """Model to store email notification preferences for admins"""
+    
+    # Admin user who owns these settings
+    admin_user = models.OneToOneField(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='email_notification_settings',
+        limit_choices_to={'is_staff': True},
+        verbose_name='کاربر ادمین'
+    )
+    
+    # Email address to send notifications to (can be different from admin's email)
+    notification_email = models.EmailField(verbose_name='ایمیل دریافت اطلاع‌رسانی')
+    
+    # Shop order notifications
+    notify_shop_orders = models.BooleanField(default=True, verbose_name='اطلاع‌رسانی سفارشات فروشگاه')
+    notify_shop_order_status_change = models.BooleanField(default=True, verbose_name='اطلاع‌رسانی تغییر وضعیت سفارش')
+    
+    # Plan request notifications  
+    notify_workout_plan_requests = models.BooleanField(default=True, verbose_name='اطلاع‌رسانی درخواست برنامه تمرینی')
+    notify_diet_plan_requests = models.BooleanField(default=True, verbose_name='اطلاع‌رسانی درخواست برنامه غذایی')
+    
+    # General notification settings
+    notify_new_user_registration = models.BooleanField(default=False, verbose_name='اطلاع‌رسانی کاربران جدید')
+    notify_payment_uploads = models.BooleanField(default=True, verbose_name='اطلاع‌رسانی آپلود رسید پرداخت')
+    
+    # Notification frequency (for bundled notifications)
+    NOTIFICATION_FREQUENCY_CHOICES = [
+        ('immediate', 'بلافاصله'),
+        ('hourly', 'هر ساعت'),
+        ('daily', 'روزانه'),
+        ('weekly', 'هفتگی'),
+    ]
+    notification_frequency = models.CharField(
+        max_length=20,
+        choices=NOTIFICATION_FREQUENCY_CHOICES,
+        default='immediate',
+        verbose_name='فرکانس اطلاع‌رسانی'
+    )
+    
+    # Active status
+    is_active = models.BooleanField(default=True, verbose_name='فعال')
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
+
+    class Meta:
+        verbose_name = 'تنظیمات اطلاع‌رسانی ایمیل'
+        verbose_name_plural = 'تنظیمات اطلاع‌رسانی ایمیل'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'تنظیمات اطلاع‌رسانی {self.admin_user.username}'
+
+    @classmethod
+    def get_active_notification_emails(cls, notification_type):
+        """Get all active admin emails for a specific notification type"""
+        field_mapping = {
+            'shop_order': 'notify_shop_orders',
+            'workout_plan_request': 'notify_workout_plan_requests',
+            'diet_plan_request': 'notify_diet_plan_requests',
+            'new_user': 'notify_new_user_registration',
+            'payment_upload': 'notify_payment_uploads',
+        }
+        
+        if notification_type not in field_mapping:
+            return []
+        
+        field_name = field_mapping[notification_type]
+        filter_kwargs = {
+            'is_active': True,
+            field_name: True
+        }
+        
+        return cls.objects.filter(**filter_kwargs).values_list('notification_email', flat=True)
+
+    def save(self, *args, **kwargs):
+        # Set default notification email to admin's email if not provided
+        if not self.notification_email and self.admin_user.email:
+            self.notification_email = self.admin_user.email
+        super().save(*args, **kwargs)

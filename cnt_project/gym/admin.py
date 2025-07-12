@@ -32,7 +32,7 @@ admin_site = CustomAdminSite(name='admin')
 from .models import (
     UserProfile, WorkoutPlan, DietPlan, 
     Payment, Ticket, TicketResponse, Document, PlanRequest,
-    BodyAnalysisReport, MonthlyGoal, ProgressAnalysis, BodyInformationUser, PaymentCard
+    BodyAnalysisReport, MonthlyGoal, ProgressAnalysis, BodyInformationUser, PaymentCard, EmailNotificationSettings
 )
 
 # Import shop models
@@ -41,9 +41,11 @@ from gym_shop.models import Category, Product, ProductImage, Cart, CartItem, Ord
 class UserProfileAdmin(admin.ModelAdmin):
     verbose_name = 'پروفایل کاربر'
     verbose_name_plural = 'پروفایل‌های کاربران'
-    list_display = ('name', 'phone_number')
+    list_display = ('name', 'phone_number', 'is_vip', 'user')
     search_fields = ('user__username', 'phone_number', 'melli_code', 'name')
     ordering = ('name',)
+    list_filter = ('is_vip', 'agreement_accepted')
+    list_editable = ('is_vip',)
 
     def __str__(self):
         return f"{self.name} ({self.melli_code})"
@@ -127,6 +129,39 @@ class BodyInformationUserAdmin(admin.ModelAdmin):
     list_display = ('user_profile', 'birth_date', 'gender', 'height_cm', 'weight_kg', 'disease_history')
     search_fields = ('user_profile__name', 'user_profile__user__username')
 
+class EmailNotificationSettingsAdmin(admin.ModelAdmin):
+    verbose_name = 'تنظیمات اطلاع‌رسانی ایمیل'
+    verbose_name_plural = 'تنظیمات اطلاع‌رسانی ایمیل'
+    list_display = ('admin_user', 'notification_email', 'is_active', 'notification_frequency', 'notify_shop_orders', 'notify_workout_plan_requests', 'notify_diet_plan_requests')
+    list_filter = ('is_active', 'notification_frequency', 'notify_shop_orders', 'notify_workout_plan_requests', 'notify_diet_plan_requests')
+    search_fields = ('admin_user__username', 'notification_email')
+    ordering = ('-created_at',)
+    list_editable = ('is_active', 'notification_frequency')
+    
+    fieldsets = (
+        ('تنظیمات کلی', {
+            'fields': ('admin_user', 'notification_email', 'is_active', 'notification_frequency')
+        }),
+        ('اطلاع‌رسانی فروشگاه', {
+            'fields': ('notify_shop_orders', 'notify_shop_order_status_change')
+        }),
+        ('اطلاع‌رسانی برنامه‌ها', {
+            'fields': ('notify_workout_plan_requests', 'notify_diet_plan_requests')
+        }),
+        ('سایر اطلاع‌رسانی‌ها', {
+            'fields': ('notify_new_user_registration', 'notify_payment_uploads')
+        }),
+    )
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('admin_user')
+    
+    def save_model(self, request, obj, form, change):
+        # Auto-create notification settings for the current admin if they don't exist
+        if not change and not obj.notification_email and request.user.email:
+            obj.notification_email = request.user.email
+        super().save_model(request, obj, form, change)
+
 # Register all models with the custom Persian admin site
 admin_site.register(UserProfile, UserProfileAdmin)
 admin_site.register(WorkoutPlan, WorkoutPlanAdmin)
@@ -142,6 +177,7 @@ admin_site.register(BodyAnalysisReport, BodyAnalysisReportAdmin)
 admin_site.register(MonthlyGoal, MonthlyGoalAdmin)
 admin_site.register(ProgressAnalysis, ProgressAnalysisAdmin)
 admin_site.register(BodyInformationUser, BodyInformationUserAdmin)
+admin_site.register(EmailNotificationSettings, EmailNotificationSettingsAdmin)
 
 # Import and register shop admin classes
 from gym_shop.admin import CategoryAdmin, ProductAdmin, CartAdmin, OrderAdmin, ProductImageAdmin

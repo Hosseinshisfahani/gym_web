@@ -1,0 +1,363 @@
+{% extends 'gym_shop/base.html' %}
+{% load custom_filters %}
+{% load humanize %}
+
+{% block title %}جزئیات سفارش {{ order.order_number }}{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+    .admin-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+    }
+    .info-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
+    }
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: bold;
+    }
+    .status-pending { background-color: #fff3cd; color: #856404; }
+    .status-paid { background-color: #d4edda; color: #155724; }
+    .status-processing { background-color: #cce5ff; color: #004085; }
+    .status-shipped { background-color: #e2e3e5; color: #383d41; }
+    .status-delivered { background-color: #d1ecf1; color: #0c5460; }
+    .status-cancelled { background-color: #f8d7da; color: #721c24; }
+    .status-returned { background-color: #ffeaa7; color: #856404; }
+    .btn-admin {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+    }
+    .btn-admin:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        color: white;
+    }
+    .order-item {
+        border-bottom: 1px solid #eee;
+        padding: 1rem 0;
+    }
+    .order-item:last-child {
+        border-bottom: none;
+    }
+    .product-image {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+    .timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 0.5rem;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #dee2e6;
+    }
+    .timeline-item {
+        position: relative;
+        margin-bottom: 1rem;
+    }
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -0.5rem;
+        top: 0.5rem;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #007bff;
+    }
+    .timeline-item.current::before {
+        background: #28a745;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-0">
+                    <i class="fas fa-receipt me-3"></i>
+                    جزئیات سفارش {{ order.order_number }}
+                </h1>
+                <p class="mb-0 mt-2">مشاهده و مدیریت جزئیات سفارش</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'gym_shop:order_management' %}" class="btn btn-light btn-lg">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    بازگشت
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-4">
+    <div class="row">
+        <!-- اطلاعات سفارش -->
+        <div class="col-md-8">
+            <div class="info-card">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4>اطلاعات سفارش</h4>
+                    <span class="status-badge status-{{ order.status }}">
+                        {{ order.get_status_display }}
+                    </span>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">شماره سفارش:</th>
+                                <td><strong>{{ order.order_number }}</strong></td>
+                            </tr>
+                            <tr>
+                                <th>تاریخ ایجاد:</th>
+                                <td>{{ order.created_at|date:"Y/m/d H:i" }}</td>
+                            </tr>
+                            <tr>
+                                <th>آخرین بروزرسانی:</th>
+                                <td>{{ order.updated_at|date:"Y/m/d H:i" }}</td>
+                            </tr>
+                            <tr>
+                                <th>کاربر:</th>
+                                <td>{{ order.user.username }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">جمع اولیه:</th>
+                                <td>{{ order.subtotal|floatformat:0|intcomma }} تومان</td>
+                            </tr>
+                            <tr>
+                                <th>هزینه ارسال:</th>
+                                <td>{{ order.shipping_cost|floatformat:0|intcomma }} تومان</td>
+                            </tr>
+                            <tr>
+                                <th>مجموع:</th>
+                                <td><strong>{{ order.total|floatformat:0|intcomma }} تومان</strong></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- اطلاعات مشتری -->
+            <div class="info-card">
+                <h4 class="mb-4">اطلاعات مشتری</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">نام:</th>
+                                <td>{{ order.first_name }}</td>
+                            </tr>
+                            <tr>
+                                <th>نام خانوادگی:</th>
+                                <td>{{ order.last_name }}</td>
+                            </tr>
+                            <tr>
+                                <th>ایمیل:</th>
+                                <td>{{ order.email }}</td>
+                            </tr>
+                            <tr>
+                                <th>تلفن:</th>
+                                <td>{{ order.phone }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">آدرس:</th>
+                                <td>{{ order.address }}</td>
+                            </tr>
+                            <tr>
+                                <th>شهر:</th>
+                                <td>{{ order.city }}</td>
+                            </tr>
+                            <tr>
+                                <th>کد پستی:</th>
+                                <td>{{ order.postal_code }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                {% if order.notes %}
+                <div class="mt-3">
+                    <h6>یادداشت مشتری:</h6>
+                    <p class="text-muted">{{ order.notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- آیتم‌های سفارش -->
+            <div class="info-card">
+                <h4 class="mb-4">آیتم‌های سفارش ({{ order.items.count }} آیتم)</h4>
+                {% for item in order.items.all %}
+                <div class="order-item">
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            {% if item.product.image %}
+                                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="product-image">
+                            {% else %}
+                                <div class="product-image bg-light d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-image text-muted"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <h6>{{ item.product.name }}</h6>
+                            <small class="text-muted">کد محصول: {{ item.product.id }}</small>
+                            {% if item.size %}
+                                <br><small class="text-muted">سایز: {{ item.size }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-2">
+                            <strong>{{ item.quantity }}</strong> عدد
+                        </div>
+                        <div class="col-md-2">
+                            {{ item.price|floatformat:0|intcomma }} تومان
+                        </div>
+                        <div class="col-md-2">
+                            <strong>{{ item.total|floatformat:0|intcomma }} تومان</strong>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- عملیات و آمار -->
+        <div class="col-md-4">
+            <!-- عملیات -->
+            <div class="info-card">
+                <h5 class="mb-3">عملیات</h5>
+                
+                <!-- تغییر وضعیت -->
+                <div class="mb-3">
+                    <label class="form-label">تغییر وضعیت</label>
+                    <form method="post" action="{% url 'gym_shop:update_order_status' order.id %}" class="d-flex gap-2">
+                        {% csrf_token %}
+                        <select name="status" class="form-select" onchange="this.form.submit()">
+                            {% for status_code, status_name in order_statuses %}
+                                <option value="{{ status_code }}" {% if status_code == order.status %}selected{% endif %}>
+                                    {{ status_name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </div>
+
+                <!-- دکمه‌های عملیات -->
+                <div class="d-grid gap-2">
+                    <a href="{% url 'gym_shop:order_management' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-list me-2"></i>
+                        لیست سفارشات
+                    </a>
+                    <a href="{% url 'gym_shop:delete_order' order.id %}" 
+                       class="btn btn-outline-danger"
+                       onclick="return confirm('آیا از حذف این سفارش مطمئن هستید؟')">
+                        <i class="fas fa-trash me-2"></i>
+                        حذف سفارش
+                    </a>
+                </div>
+            </div>
+
+            <!-- تایم‌لاین وضعیت -->
+            <div class="info-card">
+                <h5 class="mb-3">تایم‌لاین سفارش</h5>
+                <div class="timeline">
+                    <div class="timeline-item {% if order.status == 'pending' %}current{% endif %}">
+                        <h6>در انتظار پرداخت</h6>
+                        <small class="text-muted">{{ order.created_at|date:"Y/m/d H:i" }}</small>
+                    </div>
+                    <div class="timeline-item {% if order.status == 'paid' %}current{% endif %}">
+                        <h6>پرداخت شده</h6>
+                        {% if order.status == 'paid' %}
+                            <small class="text-muted">{{ order.updated_at|date:"Y/m/d H:i" }}</small>
+                        {% endif %}
+                    </div>
+                    <div class="timeline-item {% if order.status == 'processing' %}current{% endif %}">
+                        <h6>در حال پردازش</h6>
+                        {% if order.status == 'processing' %}
+                            <small class="text-muted">{{ order.updated_at|date:"Y/m/d H:i" }}</small>
+                        {% endif %}
+                    </div>
+                    <div class="timeline-item {% if order.status == 'shipped' %}current{% endif %}">
+                        <h6>ارسال شده</h6>
+                        {% if order.status == 'shipped' %}
+                            <small class="text-muted">{{ order.updated_at|date:"Y/m/d H:i" }}</small>
+                        {% endif %}
+                    </div>
+                    <div class="timeline-item {% if order.status == 'delivered' %}current{% endif %}">
+                        <h6>تحویل داده شده</h6>
+                        {% if order.status == 'delivered' %}
+                            <small class="text-muted">{{ order.updated_at|date:"Y/m/d H:i" }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- آمار سفارش -->
+            <div class="info-card">
+                <h5 class="mb-3">آمار سفارش</h5>
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="border-end">
+                            <h4 class="text-primary">{{ order.items.count }}</h4>
+                            <small class="text-muted">آیتم</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success">{{ order.items.all|length }}</h4>
+                        <small class="text-muted">تنوع محصول</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// اضافه کردن تایید برای تغییر وضعیت
+document.addEventListener('DOMContentLoaded', function() {
+    const statusSelect = document.querySelector('select[name="status"]');
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function(e) {
+            if (!confirm('آیا از تغییر وضعیت این سفارش مطمئن هستید؟')) {
+                e.preventDefault();
+                this.value = '{{ order.status }}';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %} 

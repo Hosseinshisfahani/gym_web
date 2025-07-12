@@ -159,6 +159,39 @@ def profile(request, user_id=None):
         'progress_entries': ProgressAnalysis.objects.filter(user=user).count(),
     }
     
+    # VIP statistics and email notification settings for admin users
+    vip_stats = None
+    notification_settings = None
+    if request.user.is_staff:
+        vip_stats = {
+            'total_users': UserProfile.objects.count(),
+            'vip_users': UserProfile.objects.filter(is_vip=True).count(),
+            'non_vip_users': UserProfile.objects.filter(is_vip=False).count(),
+            'vip_percentage': round((UserProfile.objects.filter(is_vip=True).count() / UserProfile.objects.count()) * 100, 1) if UserProfile.objects.count() > 0 else 0,
+        }
+        
+        # Get or create email notification settings for this admin
+        try:
+            from gym.models import EmailNotificationSettings
+            notification_settings, created = EmailNotificationSettings.objects.get_or_create(
+                admin_user=request.user,
+                defaults={
+                    'notification_email': request.user.email or 'admin@example.com',
+                    'notify_shop_orders': True,
+                    'notify_workout_plan_requests': True,
+                    'notify_diet_plan_requests': True,
+                    'notify_payment_uploads': True,
+                    'notification_frequency': 'immediate',
+                    'is_active': True,
+                }
+            )
+        except Exception as e:
+            # Log the error but don't break the page
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error creating notification settings: {str(e)}")
+            notification_settings = None
+    
     # Get most recent progress data for quick view
     recent_progress = ProgressAnalysis.objects.filter(user=user).order_by('-measurement_date')[:5]
     
@@ -167,6 +200,8 @@ def profile(request, user_id=None):
         'is_own_profile': not user_id or user_id == request.user.id,
         'stats': stats,
         'recent_progress': recent_progress,
+        'vip_stats': vip_stats,
+        'notification_settings': notification_settings,
     }
     return render(request, 'gym/profile.html', context)
 
@@ -879,6 +914,71 @@ def admin_user_management(request):
 
 @login_required
 @staff_member_required
+def vip_customers(request):
+    """View for managing VIP customers"""
+    # Get filter parameters
+    search_query = request.GET.get('search', '')
+    vip_filter = request.GET.get('vip_filter', 'all')  # all, vip_only, non_vip
+    
+    # Base queryset
+    if vip_filter == 'vip_only':
+        user_profiles = UserProfile.objects.filter(is_vip=True)
+    elif vip_filter == 'non_vip':
+        user_profiles = UserProfile.objects.filter(is_vip=False)
+    else:
+        user_profiles = UserProfile.objects.all()
+    
+    # Apply search filter
+    if search_query:
+        user_profiles = user_profiles.filter(
+            Q(name__icontains=search_query) |
+            Q(user__username__icontains=search_query) |
+            Q(user__email__icontains=search_query) |
+            Q(phone_number__icontains=search_query) |
+            Q(melli_code__icontains=search_query)
+        )
+    
+    # Order by VIP status (VIP first) then by name
+    user_profiles = user_profiles.order_by('-is_vip', 'name')
+    
+    # Get VIP statistics
+    vip_stats = {
+        'total_users': UserProfile.objects.count(),
+        'vip_users': UserProfile.objects.filter(is_vip=True).count(),
+        'non_vip_users': UserProfile.objects.filter(is_vip=False).count(),
+        'vip_percentage': round((UserProfile.objects.filter(is_vip=True).count() / UserProfile.objects.count()) * 100, 1) if UserProfile.objects.count() > 0 else 0,
+    }
+    
+    context = {
+        'user_profiles': user_profiles,
+        'search_query': search_query,
+        'vip_filter': vip_filter,
+        'vip_stats': vip_stats,
+    }
+    
+    return render(request, 'gym/admin/vip_customers.html', context)
+
+@login_required
+@staff_member_required
+def toggle_vip_status(request, user_id):
+    """View for toggling VIP status of a user"""
+    user_profile = get_object_or_404(UserProfile, user_id=user_id)
+    
+    if request.method == 'POST':
+        user_profile.is_vip = not user_profile.is_vip
+        user_profile.save()
+        
+        status_text = "VIP" if user_profile.is_vip else "عادی"
+        messages.success(request, f'وضعیت {user_profile.name or user_profile.user.username} به {status_text} تغییر یافت.')
+    
+    # Redirect back to the referring page
+    referrer = request.META.get('HTTP_REFERER')
+    if referrer:
+        return redirect(referrer)
+    return redirect('gym:vip_customers')
+
+@login_required
+@staff_member_required
 def manage_plan_requests(request):
     """View for managing all plan requests"""
     # Get filter parameters
@@ -1199,12 +1299,32 @@ def plan_request_payment(request):
             payment.payment_type = 'workout_plan' if plan_data['plan_type'] == 'workout' else 'diet_plan'
             payment.save()
             
+            # Send email notification to admins for payment upload
+            try:
+                from gym.utils.email_notifications import send_payment_upload_notification
+                send_payment_upload_notification(payment, request)
+            except Exception as e:
+                # Log error but don't interrupt the process
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to send payment upload notification email: {str(e)}")
+            
             # Create the plan request after successful payment upload
             plan_request = PlanRequest.objects.create(
                 user=request.user,
                 plan_type=plan_data['plan_type'],
                 description=plan_data['description']
             )
+            
+            # Send email notification to admins
+            try:
+                from gym.utils.email_notifications import send_plan_request_notification
+                send_plan_request_notification(plan_request, request)
+            except Exception as e:
+                # Log error but don't interrupt the process
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to send plan request notification email: {str(e)}")
             
             # Store plan data for status display and clear pending request
             request.session['completed_plan_request'] = {
@@ -1734,7 +1854,7 @@ def progress_analysis(request):
                     
                     current_weight = float(weight_entry.value)
                     target_weight = float(latest_goal.target_weight)
-                    
+        
                     if initial_weight != target_weight:
                         progress_pct = ((current_weight - initial_weight) / (target_weight - initial_weight)) * 100
                         weight_progress.append(max(0, min(100, progress_pct)))
@@ -1787,7 +1907,7 @@ def progress_analysis(request):
         
         # Get all users for filter dropdown
         all_users = User.objects.filter(monthly_goals__isnull=False).distinct()
-        
+            
         context = {
             'users_chart_data': users_chart_data,
             'all_users': all_users,
@@ -2270,3 +2390,50 @@ def comprehensive_plan_management(request):
     }
     
     return render(request, 'gym/admin/comprehensive_plan_management.html', context)
+
+@login_required
+@staff_member_required
+def test_email_notifications(request):
+    """Test email notification system"""
+    if request.method == 'POST':
+        notification_type = request.POST.get('notification_type')
+        
+        try:
+            from gym.utils.email_notifications import EmailNotificationService
+            
+            if notification_type == 'test_config':
+                # Test basic email configuration
+                success = EmailNotificationService.test_email_configuration()
+                if success:
+                    messages.success(request, 'تست اطلاع‌رسانی ایمیل موفق بود! ایمیل تست ارسال شد.')
+                else:
+                    messages.error(request, 'خطا در ارسال ایمیل تست. لطفاً تنظیمات ایمیل را بررسی کنید.')
+            
+            elif notification_type == 'create_default_settings':
+                # Create default notification settings for current admin
+                settings_obj = EmailNotificationService.create_default_notification_settings(request.user)
+                if settings_obj:
+                    messages.success(request, 'تنظیمات پیش‌فرض اطلاع‌رسانی ایمیل ایجاد شد.')
+                else:
+                    messages.error(request, 'خطا در ایجاد تنظیمات اطلاع‌رسانی.')
+            
+        except Exception as e:
+            messages.error(request, f'خطا در انجام تست: {str(e)}')
+    
+    # Get current notification settings
+    from gym.models import EmailNotificationSettings
+    
+    try:
+        current_settings = EmailNotificationSettings.objects.get(admin_user=request.user)
+    except EmailNotificationSettings.DoesNotExist:
+        current_settings = None
+    
+    # Get all admin notification settings
+    all_settings = EmailNotificationSettings.objects.all().select_related('admin_user')
+    
+    context = {
+        'current_settings': current_settings,
+        'all_settings': all_settings,
+    }
+    
+    return render(request, 'gym/admin/test_email_notifications.html', context)

@@ -1,0 +1,363 @@
+{% extends 'gym_shop/base.html' %}
+{% load static %}
+
+{% block title %}مدیریت محصولات - فروشگاه ورزشی{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stats-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stats-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .search-filters {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .product-table {
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .product-image {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .status-active {
+        background: #d4edda;
+        color: #155724;
+    }
+    
+    .status-inactive {
+        background: #f8d7da;
+        color: #721c24;
+    }
+    
+    .featured-badge {
+        background: #ffeaa7;
+        color: #2d3436;
+    }
+    
+    .action-buttons .btn {
+        padding: 0.25rem 0.5rem;
+        margin: 0.1rem;
+        font-size: 0.8rem;
+    }
+    
+    .btn-admin-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 5px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-admin-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    }
+    
+    .pagination {
+        justify-content: center;
+        margin-top: 2rem;
+    }
+    
+    .pagination .page-link {
+        color: #667eea;
+        border-color: #667eea;
+    }
+    
+    .pagination .page-item.active .page-link {
+        background: #667eea;
+        border-color: #667eea;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Admin Header -->
+<div class="admin-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-0">
+                    <i class="fas fa-box-open me-2"></i>
+                    مدیریت محصولات
+                </h1>
+                <p class="mb-0 mt-2">مدیریت کامل محصولات فروشگاه</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'gym_shop:add_product' %}" class="btn btn-light btn-lg">
+                    <i class="fas fa-plus me-2"></i>
+                    افزودن محصول جدید
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-icon text-primary">
+                    <i class="fas fa-box"></i>
+                </div>
+                <div class="stats-number">{{ total_products }}</div>
+                <div class="stats-label">کل محصولات</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-icon text-success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stats-number">{{ active_products }}</div>
+                <div class="stats-label">محصولات فعال</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-icon text-warning">
+                    <i class="fas fa-star"></i>
+                </div>
+                <div class="stats-number">{{ featured_products }}</div>
+                <div class="stats-label">محصولات ویژه</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-icon text-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stats-number">{{ out_of_stock }}</div>
+                <div class="stats-label">ناموجود</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="search-filters">
+        <h5 class="mb-3">
+            <i class="fas fa-search me-2"></i>
+            جستجو و فیلتر
+        </h5>
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                {{ search_form.search }}
+            </div>
+            <div class="col-md-3">
+                {{ search_form.category }}
+            </div>
+            <div class="col-md-2">
+                {{ search_form.is_active }}
+            </div>
+            <div class="col-md-2">
+                {{ search_form.is_featured }}
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-admin-primary w-100">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Products Table -->
+    <div class="product-table">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>تصویر</th>
+                        <th>نام محصول</th>
+                        <th>دسته‌بندی</th>
+                        <th>قیمت</th>
+                        <th>موجودی</th>
+                        <th>وضعیت</th>
+                        <th>عملیات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in page_obj %}
+                    <tr>
+                        <td>
+                            {% if product.image %}
+                                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="product-image">
+                            {% else %}
+                                <div class="product-image bg-light d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-image text-muted"></i>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div>
+                                <strong>{{ product.name }}</strong>
+                                {% if product.is_featured %}
+                                    <span class="status-badge featured-badge ms-2">ویژه</span>
+                                {% endif %}
+                            </div>
+                            <small class="text-muted">{{ product.brand|default:"بدون برند" }}</small>
+                        </td>
+                        <td>{{ product.category.name }}</td>
+                        <td>
+                            {% if product.discount_price %}
+                                <div class="text-success fw-bold">{{ product.discount_price|floatformat:0 }} تومان</div>
+                                <small class="text-muted text-decoration-line-through">{{ product.price|floatformat:0 }}</small>
+                            {% else %}
+                                <div class="fw-bold">{{ product.price|floatformat:0 }} تومان</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if product.stock > 0 %}
+                                <span class="text-success">{{ product.stock }}</span>
+                            {% else %}
+                                <span class="text-danger">ناموجود</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if product.is_active %}
+                                <span class="status-badge status-active">فعال</span>
+                            {% else %}
+                                <span class="status-badge status-inactive">غیرفعال</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="{% url 'gym_shop:edit_product' product.id %}" class="btn btn-sm btn-outline-primary" title="ویرایش">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'gym_shop:toggle_product_status' product.id %}" class="btn btn-sm btn-outline-success" title="تغییر وضعیت">
+                                    <i class="fas fa-toggle-on"></i>
+                                </a>
+                                <a href="{% url 'gym_shop:toggle_product_featured' product.id %}" class="btn btn-sm btn-outline-warning" title="تغییر ویژگی">
+                                    <i class="fas fa-star"></i>
+                                </a>
+                                <a href="{% url 'gym_shop:delete_product' product.id %}" class="btn btn-sm btn-outline-danger" title="حذف">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                            <div class="text-muted">محصولی یافت نشد.</div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="p-3">
+            <nav>
+                <ul class="pagination mb-0">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.is_active %}&is_active={{ request.GET.is_active }}{% endif %}{% if request.GET.is_featured %}&is_featured={{ request.GET.is_featured }}{% endif %}">قبلی</a>
+                        </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.is_active %}&is_active={{ request.GET.is_active }}{% endif %}{% if request.GET.is_featured %}&is_featured={{ request.GET.is_featured }}{% endif %}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}{% if request.GET.is_active %}&is_active={{ request.GET.is_active }}{% endif %}{% if request.GET.is_featured %}&is_featured={{ request.GET.is_featured }}{% endif %}">بعدی</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <a href="{% url 'gym_shop:order_management' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-shopping-cart me-2"></i>
+                        مدیریت سفارشات
+                    </a>
+                    <a href="{% url 'gym_shop:category_management' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-tags me-2"></i>
+                        مدیریت دسته‌بندی‌ها
+                    </a>
+                </div>
+                <div>
+                    <a href="{% url 'gym_shop:shop_financial_dashboard' %}" class="btn btn-outline-info">
+                        <i class="fas fa-chart-line me-2"></i>
+                        داشبورد مالی
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,461 @@
+{% extends 'gym_shop/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - فروشگاه ورزشی{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .form-container {
+        background: white;
+        border-radius: 10px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #667eea;
+    }
+    
+    .form-section h5 {
+        color: #667eea;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+    
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 6px;
+        border: 1px solid #ced4da;
+        padding: 0.75rem 1rem;
+        transition: border-color 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .btn-admin-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-admin-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-admin-secondary {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 0.75rem 2rem;
+        border-radius: 6px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-admin-secondary:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+    }
+    
+    .preview-container {
+        border: 2px dashed #dee2e6;
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        background: #f8f9fa;
+        margin-top: 1rem;
+    }
+    
+    .preview-image {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .form-check {
+        margin-bottom: 1rem;
+    }
+    
+    .form-check-input {
+        width: 1.2rem;
+        height: 1.2rem;
+        border-radius: 4px;
+    }
+    
+    .form-check-label {
+        font-weight: 500;
+        margin-right: 0.5rem;
+    }
+    
+    .required-label::after {
+        content: ' *';
+        color: #dc3545;
+        font-weight: bold;
+    }
+    
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    
+    .error-message {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+    
+    .success-message {
+        background: #d4edda;
+        color: #155724;
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        margin-bottom: 1rem;
+        border: 1px solid #c3e6cb;
+    }
+    
+    .price-input-group {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .price-input-group > div {
+        flex: 1;
+    }
+    
+    @media (max-width: 768px) {
+        .price-input-group {
+            flex-direction: column;
+        }
+        
+        .admin-header {
+            padding: 1rem 0;
+        }
+        
+        .form-container {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Admin Header -->
+<div class="admin-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-0">
+                    <i class="fas fa-box me-2"></i>
+                    {{ title }}
+                </h1>
+                <p class="mb-0 mt-2">
+                    {% if product %}
+                        ویرایش اطلاعات محصول {{ product.name }}
+                    {% else %}
+                        افزودن محصول جدید به فروشگاه
+                    {% endif %}
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'gym_shop:product_management' %}" class="btn btn-light">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    بازگشت به لیست محصولات
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="form-container">
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- اطلاعات اصلی -->
+            <div class="form-section">
+                <h5>
+                    <i class="fas fa-info-circle me-2"></i>
+                    اطلاعات اصلی
+                </h5>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label required-label">نام محصول (فارسی)</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="error-message">{{ form.name.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label required-label">نام محصول (انگلیسی)</label>
+                            {{ form.name_en }}
+                            {% if form.name_en.errors %}
+                                <div class="error-message">{{ form.name_en.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label required-label">شناسه محصول (Slug)</label>
+                            {{ form.slug }}
+                            <div class="help-text">شناسه منحصر به فرد برای URL محصول</div>
+                            {% if form.slug.errors %}
+                                <div class="error-message">{{ form.slug.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label required-label">دسته‌بندی</label>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                                <div class="error-message">{{ form.category.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label required-label">توضیح کوتاه</label>
+                    {{ form.short_description }}
+                    <div class="help-text">توضیح کوتاه که در لیست محصولات نمایش داده می‌شود</div>
+                    {% if form.short_description.errors %}
+                        <div class="error-message">{{ form.short_description.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label required-label">توضیحات کامل</label>
+                    {{ form.description }}
+                    <div class="help-text">توضیحات کامل محصول که در صفحه جزئیات نمایش داده می‌شود</div>
+                    {% if form.description.errors %}
+                        <div class="error-message">{{ form.description.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- قیمت و موجودی -->
+            <div class="form-section">
+                <h5>
+                    <i class="fas fa-tags me-2"></i>
+                    قیمت و موجودی
+                </h5>
+                
+                <div class="price-input-group">
+                    <div>
+                        <label class="form-label required-label">قیمت (تومان)</label>
+                        {{ form.price }}
+                        {% if form.price.errors %}
+                            <div class="error-message">{{ form.price.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="form-label">قیمت تخفیف‌دار (تومان)</label>
+                        {{ form.discount_price }}
+                        <div class="help-text">در صورت وجود تخفیف وارد کنید</div>
+                        {% if form.discount_price.errors %}
+                            <div class="error-message">{{ form.discount_price.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label required-label">موجودی</label>
+                            {{ form.stock }}
+                            {% if form.stock.errors %}
+                                <div class="error-message">{{ form.stock.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">سایزهای موجود</label>
+                            {{ form.available_sizes }}
+                            <div class="help-text">سایزها را با کاما جدا کنید (مثال: S,M,L,XL)</div>
+                            {% if form.available_sizes.errors %}
+                                <div class="error-message">{{ form.available_sizes.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- مشخصات محصول -->
+            <div class="form-section">
+                <h5>
+                    <i class="fas fa-cogs me-2"></i>
+                    مشخصات محصول
+                </h5>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">برند</label>
+                            {{ form.brand }}
+                            {% if form.brand.errors %}
+                                <div class="error-message">{{ form.brand.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">جنس</label>
+                            {{ form.material }}
+                            {% if form.material.errors %}
+                                <div class="error-message">{{ form.material.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">رنگ</label>
+                            {{ form.color }}
+                            {% if form.color.errors %}
+                                <div class="error-message">{{ form.color.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">وزن (کیلوگرم)</label>
+                    {{ form.weight }}
+                    <div class="help-text">وزن محصول برای محاسبه هزینه ارسال</div>
+                    {% if form.weight.errors %}
+                        <div class="error-message">{{ form.weight.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- تصویر -->
+            <div class="form-section">
+                <h5>
+                    <i class="fas fa-image me-2"></i>
+                    تصویر محصول
+                </h5>
+                
+                <div class="mb-3">
+                    <label class="form-label required-label">تصویر اصلی</label>
+                    {{ form.image }}
+                    {% if form.image.errors %}
+                        <div class="error-message">{{ form.image.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                
+                {% if product and product.image %}
+                <div class="preview-container">
+                    <p class="mb-2">تصویر فعلی:</p>
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" class="preview-image">
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- تنظیمات -->
+            <div class="form-section">
+                <h5>
+                    <i class="fas fa-cog me-2"></i>
+                    تنظیمات
+                </h5>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            {{ form.is_active }}
+                            <label class="form-check-label">
+                                محصول فعال است
+                            </label>
+                        </div>
+                        <div class="help-text">محصولات غیرفعال در فروشگاه نمایش داده نمی‌شوند</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            {{ form.is_featured }}
+                            <label class="form-check-label">
+                                محصول ویژه
+                            </label>
+                        </div>
+                        <div class="help-text">محصولات ویژه در بخش محصولات ویژه نمایش داده می‌شوند</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- دکمه‌های عملیات -->
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <button type="submit" class="btn btn-admin-primary">
+                        <i class="fas fa-save me-2"></i>
+                        {% if product %}
+                            ذخیره تغییرات
+                        {% else %}
+                            افزودن محصول
+                        {% endif %}
+                    </button>
+                    <a href="{% url 'gym_shop:product_management' %}" class="btn btn-admin-secondary ms-2">
+                        <i class="fas fa-times me-2"></i>
+                        لغو
+                    </a>
+                </div>
+                {% if product %}
+                <div>
+                    <a href="{% url 'gym_shop:delete_product' product.id %}" class="btn btn-outline-danger">
+                        <i class="fas fa-trash me-2"></i>
+                        حذف محصول
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Auto-generate slug from English name
+document.addEventListener('DOMContentLoaded', function() {
+    const nameEnInput = document.getElementById('{{ form.name_en.id_for_label }}');
+    const slugInput = document.getElementById('{{ form.slug.id_for_label }}');
+    
+    if (nameEnInput && slugInput && !slugInput.value) {
+        nameEnInput.addEventListener('input', function() {
+            const slug = this.value.toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+            slugInput.value = slug;
+        });
+    }
+});
+</script>
+{% endblock %} 

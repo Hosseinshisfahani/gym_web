@@ -1,0 +1,188 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}تست اطلاع‌رسانی ایمیل - پنل ادمین{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4"><i class="fas fa-envelope-open"></i> تست سیستم اطلاع‌رسانی ایمیل</h2>
+            
+            <!-- Test Actions -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5><i class="fas fa-vial"></i> تست‌های سیستم</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post">
+                                {% csrf_token %}
+                                <div class="d-grid gap-2">
+                                    <button type="submit" name="notification_type" value="test_config" class="btn btn-success">
+                                        <i class="fas fa-paper-plane"></i> تست ارسال ایمیل
+                                    </button>
+                                    {% if not current_settings %}
+                                    <button type="submit" name="notification_type" value="create_default_settings" class="btn btn-warning">
+                                        <i class="fas fa-plus"></i> ایجاد تنظیمات پیش‌فرض
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header bg-info text-white">
+                            <h5><i class="fas fa-info-circle"></i> راهنما</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success"></i> تست ارسال ایمیل: بررسی کارکرد سیستم ایمیل</li>
+                                <li><i class="fas fa-cog text-warning"></i> ایجاد تنظیمات: تنظیمات اولیه برای ادمین جاری</li>
+                                <li><i class="fas fa-bell text-primary"></i> اطلاع‌رسانی خودکار: سفارشات و درخواست‌ها</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Current Settings -->
+            {% if current_settings %}
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5><i class="fas fa-user-cog"></i> تنظیمات فعلی شما</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>ایمیل اطلاع‌رسانی:</strong> {{ current_settings.notification_email }}</p>
+                            <p><strong>وضعیت:</strong> 
+                                <span class="badge {% if current_settings.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                    {% if current_settings.is_active %}فعال{% else %}غیرفعال{% endif %}
+                                </span>
+                            </p>
+                            <p><strong>فرکانس:</strong> {{ current_settings.get_notification_frequency_display }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>اطلاع‌رسانی‌های فعال:</strong></p>
+                            <ul class="list-unstyled">
+                                <li>
+                                    <i class="fas {% if current_settings.notify_shop_orders %}fa-check text-success{% else %}fa-times text-danger{% endif %}"></i>
+                                    سفارشات فروشگاه
+                                </li>
+                                <li>
+                                    <i class="fas {% if current_settings.notify_workout_plan_requests %}fa-check text-success{% else %}fa-times text-danger{% endif %}"></i>
+                                    درخواست برنامه تمرینی
+                                </li>
+                                <li>
+                                    <i class="fas {% if current_settings.notify_diet_plan_requests %}fa-check text-success{% else %}fa-times text-danger{% endif %}"></i>
+                                    درخواست برنامه غذایی
+                                </li>
+                                <li>
+                                    <i class="fas {% if current_settings.notify_payment_uploads %}fa-check text-success{% else %}fa-times text-danger{% endif %}"></i>
+                                    آپلود رسید پرداخت
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <a href="/admin/gym/emailnotificationsettings/{{ current_settings.id }}/change/" class="btn btn-primary">
+                            <i class="fas fa-edit"></i> ویرایش تنظیمات
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-warning">
+                <h5><i class="fas fa-exclamation-triangle"></i> تنظیمات اطلاع‌رسانی یافت نشد</h5>
+                <p>برای استفاده از سیستم اطلاع‌رسانی ایمیل، ابتدا تنظیمات پیش‌فرض را ایجاد کنید.</p>
+            </div>
+            {% endif %}
+            
+            <!-- All Admin Settings -->
+            {% if all_settings %}
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5><i class="fas fa-users-cog"></i> تنظیمات تمام ادمین‌ها</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ادمین</th>
+                                    <th>ایمیل</th>
+                                    <th>وضعیت</th>
+                                    <th>فرکانس</th>
+                                    <th>سفارشات</th>
+                                    <th>برنامه تمرینی</th>
+                                    <th>برنامه غذایی</th>
+                                    <th>عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for settings in all_settings %}
+                                <tr>
+                                    <td>{{ settings.admin_user.username }}</td>
+                                    <td>{{ settings.notification_email|truncatechars:30 }}</td>
+                                    <td>
+                                        <span class="badge {% if settings.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                            {% if settings.is_active %}فعال{% else %}غیرفعال{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>{{ settings.get_notification_frequency_display }}</td>
+                                    <td>
+                                        <i class="fas {% if settings.notify_shop_orders %}fa-check text-success{% else %}fa-times text-danger{% endif %}"></i>
+                                    </td>
+                                    <td>
+                                        <i class="fas {% if settings.notify_workout_plan_requests %}fa-check text-success{% else %}fa-times text-danger{% endif %}"></i>
+                                    </td>
+                                    <td>
+                                        <i class="fas {% if settings.notify_diet_plan_requests %}fa-check text-success{% else %}fa-times text-danger{% endif %}"></i>
+                                    </td>
+                                    <td>
+                                        <a href="/admin/gym/emailnotificationsettings/{{ settings.id }}/change/" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+}
+
+.btn {
+    border-radius: 5px;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.table th {
+    border-top: none;
+    background-color: #f8f9fa;
+}
+</style>
+{% endblock %} 

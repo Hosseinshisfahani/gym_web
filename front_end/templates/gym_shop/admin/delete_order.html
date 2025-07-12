@@ -1,0 +1,306 @@
+{% extends 'gym_shop/base.html' %}
+{% load custom_filters %}
+{% load humanize %}
+
+{% block title %}حذف سفارش {{ order.order_number }}{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+    .admin-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        padding: 2rem 0;
+    }
+    .warning-card {
+        background: #fff3cd;
+        border-left: 4px solid #ffc107;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+    .danger-card {
+        background: #f8d7da;
+        border-left: 4px solid #dc3545;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+    .order-info {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        margin-bottom: 2rem;
+    }
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: bold;
+    }
+    .status-pending { background-color: #fff3cd; color: #856404; }
+    .status-paid { background-color: #d4edda; color: #155724; }
+    .status-processing { background-color: #cce5ff; color: #004085; }
+    .status-shipped { background-color: #e2e3e5; color: #383d41; }
+    .status-delivered { background-color: #d1ecf1; color: #0c5460; }
+    .status-cancelled { background-color: #f8d7da; color: #721c24; }
+    .status-returned { background-color: #ffeaa7; color: #856404; }
+    .order-item {
+        border-bottom: 1px solid #eee;
+        padding: 1rem 0;
+    }
+    .order-item:last-child {
+        border-bottom: none;
+    }
+    .product-image {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+    .confirmation-box {
+        background: #f8f9fa;
+        border: 2px dashed #dee2e6;
+        padding: 2rem;
+        border-radius: 10px;
+        text-align: center;
+        margin: 2rem 0;
+    }
+    .btn-danger-custom {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        border: none;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+    .btn-danger-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+        color: white;
+    }
+    .btn-cancel {
+        background: #6c757d;
+        border: none;
+        color: white;
+        padding: 0.75rem 2rem;
+        border-radius: 25px;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+    .btn-cancel:hover {
+        background: #5a6268;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-3"></i>
+                    حذف سفارش {{ order.order_number }}
+                </h1>
+                <p class="mb-0 mt-2">تأیید حذف سفارش و بازگرداندن موجودی</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'gym_shop:admin_order_detail' order.id %}" class="btn btn-light btn-lg">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    بازگشت
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <!-- هشدار اصلی -->
+            <div class="danger-card">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-exclamation-circle fa-2x text-danger me-3"></i>
+                    <div>
+                        <h5 class="text-danger mb-1">هشدار مهم!</h5>
+                        <p class="mb-0">
+                            حذف این سفارش غیرقابل برگشت است و تمام اطلاعات مربوط به آن از دست خواهد رفت.
+                            موجودی محصولات به انبار بازگردانده خواهد شد.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- اطلاعات سفارش -->
+            <div class="order-info">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h4 class="mb-4">اطلاعات سفارش</h4>
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">شماره سفارش:</th>
+                                <td><strong>{{ order.order_number }}</strong></td>
+                            </tr>
+                            <tr>
+                                <th>تاریخ ایجاد:</th>
+                                <td>{{ order.created_at|date:"Y/m/d H:i" }}</td>
+                            </tr>
+                            <tr>
+                                <th>وضعیت:</th>
+                                <td>
+                                    <span class="status-badge status-{{ order.status }}">
+                                        {{ order.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>مبلغ کل:</th>
+                                <td><strong>{{ order.total|floatformat:0|intcomma }} تومان</strong></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h4 class="mb-4">اطلاعات مشتری</h4>
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">نام:</th>
+                                <td>{{ order.first_name }} {{ order.last_name }}</td>
+                            </tr>
+                            <tr>
+                                <th>ایمیل:</th>
+                                <td>{{ order.email }}</td>
+                            </tr>
+                            <tr>
+                                <th>تلفن:</th>
+                                <td>{{ order.phone }}</td>
+                            </tr>
+                            <tr>
+                                <th>شهر:</th>
+                                <td>{{ order.city }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- آیتم‌های سفارش -->
+            <div class="order-info">
+                <h4 class="mb-4">آیتم‌های سفارش که موجودی آن‌ها بازگردانده می‌شود:</h4>
+                {% for item in order.items.all %}
+                <div class="order-item">
+                    <div class="row align-items-center">
+                        <div class="col-md-1">
+                            {% if item.product.image %}
+                                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" class="product-image">
+                            {% else %}
+                                <div class="product-image bg-light d-flex align-items-center justify-content-center">
+                                    <i class="fas fa-image text-muted"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-5">
+                            <h6>{{ item.product.name }}</h6>
+                            <small class="text-muted">کد محصول: {{ item.product.id }}</small>
+                            {% if item.size %}
+                                <br><small class="text-muted">سایز: {{ item.size }}</small>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-2">
+                            <strong>{{ item.quantity }}</strong> عدد
+                        </div>
+                        <div class="col-md-2">
+                            {{ item.price|floatformat:0|intcomma }} تومان
+                        </div>
+                        <div class="col-md-2">
+                            <strong>{{ item.total|floatformat:0|intcomma }} تومان</strong>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- هشدار اضافی -->
+            <div class="warning-card">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-info-circle fa-2x text-warning me-3"></i>
+                    <div>
+                        <h6 class="text-warning mb-1">توجه:</h6>
+                        <ul class="mb-0">
+                            <li>موجودی تمام محصولات این سفارش به انبار بازگردانده خواهد شد</li>
+                            <li>تمام اطلاعات مربوط به این سفارش حذف خواهد شد</li>
+                            <li>این عمل قابل برگشت نیست</li>
+                            <li>درصورت نیاز به نگهداری اطلاعات، بهتر است وضعیت سفارش را به "لغو شده" تغییر دهید</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- تایید حذف -->
+            <div class="confirmation-box">
+                <i class="fas fa-question-circle fa-3x text-danger mb-3"></i>
+                <h4 class="text-danger">آیا از حذف این سفارش مطمئن هستید؟</h4>
+                <p class="text-muted mb-4">
+                    این عمل غیرقابل برگشت است و تمام اطلاعات سفارش حذف خواهد شد.
+                </p>
+                
+                <div class="d-flex gap-3 justify-content-center">
+                    <form method="post" style="display: inline-block;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger-custom" id="confirmDelete">
+                            <i class="fas fa-trash me-2"></i>
+                            بله، سفارش را حذف کن
+                        </button>
+                    </form>
+                    <a href="{% url 'gym_shop:admin_order_detail' order.id %}" class="btn btn-cancel">
+                        <i class="fas fa-times me-2"></i>
+                        انصراف
+                    </a>
+                </div>
+            </div>
+
+            <!-- راهنمای جایگزین -->
+            <div class="order-info">
+                <h5 class="text-info mb-3">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    راهکار جایگزین
+                </h5>
+                <p class="mb-3">
+                    اگر می‌خواهید سفارش را لغو کنید اما اطلاعات آن را نگه دارید، می‌توانید:
+                </p>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'gym_shop:admin_order_detail' order.id %}" class="btn btn-outline-info">
+                        <i class="fas fa-edit me-2"></i>
+                        تغییر وضعیت به "لغو شده"
+                    </a>
+                    <a href="{% url 'gym_shop:order_management' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-list me-2"></i>
+                        بازگشت به لیست سفارشات
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('confirmDelete').addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    if (confirm('آیا واقعاً از حذف این سفارش مطمئن هستید؟ این عمل غیرقابل برگشت است.')) {
+        if (confirm('آخرین هشدار: تمام اطلاعات سفارش حذف خواهد شد. آیا ادامه می‌دهید؟')) {
+            this.form.submit();
+        }
+    }
+});
+</script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %} 

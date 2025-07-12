@@ -296,21 +296,35 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>در حال پردازش...';
     submitBtn.disabled = true;
     
-    // Submit form
+    // Submit form with proper AJAX headers
     fetch(window.location.href, {
         method: 'POST',
         body: new FormData(this),
         headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
         }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
-            if (data.payment_url) {
+            // Show success message
+            alert(data.message || 'سفارش شما با موفقیت ثبت شد');
+            
+            // Redirect to order detail page
+            if (data.order_url) {
+                window.location.href = data.order_url;
+            } else if (data.payment_url) {
                 window.location.href = data.payment_url;
             } else {
-                window.location.href = data.order_url;
+                // Fallback redirect
+                window.location.href = '/shop/orders/';
             }
         } else {
             alert(data.message || 'خطا در ثبت سفارش');
@@ -320,7 +334,7 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('خطا در ثبت سفارش');
+        alert('خطا در ثبت سفارش. لطفاً مجدداً تلاش کنید.');
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
     });

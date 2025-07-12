@@ -14,79 +14,149 @@
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
+                        <!-- Core Gym Features - Blue Theme -->
                         <div class="col-md-4">
-                            <div class="border rounded-3 p-3 text-center h-100">
+                            <div class="dashboard-card dashboard-card-blue text-center h-100">
                                 <div class="icon-circle mb-2 mx-auto"><i class="fas fa-utensils fa-2x"></i></div>
                                 برنامه‌های غذایی
-                                <div><a href="{% url 'gym:diet_plans' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
+                                <div><a href="{% url 'gym:diet_plans' %}" class="btn btn-outline-light btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="border rounded-3 p-3 text-center h-100">
+                            <div class="dashboard-card dashboard-card-blue text-center h-100">
                                 <div class="icon-circle mb-2 mx-auto"><i class="fas fa-dumbbell fa-2x"></i></div>
                                 برنامه‌های تمرینی
-                                <div><a href="{% url 'gym:workout_plans' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
+                                <div><a href="{% url 'gym:workout_plans' %}" class="btn btn-outline-light btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
                             </div>
                         </div>
-
                         <div class="col-md-4">
-                            <div class="border rounded-3 p-3 text-center h-100">
+                            <div class="dashboard-card dashboard-card-blue text-center h-100">
                                 <div class="icon-circle mb-2 mx-auto"><i class="fas fa-comments fa-2x"></i></div>
                                 ارتباط با مربی
-                                <div><a href="{% url 'gym:tickets' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
+                                <div><a href="{% url 'gym:tickets' %}" class="btn btn-outline-light btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
                             </div>
                         </div>
-                        <!-- New Dashboard Items -->
+                        
+                        <!-- Analysis & Reports - Teal Theme -->
                         <div class="col-md-4">
-                            <div class="border rounded-3 p-3 text-center h-100">
+                            <div class="dashboard-card dashboard-card-teal text-center h-100">
                                 <div class="icon-circle mb-2 mx-auto"><i class="fas fa-flask fa-2x"></i></div>
                                 آنالیز بدن و آزمایشات
-                                <div class="badge bg-primary mb-1">{{ stats.body_analysis_count }} مورد</div>
+                                <div class="badge bg-light text-dark mb-1">{{ stats.body_analysis_count }} مورد</div>
                                 {% if stats.body_analysis_pending > 0 %}
                                 <div class="badge bg-warning text-dark mb-1">{{ stats.body_analysis_pending }} در انتظار بررسی</div>
                                 {% endif %}
-                                <div><a href="{% url 'gym:body_analysis_reports' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
+                                <div><a href="{% url 'gym:body_analysis_reports' %}" class="btn btn-outline-light btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="border rounded-3 p-3 text-center h-100">
+                            <div class="dashboard-card dashboard-card-teal text-center h-100">
                                 <div class="icon-circle mb-2 mx-auto"><i class="fas fa-receipt fa-2x"></i></div>
                                 سوابق پرداخت
-                                <div class="badge bg-primary mb-1">{{ stats.payment_count }} مورد</div>
+                                <div class="badge bg-light text-dark mb-1">{{ stats.payment_count }} مورد</div>
                                 {% if stats.payment_pending > 0 %}
                                 <div class="badge bg-warning text-dark mb-1">{{ stats.payment_pending }} در انتظار تایید</div>
                                 {% endif %}
-                                <div><a href="{% url 'gym:payments' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
+                                <div><a href="{% url 'gym:payments' %}" class="btn btn-outline-light btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="border rounded-3 p-3 text-center h-100">
-                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-bullseye fa-2x"></i></div>
-                                اهداف ماهانه
-                                <div class="badge bg-primary mb-1">{{ stats.goals_count }} هدف</div>
-                                {% if stats.goals_active > 0 %}
-                                <div class="badge bg-success mb-1">{{ stats.goals_active }} فعال</div>
-                                {% endif %}
-                                <div><a href="{% url 'gym:monthly_goals' %}" class="btn btn-outline-primary btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="border rounded-3 p-3 text-center h-100">
+                            <div class="dashboard-card dashboard-card-teal text-center h-100">
                                 <div class="icon-circle mb-2 mx-auto"><i class="fas fa-chart-line fa-2x"></i></div>
                                 آنالیز پیشرفت
-                                <div class="badge bg-primary mb-1">{{ stats.progress_entries }} اندازه‌گیری</div>
-                                <div class="small text-muted mb-2">وزن، چربی، عضله</div>
-                                <div><a href="{% url 'gym:progress_analysis' %}" class="btn btn-outline-primary btn-sm mt-2">ثبت/مشاهده <i class="fa fa-plus"></i></a></div>
+                                <div class="badge bg-light text-dark mb-1">{{ stats.progress_entries }} اندازه‌گیری</div>
+                                <div class="small text-light mb-2">وزن، چربی، عضله</div>
+                                <div><a href="{% url 'gym:progress_analysis' %}" class="btn btn-outline-light btn-sm mt-2">ثبت/مشاهده <i class="fa fa-plus"></i></a></div>
                             </div>
-                        </div>                        
+                        </div>
+                        
+                        <!-- Goals & Progress - Green Theme -->
                         <div class="col-md-4">
-                            <div class="border rounded-3 p-3 text-center h-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                                <div class="icon-circle mb-2 mx-auto" style="background: rgba(255,255,255,0.2);"><i class="fas fa-shopping-bag fa-2x"></i></div>
+                            <div class="dashboard-card dashboard-card-green text-center h-100">
+                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-bullseye fa-2x"></i></div>
+                                اهداف ماهانه
+                                <div class="badge bg-light text-dark mb-1">{{ stats.goals_count }} هدف</div>
+                                {% if stats.goals_active > 0 %}
+                                <div class="badge bg-warning text-dark mb-1">{{ stats.goals_active }} فعال</div>
+                                {% endif %}
+                                <div><a href="{% url 'gym:monthly_goals' %}" class="btn btn-outline-light btn-sm mt-2">مشاهده <i class="fa fa-eye"></i></a></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Shop Section - Purple Theme -->
+                        <div class="col-md-4">
+                            <div class="dashboard-card dashboard-card-purple text-center h-100">
+                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-shopping-bag fa-2x"></i></div>
                                 فروشگاه
                                 <div class="mt-2 text-light">تجهیزات و لباس ورزشی</div>
-                                <div><a href="{% url 'gym_shop:home' %}" class="btn btn-light btn-sm mt-2">مشاهده فروشگاه <i class="fas fa-store"></i></a></div>
+                                <div><a href="{% url 'gym_shop:home' %}" class="btn btn-outline-light btn-sm mt-2">مشاهده فروشگاه <i class="fas fa-store"></i></a></div>
                             </div>
                         </div>                       
+                        
+                        <!-- VIP Customers Section (Admin Only) -->
+                        {% if user.is_staff and vip_stats %}
+                        <div class="col-md-4">
+                            <div class="dashboard-card dashboard-card-amber text-center h-100">
+                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-crown fa-2x"></i></div>
+                                مشتریان VIP
+                                <div class="badge bg-light text-dark mb-1">{{ vip_stats.vip_users }} کاربر VIP</div>
+                                <div class="badge bg-light text-dark mb-1">{{ vip_stats.vip_percentage }}% کل کاربران</div>
+                                <div><a href="{% url 'gym:vip_customers' %}" class="btn btn-outline-light btn-sm mt-2">مدیریت VIP <i class="fas fa-crown"></i></a></div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Shop Financial Management Section (Admin Only) -->
+                        {% if user.is_staff %}
+                        <div class="col-md-4">
+                            <div class="dashboard-card dashboard-card-emerald text-center h-100">
+                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-chart-line fa-2x"></i></div>
+                                مدیریت مالی فروشگاه
+                                <div class="badge bg-light text-dark mb-1">درآمد & هزینه</div>
+                                <div class="badge bg-light text-dark mb-1">گزارشات فروش</div>
+                                <div><a href="{% url 'gym_shop:shop_financial_dashboard' %}" class="btn btn-outline-light btn-sm mt-2">داشبورد مالی <i class="fas fa-dollar-sign"></i></a></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Email Notification Settings Section (Admin Only) -->
+                        {% if notification_settings %}
+                        <div class="col-md-4">
+                            <div class="dashboard-card dashboard-card-indigo text-center h-100">
+                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-bell fa-2x"></i></div>
+                                تنظیمات اطلاع‌رسانی
+                                <div class="badge {% if notification_settings.is_active %}bg-success{% else %}bg-warning text-dark{% endif %} mb-1">
+                                    {% if notification_settings.is_active %}فعال{% else %}غیرفعال{% endif %}
+                                </div>
+                                <div class="badge bg-light text-dark mb-1">{{ notification_settings.get_notification_frequency_display }}</div>
+                                <small class="text-light d-block mb-2">{{ notification_settings.notification_email|truncatechars:25 }}</small>
+                                <div><a href="/admin/gym/emailnotificationsettings/{{ notification_settings.id }}/change/" class="btn btn-outline-light btn-sm mt-2">تنظیمات ایمیل <i class="fas fa-cog"></i></a></div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Product Management Section (Admin Only) -->
+                        <div class="col-md-4">
+                            <div class="dashboard-card dashboard-card-orange text-center h-100">
+                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-box-open fa-2x"></i></div>
+                                مدیریت محصولات
+                                <div class="badge bg-light text-dark mb-1">افزودن محصول</div>
+                                <div class="badge bg-light text-dark mb-1">دسته‌بندی‌ها</div>
+                                <div><a href="{% url 'gym_shop:product_management' %}" class="btn btn-outline-light btn-sm mt-2">مدیریت محصولات <i class="fas fa-cogs"></i></a></div>
+                            </div>
+                        </div>
+                        
+                        <!-- Order Management Section (Admin Only) -->
+                        <div class="col-md-4">
+                            <div class="dashboard-card dashboard-card-red text-center h-100">
+                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-clipboard-list fa-2x"></i></div>
+                                مدیریت سفارشات
+                                <div class="badge bg-light text-dark mb-1">پیگیری سفارش</div>
+                                <div class="badge bg-light text-dark mb-1">گزارشات فروش</div>
+                                <div><a href="{% url 'gym_shop:order_management' %}" class="btn btn-outline-light btn-sm mt-2">مدیریت سفارشات <i class="fas fa-shopping-cart"></i></a></div>
+                            </div>
+                        </div>
+                        
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -121,28 +191,121 @@
 </div>
 
 <style>
+    /* Dashboard Card Base Styles */
+    .dashboard-card {
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        color: white;
+        border: none;
+    }
+    
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Color Schemes */
+    .dashboard-card-blue {
+        background: linear-gradient(135deg, #4285f4 0%, #1565c0 100%);
+    }
+    
+    .dashboard-card-teal {
+        background: linear-gradient(135deg, #26a69a 0%, #00695c 100%);
+    }
+    
+    .dashboard-card-green {
+        background: linear-gradient(135deg, #66bb6a 0%, #388e3c 100%);
+    }
+    
+    .dashboard-card-purple {
+        background: linear-gradient(135deg, #ab47bc 0%, #7b1fa2 100%);
+    }
+    
+    .dashboard-card-amber {
+        background: linear-gradient(135deg, #ffb74d 0%, #f57c00 100%);
+    }
+    
+    .dashboard-card-emerald {
+        background: linear-gradient(135deg, #26c6da 0%, #00acc1 100%);
+    }
+    
+    .dashboard-card-indigo {
+        background: linear-gradient(135deg, #5c6bc0 0%, #3949ab 100%);
+    }
+    
+    .dashboard-card-orange {
+        background: linear-gradient(135deg, #ff7043 0%, #d84315 100%);
+    }
+    
+    .dashboard-card-red {
+        background: linear-gradient(135deg, #ef5350 0%, #c62828 100%);
+    }
+    
+    /* Icon Circle Styles */
     .icon-circle {
         width: 80px;
         height: 80px;
-        background-color: rgba(255, 0, 0, 0.1);
+        background-color: rgba(255, 255, 255, 0.2);
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
         margin: 0 auto 10px auto;
-        transition: transform 0.2s;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
     }
+    
     .icon-circle i {
-        color: var(--primary-color);
+        color: white;
     }
-    .border:hover .icon-circle {
+    
+    .dashboard-card:hover .icon-circle {
         transform: scale(1.1);
+        background-color: rgba(255, 255, 255, 0.3);
     }
+    
+    /* Card Specific Styles */
     .card {
-        border-radius: 10px;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
+    
     .btn {
-        border-radius: 5px;
+        border-radius: 25px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-outline-light:hover {
+        background-color: rgba(255, 255, 255, 0.9);
+        color: #333;
+        transform: translateY(-2px);
+    }
+    
+    /* Badge Styles */
+    .badge {
+        border-radius: 12px;
+        padding: 0.4em 0.8em;
+        font-size: 0.75em;
+        font-weight: 500;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .dashboard-card {
+            margin-bottom: 1rem;
+        }
+        
+        .icon-circle {
+            width: 60px;
+            height: 60px;
+        }
+        
+        .icon-circle i {
+            font-size: 1.5rem;
+        }
     }
     .btn-outline-primary {
         color: var(--primary-color);

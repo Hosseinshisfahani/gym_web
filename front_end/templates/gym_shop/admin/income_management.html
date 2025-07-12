@@ -1,0 +1,266 @@
+{% extends 'gym_shop/base.html' %}
+
+{% block title %}مدیریت درآمدها{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-plus-circle text-success me-2"></i>
+                    مدیریت درآمدها
+                </h1>
+                <div class="btn-group">
+                    <a href="{% url 'gym_shop:shop_financial_dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-chart-line me-1"></i>
+                        داشبورد
+                    </a>
+                    <a href="{% url 'gym_shop:order_management' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-shopping-cart me-1"></i>
+                        سفارشات
+                    </a>
+                    <a href="{% url 'gym_shop:add_shop_income' %}" class="btn btn-success">
+                        <i class="fas fa-plus me-1"></i>
+                        افزودن درآمد
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h6 class="mb-0">فیلتر درآمدها</h6>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">نوع درآمد</label>
+                    <select name="income_type" class="form-select">
+                        <option value="">همه</option>
+                        {% for value, display in income_types %}
+                            <option value="{{ value }}" {% if income_type == value %}selected{% endif %}>{{ display }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">وضعیت</label>
+                    <select name="status" class="form-select">
+                        <option value="">همه</option>
+                        {% for value, display in statuses %}
+                            <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ display }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">از تاریخ</label>
+                    <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">تا تاریخ</label>
+                    <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-1"></i>
+                        اعمال فیلتر
+                    </button>
+                    <a href="{% url 'gym_shop:shop_income_management' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-1"></i>
+                        پاک کردن
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">مجموع درآمد</h5>
+                    <h3 class="mb-0">{{ total_income|floatformat:0 }} تومان</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">تعداد درآمدها</h5>
+                    <h3 class="mb-0">{{ page_obj.paginator.count }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Income List -->
+    <div class="card">
+        <div class="card-header">
+            <h6 class="mb-0">لیست درآمدها</h6>
+        </div>
+        <div class="card-body">
+            {% if page_obj %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>عنوان</th>
+                                <th>نوع</th>
+                                <th>مبلغ</th>
+                                <th>وضعیت</th>
+                                <th>تاریخ</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for income in page_obj %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ income.title }}</strong>
+                                        {% if income.description %}
+                                            <br>
+                                            <small class="text-muted">{{ income.description|truncatewords:10 }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ income.get_income_type_display }}</span>
+                                    </td>
+                                    <td>
+                                        <strong class="text-success">{{ income.amount|floatformat:0 }} تومان</strong>
+                                    </td>
+                                    <td>
+                                        {% if income.status == 'confirmed' %}
+                                            <span class="badge bg-success">{{ income.get_status_display }}</span>
+                                        {% elif income.status == 'pending' %}
+                                            <span class="badge bg-warning">{{ income.get_status_display }}</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">{{ income.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ income.date|date:"Y/m/d" }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-primary" onclick="updateIncomeStatus({{ income.id }}, 'confirmed')">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-warning" onclick="updateIncomeStatus({{ income.id }}, 'pending')">
+                                                <i class="fas fa-clock"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="updateIncomeStatus({{ income.id }}, 'cancelled')">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">قبلی</a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">بعدی</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                    <h5>هیچ درآمدی یافت نشد</h5>
+                    <p class="text-muted">برای شروع، درآمد جدید اضافه کنید.</p>
+                    <a href="{% url 'gym_shop:add_shop_income' %}" class="btn btn-success">
+                        <i class="fas fa-plus me-1"></i>
+                        افزودن درآمد
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function updateIncomeStatus(incomeId, status) {
+    if (confirm('آیا از تغییر وضعیت این درآمد مطمئن هستید؟')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/shop/admin/income/update/${incomeId}/`;
+        
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = 'csrfmiddlewaretoken';
+        csrfToken.value = '{{ csrf_token }}';
+        
+        const statusInput = document.createElement('input');
+        statusInput.type = 'hidden';
+        statusInput.name = 'status';
+        statusInput.value = status;
+        
+        form.appendChild(csrfToken);
+        form.appendChild(statusInput);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+
+<style>
+.card {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card-header {
+    background: rgba(0, 0, 0, 0.03);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    border-radius: 1rem 1rem 0 0 !important;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.badge {
+    font-size: 0.75rem;
+    padding: 0.5em 0.75em;
+}
+
+.btn-group .btn {
+    border-radius: 0.375rem;
+    margin-left: 0.25rem;
+}
+
+.btn-group .btn:first-child {
+    margin-left: 0;
+}
+</style>
+{% endblock %} 

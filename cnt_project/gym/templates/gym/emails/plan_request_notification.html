@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>درخواست برنامه جدید</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Tahoma', 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            line-height: 1.6;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+            text-align: center;
+            margin: -20px -20px 20px -20px;
+        }
+        
+        .header.workout {
+            background: linear-gradient(135deg, #dc3545 0%, #fd7e14 100%);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .request-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .request-info h2 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .info-row:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: #6c757d;
+        }
+        
+        .info-value {
+            color: #495057;
+        }
+        
+        .plan-type-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+        
+        .plan-type-workout {
+            background: #ffe6e6;
+            color: #dc3545;
+        }
+        
+        .plan-type-diet {
+            background: #e6f7e6;
+            color: #28a745;
+        }
+        
+        .description-section {
+            background: #fff9c4;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .description-section h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+        
+        .description-section p {
+            color: #6c5b00;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+        
+        .user-details {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .user-details h3 {
+            color: #1976d2;
+            margin-bottom: 15px;
+        }
+        
+        .body-info-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        .body-info-table th,
+        .body-info-table td {
+            padding: 10px;
+            text-align: right;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .body-info-table th {
+            background: #e9ecef;
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .action-buttons {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 5px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #1e7e34;
+        }
+        
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+            margin-top: 30px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-approved { background: #d4edda; color: #155724; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+        .status-completed { background: #d1ecf1; color: #0c5460; }
+        
+        .vip-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #ffd700, #ffed4a);
+            color: #8b4513;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header {% if plan_request.plan_type == 'workout' %}workout{% endif %}">
+            <h1>
+                {% if plan_request.plan_type == 'workout' %}
+                    🏋️‍♂️ درخواست برنامه تمرینی جدید
+                {% else %}
+                    🥗 درخواست برنامه غذایی جدید
+                {% endif %}
+            </h1>
+            <p>درخواست برنامه جدیدی از طرف کاربر دریافت شده است</p>
+        </div>
+        
+        <div class="request-info">
+            <h2>اطلاعات درخواست</h2>
+            <span class="plan-type-badge plan-type-{{ plan_request.plan_type }}">
+                {{ plan_request.get_plan_type_display }}
+            </span>
+            
+            <div class="info-row">
+                <span class="info-label">نام کاربر:</span>
+                <span class="info-value">
+                    {{ plan_request.user.userprofile.name|default:plan_request.user.username }}
+                    {% if plan_request.user.userprofile.is_vip %}
+                        <span class="vip-badge">👑 VIP</span>
+                    {% endif %}
+                </span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">نام کاربری:</span>
+                <span class="info-value">{{ plan_request.user.username }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">ایمیل:</span>
+                <span class="info-value">{{ plan_request.user.email|default:"ندارد" }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">تاریخ درخواست:</span>
+                <span class="info-value">{{ plan_request.created_at|date:"Y/m/d H:i" }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">وضعیت:</span>
+                <span class="info-value">
+                    <span class="status-badge status-{{ plan_request.status }}">{{ plan_request.get_status_display }}</span>
+                </span>
+            </div>
+        </div>
+        
+        <div class="description-section">
+            <h3>توضیحات و خواسته‌های کاربر</h3>
+            <p>{{ plan_request.description }}</p>
+        </div>
+        
+        <div class="user-details">
+            <h3>اطلاعات کاربر</h3>
+            <div class="info-row">
+                <span class="info-label">نام و نام خانوادگی:</span>
+                <span class="info-value">{{ plan_request.user.userprofile.name|default:"ندارد" }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">شماره تلفن:</span>
+                <span class="info-value">{{ plan_request.user.userprofile.phone|default:"ندارد" }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">سن:</span>
+                <span class="info-value">{{ plan_request.user.userprofile.age|default:"ندارد" }} سال</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">جنسیت:</span>
+                <span class="info-value">{{ plan_request.user.userprofile.get_gender_display|default:"ندارد" }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">تاریخ عضویت:</span>
+                <span class="info-value">{{ plan_request.user.date_joined|date:"Y/m/d" }}</span>
+            </div>
+        </div>
+        
+        {% if body_info %}
+        <div class="user-details">
+            <h3>اطلاعات بدنی کاربر</h3>
+            <table class="body-info-table">
+                <tr>
+                    <th>قد (سانتی‌متر)</th>
+                    <td>{{ body_info.height|default:"ندارد" }}</td>
+                </tr>
+                <tr>
+                    <th>وزن (کیلوگرم)</th>
+                    <td>{{ body_info.weight|default:"ندارد" }}</td>
+                </tr>
+                <tr>
+                    <th>BMI</th>
+                    <td>{{ body_info.bmi|floatformat:1|default:"ندارد" }}</td>
+                </tr>
+                <tr>
+                    <th>درصد چربی</th>
+                    <td>{{ body_info.body_fat_percentage|floatformat:1|default:"ندارد" }}%</td>
+                </tr>
+                <tr>
+                    <th>توده عضلانی</th>
+                    <td>{{ body_info.muscle_mass|floatformat:1|default:"ندارد" }} کیلوگرم</td>
+                </tr>
+                <tr>
+                    <th>سطح فعالیت</th>
+                    <td>{{ body_info.get_activity_level_display|default:"ندارد" }}</td>
+                </tr>
+                <tr>
+                    <th>هدف</th>
+                    <td>{{ body_info.get_goal_display|default:"ندارد" }}</td>
+                </tr>
+                {% if body_info.health_conditions %}
+                <tr>
+                    <th>شرایط سلامتی</th>
+                    <td>{{ body_info.health_conditions }}</td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+        {% endif %}
+        
+        <div class="action-buttons">
+            <a href="{{ plan_detail_url }}" class="btn btn-primary">مشاهده جزئیات کامل</a>
+            {% if plan_request.status == 'pending' %}
+                <a href="{{ approve_url }}" class="btn btn-success">تایید درخواست</a>
+                <a href="{{ reject_url }}" class="btn btn-danger">رد درخواست</a>
+            {% endif %}
+            {% if plan_request.status == 'approved' %}
+                {% if plan_request.plan_type == 'workout' %}
+                    <a href="{{ create_plan_url }}" class="btn btn-warning">ایجاد برنامه تمرینی</a>
+                {% else %}
+                    <a href="{{ create_plan_url }}" class="btn btn-warning">ایجاد برنامه غذایی</a>
+                {% endif %}
+            {% endif %}
+        </div>
+        
+        <div class="footer">
+            <p>این ایمیل به صورت خودکار ارسال شده است.</p>
+            <p>سیستم مدیریت باشگاه شیرنشان اسپورت</p>
+        </div>
+    </div>
+</body>
+</html> 

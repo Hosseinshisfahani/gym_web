@@ -84,6 +84,77 @@ class OrderAdmin(admin.ModelAdmin):
         })
     )
 
+# Financial Management Admin
+from .models import ShopIncome, ShopExpense, ShopSalesReport
+
+@admin.register(ShopIncome)
+class ShopIncomeAdmin(admin.ModelAdmin):
+    list_display = ['title', 'income_type', 'amount', 'status', 'date', 'related_order']
+    list_filter = ['income_type', 'status', 'date']
+    search_fields = ['title', 'description']
+    list_editable = ['status']
+    readonly_fields = ['created_at', 'updated_at']
+    date_hierarchy = 'date'
+    
+    fieldsets = (
+        ('اطلاعات درآمد', {
+            'fields': ('title', 'income_type', 'amount', 'description', 'status')
+        }),
+        ('ارتباطات', {
+            'fields': ('related_order',)
+        }),
+        ('تاریخ', {
+            'fields': ('date', 'created_at', 'updated_at')
+        })
+    )
+
+@admin.register(ShopExpense)
+class ShopExpenseAdmin(admin.ModelAdmin):
+    list_display = ['title', 'expense_type', 'amount', 'status', 'date', 'related_product']
+    list_filter = ['expense_type', 'status', 'date']
+    search_fields = ['title', 'description']
+    list_editable = ['status']
+    readonly_fields = ['created_at', 'updated_at']
+    date_hierarchy = 'date'
+    
+    fieldsets = (
+        ('اطلاعات هزینه', {
+            'fields': ('title', 'expense_type', 'amount', 'description', 'status')
+        }),
+        ('فایل‌ها و ارتباطات', {
+            'fields': ('receipt_file', 'related_product')
+        }),
+        ('تاریخ', {
+            'fields': ('date', 'created_at', 'updated_at')
+        })
+    )
+
+@admin.register(ShopSalesReport)
+class ShopSalesReportAdmin(admin.ModelAdmin):
+    list_display = ['title', 'report_period', 'start_date', 'end_date', 'total_revenue', 'total_profit', 'total_orders']
+    list_filter = ['report_period', 'is_auto_generated', 'start_date']
+    search_fields = ['title']
+    readonly_fields = ['created_at', 'updated_at']
+    date_hierarchy = 'start_date'
+    
+    fieldsets = (
+        ('اطلاعات گزارش', {
+            'fields': ('title', 'report_period', 'start_date', 'end_date', 'is_auto_generated')
+        }),
+        ('آمار فروش', {
+            'fields': ('total_orders', 'total_revenue', 'total_profit', 'total_products_sold', 'best_selling_product')
+        }),
+        ('آمار مشتریان', {
+            'fields': ('new_customers', 'returning_customers')
+        }),
+        ('وضعیت سفارشات', {
+            'fields': ('pending_orders', 'completed_orders', 'cancelled_orders')
+        }),
+        ('تاریخ', {
+            'fields': ('created_at', 'updated_at')
+        })
+    )
+
 @admin.register(ProductImage)
 class ProductImageAdmin(admin.ModelAdmin):
     list_display = ['product', 'alt_text', 'image']

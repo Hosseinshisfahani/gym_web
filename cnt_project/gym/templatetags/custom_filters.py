@@ -34,6 +34,17 @@ def get_item(dictionary, key):
     return dictionary.get(key)
 
 @register.filter
+def add_commas(value):
+    """Add commas to numbers for formatting (e.g., 1000 -> 1,000)"""
+    try:
+        # Convert to integer to remove decimal places
+        num = int(float(value))
+        # Format with commas
+        return f"{num:,}"
+    except (ValueError, TypeError):
+        return value
+
+@register.filter
 def format_price(value):
     """Format numbers with slash separators (e.g., 500000 -> 500/000)"""
     try:

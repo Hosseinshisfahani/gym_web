@@ -227,3 +227,141 @@ class OrderItem(models.Model):
     def save(self, *args, **kwargs):
         self.total = self.quantity * self.price
         super().save(*args, **kwargs)
+
+
+# مدیریت مالی فروشگاه (Shop Financial Management)
+class ShopIncome(models.Model):
+    INCOME_TYPE_CHOICES = [
+        ('product_sale', 'فروش محصول'),
+        ('shipping_fee', 'هزینه ارسال'),
+        ('other', 'سایر درآمدها'),
+    ]
+    
+    INCOME_STATUS_CHOICES = [
+        ('pending', 'در انتظار'),
+        ('confirmed', 'تایید شده'),
+        ('cancelled', 'لغو شده'),
+    ]
+    
+    title = models.CharField(max_length=200, verbose_name='عنوان درآمد')
+    income_type = models.CharField(max_length=20, choices=INCOME_TYPE_CHOICES, verbose_name='نوع درآمد')
+    amount = models.DecimalField(max_digits=12, decimal_places=0, verbose_name='مبلغ (تومان)')
+    description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
+    status = models.CharField(max_length=20, choices=INCOME_STATUS_CHOICES, default='confirmed', verbose_name='وضعیت')
+    date = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ')
+    
+    # ارتباط با سفارش (اختیاری)
+    related_order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True, blank=True, related_name='incomes', verbose_name='سفارش مرتبط')
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
+
+    class Meta:
+        verbose_name = 'درآمد فروشگاه'
+        verbose_name_plural = 'درآمدهای فروشگاه'
+        ordering = ['-date']
+
+    def __str__(self):
+        return f'{self.title} - {self.amount:,} تومان'
+
+class ShopExpense(models.Model):
+    EXPENSE_TYPE_CHOICES = [
+        ('product_purchase', 'خرید محصول'),
+        ('shipping_cost', 'هزینه ارسال'),
+        ('marketing', 'تبلیغات'),
+        ('rent', 'اجاره'),
+        ('salary', 'حقوق'),
+        ('utilities', 'آب، برق، گاز'),
+        ('maintenance', 'نگهداری'),
+        ('packaging', 'بسته‌بندی'),
+        ('website', 'وب‌سایت'),
+        ('other', 'سایر هزینه‌ها'),
+    ]
+    
+    EXPENSE_STATUS_CHOICES = [
+        ('pending', 'در انتظار'),
+        ('paid', 'پرداخت شده'),
+        ('cancelled', 'لغو شده'),
+    ]
+    
+    title = models.CharField(max_length=200, verbose_name='عنوان هزینه')
+    expense_type = models.CharField(max_length=20, choices=EXPENSE_TYPE_CHOICES, verbose_name='نوع هزینه')
+    amount = models.DecimalField(max_digits=12, decimal_places=0, verbose_name='مبلغ (تومان)')
+    description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
+    status = models.CharField(max_length=20, choices=EXPENSE_STATUS_CHOICES, default='pending', verbose_name='وضعیت')
+    date = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ')
+    
+    # فایل رسید (اختیاری)
+    receipt_file = models.FileField(upload_to='shop/receipts/', blank=True, null=True, verbose_name='فایل رسید')
+    
+    # ارتباط با محصول (اختیاری)
+    related_product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True, related_name='expenses', verbose_name='محصول مرتبط')
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
+
+    class Meta:
+        verbose_name = 'هزینه فروشگاه'
+        verbose_name_plural = 'هزینه‌های فروشگاه'
+        ordering = ['-date']
+
+    def __str__(self):
+        return f'{self.title} - {self.amount:,} تومان'
+
+class ShopSalesReport(models.Model):
+    REPORT_PERIOD_CHOICES = [
+        ('daily', 'روزانه'),
+        ('weekly', 'هفتگی'),
+        ('monthly', 'ماهانه'),
+        ('yearly', 'سالانه'),
+    ]
+    
+    title = models.CharField(max_length=200, verbose_name='عنوان گزارش')
+    report_period = models.CharField(max_length=20, choices=REPORT_PERIOD_CHOICES, verbose_name='دوره گزارش')
+    start_date = models.DateField(verbose_name='تاریخ شروع')
+    end_date = models.DateField(verbose_name='تاریخ پایان')
+    
+    # آمار فروش
+    total_orders = models.PositiveIntegerField(default=0, verbose_name='تعداد سفارشات')
+    total_revenue = models.DecimalField(max_digits=15, decimal_places=0, default=0, verbose_name='کل درآمد')
+    total_profit = models.DecimalField(max_digits=15, decimal_places=0, default=0, verbose_name='کل سود')
+    
+    # آمار محصولات
+    total_products_sold = models.PositiveIntegerField(default=0, verbose_name='تعداد محصولات فروخته شده')
+    best_selling_product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True, related_name='best_selling_reports', verbose_name='پرفروش‌ترین محصول')
+    
+    # آمار مشتریان
+    new_customers = models.PositiveIntegerField(default=0, verbose_name='مشتریان جدید')
+    returning_customers = models.PositiveIntegerField(default=0, verbose_name='مشتریان برگشتی')
+    
+    # وضعیت سفارشات
+    pending_orders = models.PositiveIntegerField(default=0, verbose_name='سفارشات در انتظار')
+    completed_orders = models.PositiveIntegerField(default=0, verbose_name='سفارشات تکمیل شده')
+    cancelled_orders = models.PositiveIntegerField(default=0, verbose_name='سفارشات لغو شده')
+    
+    # گزارش خودکار
+    is_auto_generated = models.BooleanField(default=False, verbose_name='گزارش خودکار')
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
+
+    class Meta:
+        verbose_name = 'گزارش فروش'
+        verbose_name_plural = 'گزارشات فروش'
+        ordering = ['-start_date']
+
+    def __str__(self):
+        return f'{self.title} ({self.start_date} تا {self.end_date})'
+    
+    def calculate_profit_margin(self):
+        """محاسبه درصد سود"""
+        if self.total_revenue > 0:
+            return (self.total_profit / self.total_revenue) * 100
+        return 0
+    
+    @property
+    def average_order_value(self):
+        """محاسبه میانگین مبلغ سفارش"""
+        if self.total_orders > 0:
+            return self.total_revenue / self.total_orders
+        return 0

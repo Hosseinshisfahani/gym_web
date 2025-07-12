@@ -43,6 +43,13 @@ urlpatterns = [
     path('documents/<int:doc_id>/view/', views.view_document, name='view_document'),
     path('staff/users/', views.admin_user_management, name='admin_user_management'),
     
+    # VIP Customers Management
+    path('staff/vip-customers/', views.vip_customers, name='vip_customers'),
+    path('staff/vip-customers/toggle/<int:user_id>/', views.toggle_vip_status, name='toggle_vip_status'),
+    
+    # Email Notifications
+    path('staff/test-email-notifications/', views.test_email_notifications, name='test_email_notifications'),
+    
     # Plan request management
     path('plan-requests/', views.manage_plan_requests, name='manage_plan_requests'),
     path('plan-requests/<int:request_id>/update/', views.update_plan_request, name='update_plan_request'),
