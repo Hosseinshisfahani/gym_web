@@ -332,7 +332,7 @@
                                 <tr>
                                     <td>{{ entry.get_measurement_type_display }}</td>
                                     <td>{{ entry.value }} {{ entry.unit }}</td>
-                                    <td>{{ entry.measurement_date|date:"m/d" }}</td>
+                                    <td>{{ entry.measurement_date|persian_date:"j F" }}</td>
                                     <td>
                                         <form method="post" action="{% url 'gym:delete_progress_entry' entry.id %}" style="display: inline;" onsubmit="return confirm('حذف شود؟');">
                                             {% csrf_token %}

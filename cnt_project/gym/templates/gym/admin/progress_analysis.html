@@ -1,5 +1,6 @@
 {% extends 'gym/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}آنالیز پیشرفت - نمودارهای سه‌رنگ - پلتفرم جامع ورزشی{% endblock %}
 
@@ -59,7 +60,7 @@
                     <h5 class="mb-0">
                         <i class="fas fa-user me-2"></i>{{ user_data.user_name }}
                     </h5>
-                    <small class="text-muted">هدف فعال: {{ user_data.goal.title }} ({{ user_data.goal.start_date|date:"Y/m/d" }} تا {{ user_data.goal.end_date|date:"Y/m/d" }})</small>
+                    <small class="text-muted">هدف فعال: {{ user_data.goal.title }} ({{ user_data.goal.start_date|persian_date:"Y/m/d" }} تا {{ user_data.goal.end_date|persian_date:"Y/m/d" }})</small>
                 </div>
                 <div class="col-auto">
                     <span class="badge bg-{{ user_data.goal.status|default:'secondary' }}">

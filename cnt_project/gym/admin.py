@@ -53,9 +53,9 @@ class UserProfileAdmin(admin.ModelAdmin):
 class WorkoutPlanAdmin(admin.ModelAdmin):
     verbose_name = 'برنامه تمرینی'
     verbose_name_plural = 'برنامه‌های تمرینی'
-    list_display = ('title', 'user', 'created_at', 'is_active')
-    list_filter = ('is_active',)
-    search_fields = ('title', 'user__username', 'user__userprofile__name')
+    list_display = ('plan_type', 'user', 'created_at', 'is_active')
+    list_filter = ('is_active', 'plan_type')
+    search_fields = ('user__username', 'user__userprofile__name')
     ordering = ('-created_at',)
 
 class DietPlanAdmin(admin.ModelAdmin):

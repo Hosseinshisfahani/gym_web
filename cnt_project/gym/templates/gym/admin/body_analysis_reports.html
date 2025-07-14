@@ -1,5 +1,6 @@
 {% extends 'gym/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}مدیریت آنالیزهای بدن - پلتفرم جامع ورزشی{% endblock %}
 
@@ -55,7 +56,7 @@
                         {% for report in reports %}
                         <tr>
                             <td>{{ report.user.userprofile.name|default:report.user.username }}</td>
-                            <td>{{ report.report_date|date:"Y/m/d" }}</td>
+                            <td>{{ report.report_date|persian_date:"Y/m/d" }}</td>
                             <td>
                                 <a href="{{ report.image.url }}" target="_blank">
                                     <img src="{{ report.image.url }}" alt="آنالیز بدن" style="height: 40px; width: auto;">
@@ -68,7 +69,7 @@
                                     <span class="badge bg-success">بررسی شده</span>
                                 {% endif %}
                             </td>
-                            <td>{{ report.response_date|date:"Y/m/d"|default:"-" }}</td>
+                            <td>{{ report.response_date|persian_date:"Y/m/d"|default:"-" }}</td>
                             <td>
                                 <a href="{% url 'gym:body_analysis_detail' report.id %}" class="btn btn-sm btn-primary">
                                     {% if report.status == 'pending' %}

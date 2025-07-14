@@ -1,4 +1,5 @@
 {% extends 'gym/base.html' %}
+{% load custom_filters %}
 
 {% block title %}برنامه‌های ورزشی{% endblock %}
 
@@ -25,7 +26,7 @@
                             <table class="table table-striped table-dark">
                                 <thead>
                                     <tr>
-                                        <th>عنوان</th>
+                                        <th>نوع برنامه</th>
                                         <th>تاریخ ایجاد</th>
                                         <th>وضعیت</th>
                                         <th>عملیات</th>
@@ -34,8 +35,10 @@
                                 <tbody>
                                     {% for plan in workout_plans %}
                                     <tr>
-                                        <td>{{ plan.title }}</td>
-                                        <td>{{ plan.created_at|date:"Y/m/d" }}</td>
+                                        <td>
+                                            <span class="badge bg-info">{{ plan.get_plan_type_display }}</span>
+                                        </td>
+                                        <td>{{ plan.created_at|persian_date:"Y/m/d" }}</td>
                                         <td>
                                             <span class="badge {% if plan.is_active %}bg-success{% else %}bg-secondary{% endif %}">
                                                 {% if plan.is_active %}فعال{% else %}غیرفعال{% endif %}
@@ -75,7 +78,7 @@
                                 <tbody>
                                     {% for request in plan_requests %}
                                     <tr>
-                                        <td>{{ request.created_at|date:"Y/m/d H:i" }}</td>
+                                        <td>{{ request.created_at|persian_date:"Y/m/d" }}</td>
                                         <td>
                                             <span class="badge {% if request.status == 'pending' %}bg-warning{% elif request.status == 'approved' %}bg-success{% else %}bg-danger{% endif %}">
                                                 {{ request.get_status_display }}

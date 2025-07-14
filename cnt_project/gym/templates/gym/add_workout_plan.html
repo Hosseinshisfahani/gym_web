@@ -1,5 +1,6 @@
 {% extends 'gym/base.html' %}
 {% load widget_tweaks %}
+{% load custom_filters %}
 
 {% block title %}افزودن برنامه تمرینی{% endblock %}
 
@@ -35,7 +36,7 @@
                             <h5 class="mb-0">جزئیات درخواست</h5>
                         </div>
                         <div class="card-body">
-                            <p><strong>تاریخ درخواست:</strong> {{ plan_request.created_at|date:"Y/m/d" }}</p>
+                            <p><strong>تاریخ درخواست:</strong> {{ plan_request.created_at|persian_date:"Y/m/d" }}</p>
                             <div class="mb-3">
                                 <strong>توضیحات کاربر:</strong>
                                 <div class="p-3 bg-light rounded text-dark">{{ plan_request.description|linebreaks }}</div>
@@ -82,16 +83,17 @@
                         {% endif %}
                         
                         <div class="mb-3">
-                            <label for="{{ form.title.id_for_label }}" class="form-label">عنوان <span class="text-danger">*</span></label>
-                            {{ form.title }}
-                            {% if form.title.errors %}
-                                <div class="text-danger mt-1">{{ form.title.errors }}</div>
+                            <label for="{{ form.plan_type.id_for_label }}" class="form-label">نوع برنامه تمرینی <span class="text-danger">*</span></label>
+                            {{ form.plan_type|add_class:"form-control" }}
+                            {% if form.plan_type.errors %}
+                                <div class="text-danger mt-1">{{ form.plan_type.errors }}</div>
                             {% endif %}
+                            <div class="form-text text-muted">نوع و هدف برنامه تمرینی را انتخاب کنید</div>
                         </div>
                         
                         <div class="mb-3">
                             <label for="{{ form.description.id_for_label }}" class="form-label">توضیحات</label>
-                            {{ form.description }}
+                            {{ form.description|add_class:"form-control" }}
                             {% if form.description.errors %}
                                 <div class="text-danger mt-1">{{ form.description.errors }}</div>
                             {% endif %}
@@ -99,7 +101,7 @@
                         
                         <div class="mb-3">
                             <label for="{{ form.image.id_for_label }}" class="form-label">تصویر برنامه <span class="text-danger">*</span></label>
-                            {{ form.image }}
+                            {{ form.image|add_class:"form-control" }}
                             {% if form.image.errors %}
                                 <div class="text-danger mt-1">{{ form.image.errors }}</div>
                             {% endif %}
@@ -108,7 +110,7 @@
                         
                         <div class="mb-3">
                             <label for="{{ form.plan_file.id_for_label }}" class="form-label">فایل برنامه (اختیاری)</label>
-                            {{ form.plan_file }}
+                            {{ form.plan_file|add_class:"form-control" }}
                             {% if form.plan_file.errors %}
                                 <div class="text-danger mt-1">{{ form.plan_file.errors }}</div>
                             {% endif %}
@@ -119,7 +121,7 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="{{ form.duration_weeks.id_for_label }}" class="form-label">مدت (هفته)</label>
-                                    {{ form.duration_weeks }}
+                                    {{ form.duration_weeks|add_class:"form-control" }}
                                     {% if form.duration_weeks.errors %}
                                         <div class="text-danger mt-1">{{ form.duration_weeks.errors }}</div>
                                     {% endif %}
@@ -128,7 +130,7 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="{{ form.start_date.id_for_label }}" class="form-label">تاریخ شروع</label>
-                                    {{ form.start_date }}
+                                    {{ form.start_date|add_class:"form-control" }}
                                     {% if form.start_date.errors %}
                                         <div class="text-danger mt-1">{{ form.start_date.errors }}</div>
                                     {% endif %}

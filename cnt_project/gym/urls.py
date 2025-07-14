@@ -34,6 +34,7 @@ urlpatterns = [
     path('payments/', views.payments, name='payments'),
     path('payments/add/', views.add_payment, name='add_payment'),
     path('payments/plan-request/', views.plan_request_payment, name='plan_request_payment'),
+    path('payments/gateway-callback/', views.payment_gateway_callback, name='payment_gateway_callback'),
     path('tickets/', views.tickets, name='tickets'),
     path('tickets/add/', views.add_ticket, name='add_ticket'),
     path('tickets/<int:ticket_id>/', views.ticket_detail, name='ticket_detail'),

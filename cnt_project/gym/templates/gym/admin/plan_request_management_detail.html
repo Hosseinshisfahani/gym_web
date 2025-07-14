@@ -60,10 +60,10 @@
                                     {{ plan_request.get_status_display }}
                                 </span>
                             </p>
-                            <p><strong>تاریخ درخواست:</strong> {{ plan_request.created_at|date:"Y/m/d H:i" }}</p>
+                            <p><strong>تاریخ درخواست:</strong> {{ plan_request.created_at|persian_date:"Y/m/d" }}</p>
                         </div>
                         <div class="col-md-6">
-                            <p><strong>تاریخ به‌روزرسانی:</strong> {{ plan_request.updated_at|date:"Y/m/d H:i" }}</p>
+                            <p><strong>تاریخ به‌روزرسانی:</strong> {{ plan_request.updated_at|persian_date:"Y/m/d" }}</p>
                         </div>
                     </div>
                     <div class="mt-3">
@@ -129,7 +129,7 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <p><strong>تاریخ تولد:</strong> {{ body_info.birth_date|date:"Y/m/d"|default:"تعیین نشده" }}</p>
+                            <p><strong>تاریخ تولد:</strong> {{ body_info.birth_date|persian_date:"Y/m/d"|default:"تعیین نشده" }}</p>
                             <p><strong>جنسیت:</strong> {{ body_info.get_gender_display|default:"تعیین نشده" }}</p>
                             <p><strong>قد:</strong> {{ body_info.height_cm|default:"تعیین نشده" }} سانتی‌متر</p>
                             <p><strong>وزن:</strong> {{ body_info.weight_kg|default:"تعیین نشده" }} کیلوگرم</p>
@@ -201,7 +201,7 @@
                                              {% else %}bg-danger{% endif %}">
                                     {{ payment.get_status_display }}
                                 </span>
-                                <small class="text-muted">{{ payment.payment_date|date:"Y/m/d" }}</small>
+                                <small class="text-muted">{{ payment.payment_date|persian_date:"Y/m/d" }}</small>
                             </div>
                             <p class="mb-2"><strong>مبلغ:</strong> {{ payment.amount|format_price }} تومان</p>
                             
@@ -306,7 +306,7 @@
                         {% for plan in existing_plans %}
                         <div class="border rounded p-3 mb-2">
                             <h6 class="mb-1">{{ plan.title }}</h6>
-                            <p class="mb-1 text-muted small">{{ plan.created_at|date:"Y/m/d" }}</p>
+                            <p class="mb-1 text-muted small">{{ plan.created_at|persian_date:"Y/m/d" }}</p>
                             <span class="badge {% if plan.is_active %}bg-success{% else %}bg-secondary{% endif %}">
                                 {% if plan.is_active %}فعال{% else %}غیرفعال{% endif %}
                             </span>

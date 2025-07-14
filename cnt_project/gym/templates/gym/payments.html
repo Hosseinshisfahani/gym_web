@@ -170,7 +170,7 @@
                     <tbody>
                         {% for payment in payments %}
                         <tr>
-                            <td>{{ payment.payment_date|date:"Y/m/d" }}</td>
+                            <td>{{ payment.payment_date|persian_date:"Y/m/d" }}</td>
                             {% if is_admin %}
                             <td>{{ payment.user.userprofile.name|default:payment.user.username }}</td>
                             {% endif %}

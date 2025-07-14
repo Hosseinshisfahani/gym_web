@@ -22,41 +22,103 @@
                             <div>
                                 <h5 class="mb-1">خلاصه درخواست شما</h5>
                                 <p class="mb-1"><strong>نوع برنامه:</strong> {{ plan_type_display }}</p>
+                                <p class="mb-1"><strong>مبلغ:</strong> {{ plan_price|format_price }} تومان</p>
                                 <p class="mb-0"><strong>توضیحات:</strong> {{ plan_data.description }}</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Payment Instructions -->
-                    <div class="alert alert-warning mb-4">
-                        <h6 class="mb-2"><i class="fas fa-exclamation-triangle me-2"></i>دستورالعمل پرداخت</h6>
-                        <div class="mb-3">
-                            <strong>شماره کارت برای واریز:</strong>
-                            <div class="card bg-light p-3 mt-2">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex align-items-center">
-                                            <h5 class="mb-1 text-primary me-2" id="cardNumber">{{ payment_card.get_formatted_card_number }}</h5>
-                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="copyCardNumber()" title="کپی شماره کارت">
-                                                <i class="fas fa-copy"></i>
-                                            </button>
+                    <!-- Payment Method Selection -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">انتخاب روش پرداخت</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- Gateway Payment -->
+                                <div class="col-md-6 mb-3">
+                                    <div class="payment-method-card" onclick="selectPaymentMethod('gateway')">
+                                        <div class="text-center p-4">
+                                            <i class="fas fa-credit-card fa-3x text-success mb-3"></i>
+                                            <h5>پرداخت آنلاین</h5>
+                                            <p class="text-muted">پرداخت امن از طریق درگاه بانکی</p>
+                                            <span class="badge bg-success">توصیه شده</span>
                                         </div>
-                                        <small class="text-muted">{{ payment_card.card_holder_name }}</small>
                                     </div>
-                                    <div class="text-end">
-                                        <h4 class="mb-0 text-success">{{ plan_price|format_price }} تومان</h4>
-                                        <small class="text-muted">{{ plan_type_display }}</small>
+                                </div>
+                                
+                                <!-- Manual Payment -->
+                                {% if payment_card %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="payment-method-card" onclick="selectPaymentMethod('manual')">
+                                        <div class="text-center p-4">
+                                            <i class="fas fa-receipt fa-3x text-warning mb-3"></i>
+                                            <h5>پرداخت دستی</h5>
+                                            <p class="text-muted">واریز به کارت و آپلود رسید</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gateway Payment Form -->
+                    <div id="gatewayPayment" class="payment-form">
+                        <div class="alert alert-success">
+                            <h6 class="mb-2"><i class="fas fa-shield-alt me-2"></i>پرداخت امن آنلاین</h6>
+                            <ul class="mb-0 small">
+                                <li>پرداخت از طریق درگاه امن بانکی</li>
+                                <li>امکان پرداخت با تمامی کارت‌های بانکی</li>
+                                <li>تایید فوری پرداخت</li>
+                                <li>دریافت کد پیگیری</li>
+                            </ul>
+                        </div>
+                        
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="payment_method" value="gateway">
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="fas fa-credit-card me-2"></i>پرداخت {{ plan_price|format_price }} تومان
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Manual Payment Form -->
+                    {% if payment_card %}
+                    <div id="manualPayment" class="payment-form" style="display: none;">
+                        <!-- Manual Payment Instructions -->
+                        <div class="alert alert-warning mb-4">
+                            <h6 class="mb-2"><i class="fas fa-exclamation-triangle me-2"></i>دستورالعمل پرداخت دستی</h6>
+                            <div class="mb-3">
+                                <strong>شماره کارت برای واریز:</strong>
+                                <div class="card bg-light p-3 mt-2">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex align-items-center">
+                                                <h5 class="mb-1 text-primary me-2" id="cardNumber">{{ payment_card.get_formatted_card_number }}</h5>
+                                                <button type="button" class="btn btn-sm btn-outline-primary" onclick="copyCardNumber()" title="کپی شماره کارت">
+                                                    <i class="fas fa-copy"></i>
+                                                </button>
+                                            </div>
+                                            <small class="text-muted">{{ payment_card.card_holder_name }}</small>
+                                        </div>
+                                        <div class="text-end">
+                                            <h4 class="mb-0 text-success">{{ plan_price|format_price }} تومان</h4>
+                                            <small class="text-muted">{{ plan_type_display }}</small>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
+                            <ul class="mb-0 small">
+                                <li>مبلغ <strong>{{ plan_price|format_price }} تومان</strong> را به شماره کارت بالا واریز کنید</li>
+                                <li>رسید پرداخت خود را عکس بگیرید</li>
+                                <li>تصویر رسید را در فرم زیر آپلود کنید</li>
+                                <li>پس از تایید پرداخت، درخواست شما بررسی خواهد شد</li>
+                            </ul>
                         </div>
-                        <ul class="mb-0 small">
-                            <li>مبلغ <strong>{{ plan_price|format_price }} تومان</strong> را به شماره کارت بالا واریز کنید</li>
-                            <li>رسید پرداخت خود را عکس بگیرید</li>
-                            <li>تصویر رسید را در فرم زیر آپلود کنید</li>
-                            <li>پس از تایید پرداخت، درخواست شما بررسی خواهد شد</li>
-                        </ul>
-                    </div>
 
                     {% if messages %}
                         {% for message in messages %}
@@ -67,40 +129,43 @@
                         {% endfor %}
                     {% endif %}
 
-                    <form method="post" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        
-                        <!-- Hidden fields with pre-filled values -->
-                        <input type="hidden" name="amount" value="{{ plan_price }}">
-                        <input type="hidden" name="payment_type" value="{{ form.payment_type.value }}">
-                        <input type="hidden" name="payment_date" value="{% now 'Y-m-d' %}">
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <input type="hidden" name="payment_method" value="manual">
+                            
+                            <!-- Hidden fields with pre-filled values -->
+                            <input type="hidden" name="amount" value="{{ plan_price }}">
+                            <input type="hidden" name="payment_type" value="{{ form.payment_type.value }}">
+                            <input type="hidden" name="payment_date" value="{% now 'Y-m-d' %}">
 
-                        <div class="mb-3">
-                            <label for="{{ form.proof_image.id_for_label }}" class="form-label">تصویر رسید پرداخت <span class="text-danger">*</span></label>
-                            {{ form.proof_image|add_class:"form-control" }}
-                            {% if form.proof_image.errors %}
-                                <div class="text-danger small">{{ form.proof_image.errors }}</div>
-                            {% endif %}
-                            <small class="form-text text-muted">لطفاً تصویر واضح و خوانا از رسید پرداخت خود آپلود کنید.</small>
-                        </div>
+                            <div class="mb-3">
+                                <label for="{{ form.proof_image.id_for_label }}" class="form-label">تصویر رسید پرداخت <span class="text-danger">*</span></label>
+                                {{ form.proof_image|add_class:"form-control" }}
+                                {% if form.proof_image.errors %}
+                                    <div class="text-danger small">{{ form.proof_image.errors }}</div>
+                                {% endif %}
+                                <small class="form-text text-muted">لطفاً تصویر واضح و خوانا از رسید پرداخت خود آپلود کنید.</small>
+                            </div>
 
-                        <div class="mb-3">
-                            <label for="{{ form.description.id_for_label }}" class="form-label">توضیحات اضافی (اختیاری)</label>
-                            {{ form.description|add_class:"form-control" }}
-                            {% if form.description.errors %}
-                                <div class="text-danger small">{{ form.description.errors }}</div>
-                            {% endif %}
-                        </div>
+                            <div class="mb-3">
+                                <label for="{{ form.description.id_for_label }}" class="form-label">توضیحات اضافی (اختیاری)</label>
+                                {{ form.description|add_class:"form-control" }}
+                                {% if form.description.errors %}
+                                    <div class="text-danger small">{{ form.description.errors }}</div>
+                                {% endif %}
+                            </div>
 
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-between mt-4">
-                            <a href="{% url 'gym:profile' %}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left me-2"></i>انصراف
-                            </a>
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-upload me-2"></i>ثبت پرداخت و تکمیل درخواست
-                            </button>
-                        </div>
-                    </form>
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-between mt-4">
+                                <a href="{% url 'gym:profile' %}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>انصراف
+                                </a>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-upload me-2"></i>ثبت پرداخت و تکمیل درخواست
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -147,9 +212,61 @@
     .alert-warning {
         border-left: 4px solid #ffc107;
     }
+    
+    .alert-success {
+        border-left: 4px solid #28a745;
+    }
+    
+    /* Payment Method Cards */
+    .payment-method-card {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .payment-method-card:hover {
+        border-color: var(--primary-color);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .payment-method-card.selected {
+        border-color: var(--primary-color);
+        background-color: rgba(255, 0, 0, 0.05);
+        box-shadow: 0 4px 12px rgba(255, 0, 0, 0.1);
+    }
+    
+    .payment-form {
+        transition: all 0.3s ease;
+    }
 </style>
 
 <script>
+// Payment method selection
+function selectPaymentMethod(method) {
+    // Remove selected class from all cards
+    document.querySelectorAll('.payment-method-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Add selected class to clicked card
+    event.currentTarget.classList.add('selected');
+    
+    // Hide all payment forms
+    document.querySelectorAll('.payment-form').forEach(form => {
+        form.style.display = 'none';
+    });
+    
+    // Show selected payment form
+    if (method === 'gateway') {
+        document.getElementById('gatewayPayment').style.display = 'block';
+    } else if (method === 'manual') {
+        document.getElementById('manualPayment').style.display = 'block';
+    }
+}
+
 function copyCardNumber() {
     const cardNumberText = document.getElementById('cardNumber').textContent;
     // Remove hyphens for easier pasting
@@ -219,5 +336,15 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// Initialize page - select gateway payment by default
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-select gateway payment method
+    const gatewayCard = document.querySelector('.payment-method-card');
+    if (gatewayCard) {
+        selectPaymentMethod('gateway');
+        gatewayCard.classList.add('selected');
+    }
+});
 </script>
 {% endblock %} 

@@ -1,5 +1,6 @@
 {% extends 'gym/base.html' %}
 {% load widget_tweaks %}
+{% load custom_filters %}
 
 {% block title %}افزودن برنامه غذایی{% endblock %}
 
@@ -35,7 +36,7 @@
                             <h5 class="mb-0">جزئیات درخواست</h5>
                         </div>
                         <div class="card-body">
-                            <p><strong>تاریخ درخواست:</strong> {{ plan_request.created_at|date:"Y/m/d" }}</p>
+                            <p><strong>تاریخ درخواست:</strong> {{ plan_request.created_at|persian_date:"Y/m/d" }}</p>
                             <div class="mb-3">
                                 <strong>توضیحات کاربر:</strong>
                                 <div class="p-3 bg-light rounded text-dark">{{ plan_request.description|linebreaks }}</div>

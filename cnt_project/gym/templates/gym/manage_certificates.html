@@ -1,5 +1,6 @@
 {% extends 'gym/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}مدیریت گواهینامه‌ها - پلتفرم جامع آموزشی{% endblock %}
 
@@ -39,8 +40,8 @@
                         <tr>
                             <td>{{ certificate.user.get_full_name|default:certificate.user.username }}</td>
                             <td>{{ certificate.title }}</td>
-                            <td>{{ certificate.issue_date|date:"Y/m/d" }}</td>
-                            <td>{{ certificate.created_at|date:"Y/m/d H:i" }}</td>
+                            <td>{{ certificate.issue_date|persian_date:"Y/m/d" }}</td>
+                            <td>{{ certificate.created_at|persian_date:"Y/m/d" }}</td>
                             <td>
                                 <span class="badge {% if certificate.status == 'approved' %}bg-success{% elif certificate.status == 'rejected' %}bg-danger{% else %}bg-warning{% endif %}">
                                     {{ certificate.get_status_display }}
@@ -88,7 +89,7 @@
                                             <div class="col-md-6">
                                                 <h6>اطلاعات گواهی:</h6>
                                                 <p><strong>عنوان:</strong> {{ certificate.title }}</p>
-                                                <p><strong>تاریخ صدور:</strong> {{ certificate.issue_date|date:"Y/m/d" }}</p>
+                                                <p><strong>تاریخ صدور:</strong> {{ certificate.issue_date|persian_date:"Y/m/d" }}</p>
                                                 <p><strong>وضعیت:</strong> {{ certificate.get_status_display }}</p>
                                             </div>
                                         </div>

@@ -42,8 +42,15 @@ def update_user_username(sender, instance, created, **kwargs):
             print(f"Cannot update username to {instance.melli_code} for user {instance.user.id} due to conflict")
 
 class WorkoutPlan(models.Model):
+    WORKOUT_TYPE_CHOICES = [
+        ('fat_burning', 'چربی سوزی'),
+        ('bulk', 'حجم'),
+        ('hypertrophy', 'هایپروتروفی'),
+        ('corrective', 'اصلاحی'),
+    ]
+    
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='workout_plans')
-    title = models.CharField(max_length=200, verbose_name='عنوان')
+    plan_type = models.CharField(max_length=20, choices=WORKOUT_TYPE_CHOICES, verbose_name='نوع برنامه', default='hypertrophy')
     description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
     image = models.ImageField(upload_to='workout_plans/images/', blank=True, null=True, verbose_name='تصویر برنامه')
     plan_file = models.FileField(upload_to='workout_plans/', blank=True, null=True, verbose_name='فایل برنامه')
@@ -59,7 +66,7 @@ class WorkoutPlan(models.Model):
         verbose_name_plural = 'برنامه‌های تمرینی'
     
     def __str__(self):
-        return f"{self.title} - {self.user.username}"
+        return f"{self.get_plan_type_display()} - {self.user.username}"
     
     def save(self, *args, **kwargs):
         # Calculate end date based on start date and duration
@@ -98,6 +105,7 @@ class Payment(models.Model):
         ('pending', 'در انتظار تایید'),
         ('approved', 'تایید شده'),
         ('rejected', 'رد شده'),
+        ('failed', 'ناموفق'),
     ]
     PAYMENT_TYPE_CHOICES = [
         ('membership', 'حق عضویت'),
@@ -105,16 +113,27 @@ class Payment(models.Model):
         ('diet_plan', 'برنامه غذایی'),
         ('other', 'سایر'),
     ]
+    PAYMENT_METHOD_CHOICES = [
+        ('manual', 'پرداخت دستی'),
+        ('gateway', 'درگاه پرداخت'),
+    ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payments')
     amount = models.PositiveIntegerField(verbose_name='مبلغ (تومان)')
     payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPE_CHOICES, default='other', verbose_name='نوع پرداخت')
+    payment_method = models.CharField(max_length=10, choices=PAYMENT_METHOD_CHOICES, default='manual', verbose_name='روش پرداخت')
     payment_date = models.DateField(default=timezone.now, verbose_name='تاریخ پرداخت')
     proof_image = models.ImageField(upload_to='payment_proofs/', blank=True, null=True, verbose_name='تصویر رسید پرداخت')
     description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
     status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default='pending', verbose_name='وضعیت')
     admin_note = models.TextField(blank=True, null=True, verbose_name='توضیحات مدیر')
     card_number = models.CharField(max_length=16, blank=True, null=True, verbose_name='شماره کارت')
+    
+    # Gateway payment fields
+    gateway_type = models.CharField(max_length=20, blank=True, null=True, verbose_name='نوع درگاه')
+    gateway_authority = models.CharField(max_length=100, blank=True, null=True, verbose_name='کد تراکنش درگاه')
+    gateway_ref_id = models.CharField(max_length=100, blank=True, null=True, verbose_name='شماره پیگیری')
+    gateway_response = models.TextField(blank=True, null=True, verbose_name='پاسخ درگاه')
     
     class Meta:
         verbose_name = 'پرداخت'

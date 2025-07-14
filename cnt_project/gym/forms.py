@@ -6,6 +6,73 @@ from .models import (
     Ticket, Document, PlanRequest, BodyAnalysisReport, 
     MonthlyGoal, ProgressAnalysis, BodyInformationUser
 )
+import jdatetime
+from datetime import datetime, date
+
+class PersianDateWidget(forms.DateInput):
+    """Persian date widget that displays Persian dates but submits Gregorian dates"""
+    
+    def __init__(self, attrs=None):
+        default_attrs = {
+            'class': 'form-control persian-date-input',
+            'placeholder': '۱۴۰۳/۰۱/۰۱',
+            'dir': 'ltr'
+        }
+        if attrs:
+            default_attrs.update(attrs)
+        super().__init__(attrs=default_attrs)
+    
+    def format_value(self, value):
+        if value is None:
+            return ''
+        
+        # Convert Gregorian date to Persian for display
+        if isinstance(value, (datetime, date)):
+            try:
+                if isinstance(value, datetime):
+                    persian_date = jdatetime.datetime.fromgregorian(datetime=value)
+                else:
+                    persian_date = jdatetime.date.fromgregorian(date=value)
+                return f"{persian_date.year}/{persian_date.month:02d}/{persian_date.day:02d}"
+            except:
+                return ''
+        return str(value)
+    
+    def value_from_datadict(self, data, files, name):
+        # Get the Persian date string from form
+        persian_date_str = data.get(name)
+        if not persian_date_str:
+            return None
+        
+        try:
+            # Parse Persian date (expected format: YYYY/MM/DD)
+            parts = persian_date_str.split('/')
+            if len(parts) == 3:
+                year, month, day = int(parts[0]), int(parts[1]), int(parts[2])
+                # Convert Persian date to Gregorian
+                persian_date = jdatetime.date(year, month, day)
+                gregorian_date = persian_date.togregorian()
+                return gregorian_date.strftime('%Y-%m-%d')
+        except (ValueError, AttributeError):
+            pass
+        
+        return persian_date_str
+
+def persian_to_gregorian_date(persian_date_str):
+    """Convert Persian date string to Gregorian date object"""
+    if not persian_date_str:
+        return None
+    
+    try:
+        parts = persian_date_str.split('/')
+        if len(parts) == 3:
+            year, month, day = int(parts[0]), int(parts[1]), int(parts[2])
+            persian_date = jdatetime.date(year, month, day)
+            return persian_date.togregorian()
+    except (ValueError, AttributeError):
+        pass
+    
+    return None
 
 class UserRegistrationForm(UserCreationForm):
     name = forms.CharField(
@@ -134,16 +201,19 @@ class UserProfileForm(forms.ModelForm):
     
     class Meta:
         model = UserProfile
-        fields = ['profile_image', 'name', 'phone_number', 'post_code', 'home_address']
+        fields = ['profile_image', 'name', 'melli_code', 'phone_number', 'post_code', 'home_address']
         labels = {
             'profile_image': 'عکس پروفایل',
             'name': 'نام',
+            'melli_code': 'کد ملی',
             'phone_number': 'شماره تلفن',
-            'post_code': 'کد پستی',
+            'post_code': 'کد پستی (اختیاری)',
             'home_address': 'آدرس منزل',
         }
         widgets = {
             'home_address': forms.Textarea(attrs={'rows': 3}),
+            'melli_code': forms.TextInput(attrs={'maxlength': '10', 'placeholder': 'مثال: 1234567890'}),
+            'post_code': forms.TextInput(attrs={'maxlength': '10', 'placeholder': 'مثال: 1234567890'}),
         }
     
     def __init__(self, *args, **kwargs):
@@ -164,14 +234,16 @@ class UserProfileForm(forms.ModelForm):
 class WorkoutPlanForm(forms.ModelForm):
     class Meta:
         model = WorkoutPlan
-        fields = ['title', 'description', 'image', 'plan_file', 'duration_weeks', 'start_date', 'is_active']
+        fields = ['plan_type', 'description', 'image', 'plan_file', 'duration_weeks', 'start_date', 'is_active']
         widgets = {
-            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'start_date': PersianDateWidget(),
             'description': forms.Textarea(attrs={'rows': 4}),
             'image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'plan_type': forms.Select(attrs={'class': 'form-control'}),
         }
         labels = {
             'image': 'تصویر برنامه (ضروری)',
+            'plan_type': 'نوع برنامه تمرینی',
         }
     
     def __init__(self, *args, **kwargs):
@@ -183,7 +255,7 @@ class DietPlanForm(forms.ModelForm):
         model = DietPlan
         fields = ['title', 'description', 'image', 'plan_file', 'duration_weeks', 'start_date', 'is_active']
         widgets = {
-            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'start_date': PersianDateWidget(),
             'description': forms.Textarea(attrs={'rows': 4}),
             'image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
         }
@@ -200,7 +272,7 @@ class PaymentForm(forms.ModelForm):
         model = Payment
         fields = ['amount', 'payment_type', 'payment_date', 'proof_image', 'description']
         widgets = {
-            'payment_date': forms.DateInput(attrs={'type': 'date'}),
+            'payment_date': PersianDateWidget(),
             'description': forms.Textarea(attrs={'rows': 3}),
         }
 
@@ -237,7 +309,7 @@ class BodyAnalysisReportForm(forms.ModelForm):
         model = BodyAnalysisReport
         fields = ['image', 'description', 'report_date']
         widgets = {
-            'report_date': forms.DateInput(attrs={'type': 'date'}),
+            'report_date': PersianDateWidget(),
             'description': forms.Textarea(attrs={'rows': 3, 'placeholder': 'توضیحات اضافی خود را وارد کنید...'}),
         }
 
@@ -260,8 +332,8 @@ class MonthlyGoalForm(forms.ModelForm):
             'coach_notes'
         ]
         widgets = {
-            'start_date': forms.DateInput(attrs={'type': 'date'}),
-            'end_date': forms.DateInput(attrs={'type': 'date'}),
+            'start_date': PersianDateWidget(),
+            'end_date': PersianDateWidget(),
             'coach_notes': forms.Textarea(attrs={'rows': 3, 'placeholder': 'توصیه‌ها، راهنمایی‌ها و نکات مربی...'}),
             'target_weight': forms.NumberInput(attrs={'min': 30, 'max': 200, 'step': 0.1, 'placeholder': 'مثال: 70.5'}),
             'target_body_fat_percentage': forms.NumberInput(attrs={'min': 5, 'max': 50, 'step': 0.1, 'placeholder': 'مثال: 15.5'}),
@@ -325,7 +397,7 @@ class ProgressAnalysisForm(forms.ModelForm):
         model = ProgressAnalysis
         fields = ['measurement_type', 'value', 'unit', 'measurement_date', 'notes']
         widgets = {
-            'measurement_date': forms.DateInput(attrs={'type': 'date'}),
+            'measurement_date': PersianDateWidget(),
             'notes': forms.Textarea(attrs={'rows': 2, 'placeholder': 'یادداشت...'}),
         }
 
@@ -339,7 +411,7 @@ class BodyInformationUserForm(forms.ModelForm):
             'body_image_left', 'body_image_right'
         ]
         widgets = {
-            'birth_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'birth_date': PersianDateWidget(attrs={'class': 'form-control'}),
             'gender': forms.Select(attrs={'class': 'form-control'}),
             'height_cm': forms.NumberInput(attrs={'class': 'form-control', 'min': '100', 'max': '250', 'placeholder': 'مثال: 175'}),
             'weight_kg': forms.NumberInput(attrs={'class': 'form-control', 'min': '30', 'max': '200', 'placeholder': 'مثال: 70'}),

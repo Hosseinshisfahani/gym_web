@@ -180,6 +180,7 @@
                     <h4 class="mb-1">سلام {{ user_profile.name|default:"کاربر" }} عزیز!</h4>
                     <ul class="list-unstyled text-end mb-3">
                         <li><strong>نام:</strong> {{ user_profile.name }}</li>
+                        <li><strong>کد ملی:</strong> {{ user_profile.melli_code|default:"بدون اطلاعات" }}</li>
                         <li><strong>ایمیل:</strong> {{ user_profile.user.email }}</li>
                         <li><strong>شماره تلفن:</strong> {{ user_profile.phone_number|default:"بدون اطلاعات" }}</li>
                     </ul>

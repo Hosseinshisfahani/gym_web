@@ -1,5 +1,6 @@
 {% extends 'gym/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}جزئیات آنالیز بدن - پلتفرم جامع ورزشی{% endblock %}
 
@@ -15,7 +16,7 @@
                 <div class="card-body">
                     <div class="row mb-4">
                         <div class="col-md-6">
-                            <p><strong>تاریخ آزمایش:</strong> {{ report.report_date|date:"Y/m/d" }}</p>
+                            <p><strong>تاریخ آزمایش:</strong> {{ report.report_date|persian_date:"Y/m/d" }}</p>
                             <p>
                                 <strong>وضعیت:</strong> 
                                 {% if report.status == 'pending' %}
@@ -30,7 +31,7 @@
                         </div>
                         <div class="col-md-6">
                             {% if report.response_date %}
-                            <p><strong>تاریخ پاسخ:</strong> {{ report.response_date|date:"Y/m/d H:i" }}</p>
+                            <p><strong>تاریخ پاسخ:</strong> {{ report.response_date|persian_date:"Y/m/d" }}</p>
                             {% endif %}
                         </div>
                     </div>

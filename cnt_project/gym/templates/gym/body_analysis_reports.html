@@ -1,5 +1,6 @@
 {% extends 'gym/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}آنالیز بدن و آزمایشات - پلتفرم جامع ورزشی{% endblock %}
 
@@ -53,7 +54,7 @@
                             <tbody>
                                 {% for report in reports %}
                                 <tr>
-                                    <td>{{ report.report_date|date:"Y/m/d" }}</td>
+                                    <td>{{ report.report_date|persian_date:"Y/m/d" }}</td>
                                     <td>
                                         <a href="{{ report.image.url }}" target="_blank">
                                             <img src="{{ report.image.url }}" alt="آنالیز بدن" style="height: 50px; width: auto;">

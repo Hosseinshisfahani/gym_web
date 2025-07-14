@@ -1,5 +1,6 @@
 {% extends 'gym/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}{{ page_title }} - پلتفرم جامع ورزشی{% endblock %}
 
@@ -72,11 +73,11 @@
                                 <table class="table table-borderless">
                                     <tr>
                                         <td class="text-dark"><strong>تاریخ شروع:</strong></td>
-                                        <td class="text-dark">{{ goal.start_date|date:"Y/m/d" }}</td>
+                                        <td class="text-dark">{{ goal.start_date|persian_date:"Y/m/d" }}</td>
                                     </tr>
                                     <tr>
                                         <td class="text-dark"><strong>تاریخ پایان:</strong></td>
-                                        <td class="text-dark">{{ goal.end_date|date:"Y/m/d" }}</td>
+                                        <td class="text-dark">{{ goal.end_date|persian_date:"Y/m/d" }}</td>
                                     </tr>
                                     <tr>
                                         <td class="text-dark"><strong>پیشرفت:</strong></td>

@@ -1,5 +1,6 @@
 {% extends 'gym/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}{{ certificate.title }} - پلتفرم جامع آموزشی{% endblock %}
 
@@ -27,8 +28,8 @@
                     <h5>اطلاعات گواهینامه</h5>
                     <ul class="list-unstyled">
                         <li><strong>عنوان:</strong> {{ certificate.title }}</li>
-                        <li><strong>تاریخ صدور:</strong> {{ certificate.issue_date|date:"Y/m/d" }}</li>
-                        <li><strong>تاریخ ثبت:</strong> {{ certificate.created_at|date:"Y/m/d H:i" }}</li>
+                        <li><strong>تاریخ صدور:</strong> {{ certificate.issue_date|persian_date:"Y/m/d" }}</li>
+                        <li><strong>تاریخ ثبت:</strong> {{ certificate.created_at|persian_date:"Y/m/d" }}</li>
                         <li><strong>وضعیت:</strong> 
                             <span class="badge {% if certificate.status == 'approved' %}bg-success{% elif certificate.status == 'rejected' %}bg-danger{% else %}bg-warning{% endif %}">
                                 {{ certificate.get_status_display }}

@@ -1266,14 +1266,11 @@ def plan_request_payment(request):
     
     plan_data = request.session['pending_plan_request']
     
-    # Get active payment card
+    # Get active payment card for manual payments
     payment_card = PaymentCard.objects.filter(is_active=True).first()
-    if not payment_card:
-        messages.error(request, 'در حال حاضر امکان پرداخت وجود ندارد. لطفاً با پشتیبانی تماس بگیرید.')
-        return redirect('gym:profile')
     
     # Get price based on plan type
-    plan_price = payment_card.get_price_for_plan_type(plan_data['plan_type'])
+    plan_price = payment_card.get_price_for_plan_type(plan_data['plan_type']) if payment_card else 500000
     
     # Check if user's profile is complete
     try:
@@ -1290,69 +1287,109 @@ def plan_request_payment(request):
         return redirect('gym:profile')
     
     if request.method == 'POST':
-        form = PaymentForm(request.POST, request.FILES)
-        if form.is_valid():
-            # Create the payment
-            payment = form.save(commit=False)
-            payment.user = request.user
-            # Set payment type based on plan type
-            payment.payment_type = 'workout_plan' if plan_data['plan_type'] == 'workout' else 'diet_plan'
-            payment.save()
+        payment_method = request.POST.get('payment_method', 'gateway')
+        
+        if payment_method == 'gateway':
+            # Handle gateway payment
+            from gym.utils.payment_gateway import PaymentGateway
+            gateway = PaymentGateway()
             
-            # Send email notification to admins for payment upload
-            try:
-                from gym.utils.email_notifications import send_payment_upload_notification
-                send_payment_upload_notification(payment, request)
-            except Exception as e:
-                # Log error but don't interrupt the process
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.error(f"Failed to send payment upload notification email: {str(e)}")
-            
-            # Create the plan request after successful payment upload
-            plan_request = PlanRequest.objects.create(
+            # Create payment record
+            payment = Payment.objects.create(
                 user=request.user,
-                plan_type=plan_data['plan_type'],
-                description=plan_data['description']
+                amount=plan_price,
+                payment_type='workout_plan' if plan_data['plan_type'] == 'workout' else 'diet_plan',
+                payment_method='gateway',
+                status='pending',
+                gateway_type=gateway.gateway_type
             )
             
-            # Send email notification to admins
-            try:
-                from gym.utils.email_notifications import send_plan_request_notification
-                send_plan_request_notification(plan_request, request)
-            except Exception as e:
-                # Log error but don't interrupt the process
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.error(f"Failed to send plan request notification email: {str(e)}")
+            # Store payment ID in session for callback verification
+            request.session['pending_payment_id'] = payment.id
             
-            # Store plan data for status display and clear pending request
-            request.session['completed_plan_request'] = {
-                'plan_type': plan_data['plan_type'],
-                'description': plan_data['description'],
-                'request_id': plan_request.id
-            }
-            del request.session['pending_plan_request']
+            # Generate callback URL
+            callback_url = request.build_absolute_uri(reverse('gym:payment_gateway_callback'))
             
-            messages.success(request, 'پرداخت شما با موفقیت ثبت شد و درخواست برنامه شما در انتظار بررسی است.')
+            # Create payment request with gateway
+            plan_type_display = 'برنامه تمرینی' if plan_data['plan_type'] == 'workout' else 'برنامه غذایی'
+            description = f'پرداخت {plan_type_display} - {user_profile.name}'
             
-            # Clear the success message immediately to prevent it from showing repeatedly
-            storage = messages.get_messages(request)
-            for message in storage:
-                pass  # This consumes and clears the messages
+            success, result = gateway.create_payment_request(
+                amount=plan_price,
+                description=description,
+                callback_url=callback_url,
+                mobile=user_profile.phone_number,
+                email=request.user.email
+            )
             
-            # Redirect to status step
-            return redirect('gym:plan_request_flow', step='status')
+            if success:
+                payment.gateway_authority = result['authority']
+                payment.save()
+                # Redirect to payment gateway
+                return redirect(result['gateway_url'])
+            else:
+                payment.status = 'failed'
+                payment.gateway_response = str(result)
+                payment.save()
+                messages.error(request, f'خطا در اتصال به درگاه پرداخت: {result.get("error", "خطای ناشناخته")}')
+        
         else:
-            # Invalid form, errors will be shown to the user
-            pass
-    else:
-        # Pre-fill the form with plan type and amount
-        initial_data = {
-            'payment_type': 'workout_plan' if plan_data['plan_type'] == 'workout' else 'diet_plan',
-            'amount': plan_price
-        }
-        form = PaymentForm(initial=initial_data)
+            # Handle manual payment (existing logic)
+            if not payment_card:
+                messages.error(request, 'در حال حاضر امکان پرداخت دستی وجود ندارد.')
+                return redirect('gym:profile')
+                
+            form = PaymentForm(request.POST, request.FILES)
+            if form.is_valid():
+                # Create the payment
+                payment = form.save(commit=False)
+                payment.user = request.user
+                payment.payment_method = 'manual'
+                payment.payment_type = 'workout_plan' if plan_data['plan_type'] == 'workout' else 'diet_plan'
+                payment.save()
+                
+                # Send email notification to admins for payment upload
+                try:
+                    from gym.utils.email_notifications import send_payment_upload_notification
+                    send_payment_upload_notification(payment, request)
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Failed to send payment upload notification email: {str(e)}")
+                
+                # Create the plan request after successful payment upload
+                plan_request = PlanRequest.objects.create(
+                    user=request.user,
+                    plan_type=plan_data['plan_type'],
+                    description=plan_data['description']
+                )
+                
+                # Send email notification to admins
+                try:
+                    from gym.utils.email_notifications import send_plan_request_notification
+                    send_plan_request_notification(plan_request, request)
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Failed to send plan request notification email: {str(e)}")
+                
+                # Store plan data for status display and clear pending request
+                request.session['completed_plan_request'] = {
+                    'plan_type': plan_data['plan_type'],
+                    'description': plan_data['description'],
+                    'request_id': plan_request.id
+                }
+                del request.session['pending_plan_request']
+                
+                messages.success(request, 'پرداخت شما با موفقیت ثبت شد و درخواست برنامه شما در انتظار بررسی است.')
+                return redirect('gym:plan_request_flow', step='status')
+    
+    # For GET requests, prepare form for manual payment
+    initial_data = {
+        'payment_type': 'workout_plan' if plan_data['plan_type'] == 'workout' else 'diet_plan',
+        'amount': plan_price
+    }
+    form = PaymentForm(initial=initial_data)
     
     context = {
         'form': form,
@@ -1362,6 +1399,96 @@ def plan_request_payment(request):
         'plan_type_display': 'برنامه تمرینی' if plan_data['plan_type'] == 'workout' else 'برنامه غذایی'
     }
     return render(request, 'gym/plan_request_payment.html', context)
+
+@login_required
+def payment_gateway_callback(request):
+    """Handle payment gateway callback"""
+    authority = request.GET.get('Authority') or request.POST.get('authority')
+    status = request.GET.get('Status')
+    
+    # Get pending payment from session
+    payment_id = request.session.get('pending_payment_id')
+    
+    if not payment_id:
+        messages.error(request, 'اطلاعات پرداخت یافت نشد.')
+        return redirect('gym:profile')
+    
+    try:
+        payment = Payment.objects.get(id=payment_id, user=request.user)
+    except Payment.DoesNotExist:
+        messages.error(request, 'پرداخت مورد نظر یافت نشد.')
+        return redirect('gym:profile')
+    
+    # Clear payment ID from session
+    if 'pending_payment_id' in request.session:
+        del request.session['pending_payment_id']
+    
+    if status == 'OK' and authority:
+        # Verify payment with gateway
+        from gym.utils.payment_gateway import PaymentGateway
+        gateway = PaymentGateway(payment.gateway_type)
+        
+        success, result = gateway.verify_payment(authority, payment.amount)
+        
+        if success:
+            # Payment successful
+            payment.status = 'approved'
+            payment.gateway_ref_id = result.get('ref_id')
+            payment.gateway_response = json.dumps(result)
+            payment.save()
+            
+            # Get plan data from session
+            plan_data = request.session.get('pending_plan_request')
+            
+            if plan_data:
+                # Create the plan request after successful payment
+                plan_request = PlanRequest.objects.create(
+                    user=request.user,
+                    plan_type=plan_data['plan_type'],
+                    description=plan_data['description']
+                )
+                
+                # Send email notifications
+                try:
+                    from gym.utils.email_notifications import send_payment_upload_notification, send_plan_request_notification
+                    send_payment_upload_notification(payment, request)
+                    send_plan_request_notification(plan_request, request)
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Failed to send notification emails: {str(e)}")
+                
+                # Store plan data for status display and clear pending request
+                request.session['completed_plan_request'] = {
+                    'plan_type': plan_data['plan_type'],
+                    'description': plan_data['description'],
+                    'request_id': plan_request.id
+                }
+                del request.session['pending_plan_request']
+                
+                messages.success(request, f'پرداخت با موفقیت انجام شد. شماره پیگیری: {payment.gateway_ref_id}')
+                return redirect('gym:plan_request_flow', step='status')
+            else:
+                messages.success(request, f'پرداخت با موفقیت انجام شد. شماره پیگیری: {payment.gateway_ref_id}')
+                return redirect('gym:payments')
+        else:
+            # Payment verification failed
+            payment.status = 'failed'
+            payment.gateway_response = json.dumps(result)
+            payment.save()
+            messages.error(request, f'خطا در تایید پرداخت: {result.get("error", "خطای ناشناخته")}')
+    else:
+        # Payment cancelled or failed
+        payment.status = 'failed'
+        payment.gateway_response = f'Status: {status}, Authority: {authority}'
+        payment.save()
+        
+        if status == 'NOK':
+            messages.error(request, 'پرداخت توسط کاربر لغو شد.')
+        else:
+            messages.error(request, 'خطا در انجام پرداخت.')
+    
+    return redirect('gym:profile')
 
 def password_reset(request):
     """Handle user password reset requests"""
@@ -1416,9 +1543,6 @@ def is_profile_complete_for_payment(user_profile):
     Check if a user's profile has all the necessary information for payment
     """
     # Check if essential fields are filled
-    if not user_profile.post_code:
-        return False, 'کد پستی'
-    
     if not user_profile.home_address:
         return False, 'آدرس منزل'
     

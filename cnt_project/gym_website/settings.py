@@ -219,3 +219,13 @@ CSRF_TRUSTED_ORIGINS = [
     'https://shirneshansport.ir',
     'http://shirneshansport.ir',
 ]
+
+# Payment Gateway Configuration
+# ZarinPal Configuration
+ZARINPAL_MERCHANT_ID = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'  # Replace with your merchant ID
+
+# IDPay Configuration  
+IDPAY_API_KEY = 'your-api-key'  # Replace with your API key
+
+# Payment Gateway Settings
+PAYMENT_GATEWAY_TYPE = 'zarinpal'  # Options: 'zarinpal', 'idpay'
