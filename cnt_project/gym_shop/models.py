@@ -155,6 +155,10 @@ class CartItem(models.Model):
     @property
     def total_price(self):
         return self.quantity * self.product.final_price
+    
+    @property
+    def original_total_price(self):
+        return self.quantity * self.product.price
 
 class Order(models.Model):
     ORDER_STATUS = [

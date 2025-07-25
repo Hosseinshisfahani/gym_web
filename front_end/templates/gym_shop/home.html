@@ -4,168 +4,152 @@
 {% block title %}صفحه اصلی فروشگاه - فروشگاه تجهیزات ورزشی{% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
+<!-- Modern Hero Section -->
 <section class="shop-header">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-8">
-                <h1 class="display-4 fw-bold mb-3">
+                <div class="hero-content slide-up">
+                    <h1 class="display-3 fw-bold mb-4" style="text-shadow: 0 4px 8px rgba(0,0,0,0.3);">
+                        <span style="background: linear-gradient(45deg, #fff, #f0f8ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
                     <i class="fas fa-dumbbell me-3"></i>
                     فروشگاه تجهیزات ورزشی
+                        </span>
                 </h1>
-                <p class="lead mb-4">
-                    بهترین برندهای ورزشی، بهترین قیمت‌ها
+                    <p class="lead mb-5" style="font-size: 1.3rem; opacity: 0.95; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                        ✨ بهترین برندهای ورزشی، تجربه خرید منحصربه‌فرد ✨
                 </p>
-                <div class="d-flex gap-3">
-                    <a href="{% url 'gym_shop:product_list' %}" class="btn btn-light btn-lg">
+                    <div class="hero-buttons d-flex gap-3 flex-wrap">
+                        <a href="{% url 'gym_shop:product_list' %}" class="btn btn-light btn-lg px-5 py-3" 
+                           style="border-radius: 25px; font-weight: 600; box-shadow: 0 8px 25px rgba(255,255,255,0.3); transition: all 0.4s ease;"
+                           onmouseover="this.style.transform='translateY(-3px) scale(1.05)'; this.style.boxShadow='0 12px 35px rgba(255,255,255,0.4)';"
+                           onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 8px 25px rgba(255,255,255,0.3)';">
                         <i class="fas fa-shopping-bag me-2"></i>
-                        مشاهده محصولات
+                            کاوش محصولات
                     </a>
-                    <a href="#categories" class="btn btn-outline-light btn-lg">
-                        <i class="fas fa-list me-2"></i>
+                        <a href="#categories" class="btn btn-outline-light btn-lg px-5 py-3" 
+                           style="border-radius: 25px; font-weight: 600; border-width: 2px; backdrop-filter: blur(10px); background: rgba(255,255,255,0.1);">
+                            <i class="fas fa-th-large me-2"></i>
                         دسته‌بندی‌ها
                     </a>
+                    </div>
                 </div>
             </div>
             <div class="col-lg-4 text-center">
-                <i class="fas fa-dumbbell" style="font-size: 8rem; color: #ff6b6b; text-shadow: 0 0 20px rgba(255, 107, 107, 0.4); transition: all 0.3s ease;" 
-                   onmouseover="this.style.transform='scale(1.05)'; this.style.color='#ff4757';" 
-                   onmouseout="this.style.transform='scale(1)'; this.style.color='#ff6b6b';"></i>
+                <div class="hero-icon-container" style="position: relative;">
+                    <div class="floating-icon" style="animation: float 3s ease-in-out infinite;">
+                        <i class="fas fa-dumbbell" style="font-size: 8rem; background: linear-gradient(45deg, #dc2626, #ef4444, #991b1b); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 20px rgba(220, 38, 38, 0.6));"></i>
+                    </div>
+                    <!-- Floating particles -->
+                    <div class="particle" style="position: absolute; top: 20%; left: 10%; width: 8px; height: 8px; background: #dc2626; border-radius: 50%; animation: particleFloat 4s ease-in-out infinite;"></div>
+                    <div class="particle" style="position: absolute; top: 60%; right: 15%; width: 6px; height: 6px; background: #ef4444; border-radius: 50%; animation: particleFloat 3s ease-in-out infinite 1s;"></div>
+                    <div class="particle" style="position: absolute; bottom: 30%; left: 20%; width: 10px; height: 10px; background: #991b1b; border-radius: 50%; animation: particleFloat 5s ease-in-out infinite 0.5s;"></div>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
-<!-- Categories Section -->
-<section id="categories" class="py-5">
+<!-- Dynamic Categories Section -->
+{% if categories %}
+<section id="categories" class="py-6" style="background: linear-gradient(180deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);">
     <div class="container">
-        <div class="row mb-5">
-            <div class="col-12 text-center">
-                <h2 class="display-5 fw-bold mb-3">دسته‌بندی‌ها</h2>
-                <p class="lead text-muted">انتخاب کنید و خرید کنید</p>
-            </div>
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold mb-3" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                <i class="fas fa-th-large me-3"></i>
+                دسته‌بندی محصولات
+            </h2>
+            <p class="lead text-muted">انتخاب کنید و به دنیای ورزش قدم بگذارید</p>
         </div>
         
         <div class="row g-4">
             {% for category in categories %}
-                <div class="col-lg-3 col-md-6">
-                    <a href="{% url 'gym_shop:category_detail' category.slug %}" class="text-decoration-none">
-                        <div class="category-card h-100">
-                            {% if category.image %}
-                                <img src="{{ category.image.url }}" alt="{{ category.name }}" class="img-fluid mb-3" style="height: 80px; object-fit: cover;">
-                            {% else %}
-                                <i class="category-icon fas fa-tags"></i>
-                            {% endif %}
-                            <h5 class="fw-bold">{{ category.name }}</h5>
-                            <p class="text-muted">{{ category.description|truncatewords:10 }}</p>
+            <div class="col-lg-4 col-md-6">
+                <div class="category-card modern-card h-100" style="background: linear-gradient(135deg, #000000 0%, #dc2626 100%); color: white; border-radius: 20px; overflow: hidden; position: relative;">
+                    <div class="category-image-wrapper" style="position: relative; height: 200px; overflow: hidden;">
+                        {% if category.image %}
+                        <img src="{{ category.image.url }}" alt="{{ category.name }}" class="w-100 h-100" style="object-fit: cover; opacity: 0.8;">
+                        {% else %}
+                        <div class="w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(255,255,255,0.1);">
+                            <i class="fas fa-th-large" style="font-size: 4rem; color: rgba(255,255,255,0.7);"></i>
                         </div>
-                    </a>
-                </div>
-            {% empty %}
-                <div class="col-12 text-center">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        هنوز دسته‌بندی‌ای تعریف نشده است.
+                        {% endif %}
+                        <div class="category-overlay" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(220,38,38,0.8) 100%);"></div>
+                    </div>
+                    <div class="category-content p-4" style="position: relative; z-index: 2;">
+                        <h4 class="fw-bold mb-3">{{ category.name }}</h4>
+                        {% if category.description %}
+                        <p class="mb-4" style="opacity: 0.9; height: 60px; overflow: hidden;">{{ category.description|truncatewords:15 }}</p>
+                        {% endif %}
+                        <a href="{% url 'gym_shop:category_detail' category.slug %}" class="btn btn-light btn-sm px-4" style="border-radius: 20px; font-weight: 600;">
+                            مشاهده محصولات
+                            <i class="fas fa-arrow-left ms-2"></i>
+                        </a>
                     </div>
                 </div>
+            </div>
             {% endfor %}
         </div>
     </div>
 </section>
+{% endif %}
 
-<!-- Featured Products Section -->
+<!-- Special Products Section -->
 {% if featured_products %}
-<section class="py-5 bg-light">
+<section class="py-6" style="background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);">
     <div class="container">
-        <div class="row mb-5">
-            <div class="col-12 text-center">
-                <h2 class="display-5 fw-bold mb-3">محصولات ویژه</h2>
-                <p class="lead text-muted">بهترین انتخاب‌های ما برای شما</p>
-            </div>
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold mb-3" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                <i class="fas fa-star me-3"></i>
+                محصولات ویژه
+            </h2>
+            <p class="lead text-muted">محصولات منتخب و پرفروش</p>
         </div>
         
         <div class="row g-4">
             {% for product in featured_products %}
-                <div class="col-lg-3 col-md-6">
-                    <div class="card product-card h-100 position-relative">
-                        {% if product.discount_percentage %}
-                            <div class="discount-badge">
-                                {{ product.discount_percentage }}% تخفیف
-                            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="product-card modern-card h-100" style="background: white; border-radius: 20px; overflow: hidden; box-shadow: var(--card-shadow); transition: all 0.4s ease; position: relative;">
+                    <!-- Special Badge -->
+                    <div class="special-badge" style="position: absolute; top: 10px; left: 10px; background: var(--success-gradient); color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; font-weight: bold; z-index: 3;">
+                        <i class="fas fa-star me-1"></i>
+                        ویژه
+                    </div>
+                    
+                    <div class="product-image-wrapper" style="position: relative; height: 200px; overflow: hidden;">
+                        {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-100 h-100" style="object-fit: cover; transition: transform 0.4s ease;">
+                        {% else %}
+                        <div class="w-100 h-100 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);">
+                            <i class="fas fa-image" style="font-size: 2.5rem; color: #9ca3af;"></i>
+                        </div>
                         {% endif %}
-                        
-                        <a href="{% url 'gym_shop:product_detail' product.slug %}">
-                            {% if product.image %}
-                                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="card-img-top">
-                            {% else %}
-                                <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 250px;">
-                                    <i class="fas fa-image fa-3x text-muted"></i>
-                                </div>
-                            {% endif %}
-                        </a>
-                        
-                        <div class="card-body d-flex flex-column">
-                            <h6 class="card-title">
-                                <a href="{% url 'gym_shop:product_detail' product.slug %}" class="text-decoration-none text-dark">
-                                    {{ product.name }}
-                                </a>
-                            </h6>
-                            <p class="card-text text-muted flex-grow-1">{{ product.short_description|truncatewords:15 }}</p>
-                            
-                            <div class="mt-auto">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    {% if product.discount_price %}
-                                        <div>
-                                            <span class="price">{{ product.discount_price|floatformat:0 }} تومان</span>
-                                            <small class="original-price ms-2">{{ product.price|floatformat:0 }}</small>
-                                        </div>
-                                    {% else %}
-                                        <span class="price">{{ product.price|floatformat:0 }} تومان</span>
-                                    {% endif %}
-                                    
-                                    {% if product.stock > 0 %}
-                                        <small class="text-success">
-                                            <i class="fas fa-check-circle me-1"></i>
-                                            موجود
-                                        </small>
-                                    {% else %}
-                                        <small class="text-danger">
-                                            <i class="fas fa-times-circle me-1"></i>
-                                            ناموجود
-                                        </small>
-                                    {% endif %}
-                                </div>
-                                
-                                {% if user.is_authenticated and product.stock > 0 %}
-                                    <form method="POST" action="{% url 'gym_shop:add_to_cart' %}" class="d-grid">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="product_id" value="{{ product.id }}">
-                                        <input type="hidden" name="quantity" value="1">
-                                        <button type="submit" class="btn btn-primary btn-sm">
-                                            <i class="fas fa-cart-plus me-1"></i>
-                                            افزودن به سبد
-                                        </button>
-                                    </form>
-                                {% elif not user.is_authenticated %}
-                                    <a href="{% url 'gym:login' %}" class="btn btn-outline-primary btn-sm d-grid">
-                                        <i class="fas fa-sign-in-alt me-1"></i>
-                                        ورود برای خرید
-                                    </a>
+                        {% if product.discount_price %}
+                        <div class="discount-badge" style="position: absolute; top: 10px; right: 10px; background: var(--danger-gradient); color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; font-weight: bold;">
+                            {{ product.discount_percentage }}% تخفیف
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="product-info p-3">
+                        <h6 class="fw-bold mb-2" style="color: var(--text-primary); height: 40px; overflow: hidden;">{{ product.name }}</h6>
+                        <p class="text-muted small mb-3" style="height: 40px; overflow: hidden;">{{ product.short_description|truncatewords:8 }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="price-info">
+                                {% if product.discount_price %}
+                                <span class="text-muted text-decoration-line-through small">{{ product.price|floatformat:0 }}</span>
+                                <div class="current-price fw-bold" style="color: #dc2626; font-size: 1rem;">{{ product.discount_price|floatformat:0 }} تومان</div>
+                                {% else %}
+                                <div class="current-price fw-bold" style="color: var(--text-primary); font-size: 1rem;">{{ product.price|floatformat:0 }} تومان</div>
                                 {% endif %}
                             </div>
+                            <a href="{% url 'gym_shop:product_detail' product.slug %}" class="btn btn-sm" style="background: var(--primary-gradient); color: white; border-radius: 15px; padding: 6px 12px;">
+                                <i class="fas fa-eye"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
-            {% endfor %}
-        </div>
-        
-        <div class="row mt-5">
-            <div class="col-12 text-center">
-                <a href="{% url 'gym_shop:product_list' %}" class="btn btn-primary btn-lg">
-                    <i class="fas fa-eye me-2"></i>
-                    مشاهده همه محصولات
-                </a>
             </div>
+            {% endfor %}
         </div>
     </div>
 </section>
@@ -173,126 +157,210 @@
 
 <!-- Latest Products Section -->
 {% if latest_products %}
-<section class="py-5">
+<section class="py-6">
     <div class="container">
-        <div class="row mb-5">
-            <div class="col-12 text-center">
-                <h2 class="display-5 fw-bold mb-3">جدیدترین محصولات</h2>
-                <p class="lead text-muted">آخرین محصولات اضافه شده به فروشگاه</p>
-            </div>
+        <div class="text-center mb-5">
+            <h2 class="display-5 fw-bold mb-3" style="background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                <i class="fas fa-clock me-3"></i>
+                جدیدترین محصولات
+            </h2>
+            <p class="lead text-muted">آخرین محصولات اضافه شده به فروشگاه</p>
         </div>
         
         <div class="row g-4">
-            {% for product in latest_products %}
-                <div class="col-lg-3 col-md-6">
-                    <div class="card product-card h-100 position-relative">
-                        {% if product.discount_percentage %}
-                            <div class="discount-badge">
-                                {{ product.discount_percentage }}% تخفیف
-                            </div>
+            {% for product in latest_products|slice:":6" %}
+            <div class="col-lg-4 col-md-6">
+                <div class="product-card modern-card h-100" style="background: white; border-radius: 20px; overflow: hidden; box-shadow: var(--card-shadow); transition: all 0.4s ease;">
+                    <div class="product-image-wrapper" style="position: relative; height: 180px; overflow: hidden;">
+                        {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-100 h-100" style="object-fit: cover; transition: transform 0.4s ease;">
+                        {% else %}
+                        <div class="w-100 h-100 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);">
+                            <i class="fas fa-image" style="font-size: 2.5rem; color: #9ca3af;"></i>
+                        </div>
                         {% endif %}
-                        
-                        <a href="{% url 'gym_shop:product_detail' product.slug %}">
-                            {% if product.image %}
-                                <img src="{{ product.image.url }}" alt="{{ product.name }}" class="card-img-top">
-                            {% else %}
-                                <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 250px;">
-                                    <i class="fas fa-image fa-3x text-muted"></i>
-                                </div>
-                            {% endif %}
-                        </a>
-                        
-                        <div class="card-body d-flex flex-column">
-                            <h6 class="card-title">
-                                <a href="{% url 'gym_shop:product_detail' product.slug %}" class="text-decoration-none text-dark">
-                                    {{ product.name }}
-                                </a>
-                            </h6>
-                            <p class="card-text text-muted flex-grow-1">{{ product.short_description|truncatewords:15 }}</p>
-                            
-                            <div class="mt-auto">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    {% if product.discount_price %}
-                                        <div>
-                                            <span class="price">{{ product.discount_price|floatformat:0 }} تومان</span>
-                                            <small class="original-price ms-2">{{ product.price|floatformat:0 }}</small>
-                                        </div>
-                                    {% else %}
-                                        <span class="price">{{ product.price|floatformat:0 }} تومان</span>
-                                    {% endif %}
-                                    
-                                    {% if product.stock > 0 %}
-                                        <small class="text-success">
-                                            <i class="fas fa-check-circle me-1"></i>
-                                            موجود
-                                        </small>
-                                    {% else %}
-                                        <small class="text-danger">
-                                            <i class="fas fa-times-circle me-1"></i>
-                                            ناموجود
-                                        </small>
-                                    {% endif %}
-                                </div>
-                                
-                                {% if user.is_authenticated and product.stock > 0 %}
-                                    <form method="POST" action="{% url 'gym_shop:add_to_cart' %}" class="d-grid">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="product_id" value="{{ product.id }}">
-                                        <input type="hidden" name="quantity" value="1">
-                                        <button type="submit" class="btn btn-primary btn-sm">
-                                            <i class="fas fa-cart-plus me-1"></i>
-                                            افزودن به سبد
-                                        </button>
-                                    </form>
-                                {% elif not user.is_authenticated %}
-                                    <a href="{% url 'gym:login' %}" class="btn btn-outline-primary btn-sm d-grid">
-                                        <i class="fas fa-sign-in-alt me-1"></i>
-                                        ورود برای خرید
-                                    </a>
+                        {% if product.discount_price %}
+                        <div class="discount-badge" style="position: absolute; top: 10px; right: 10px; background: var(--danger-gradient); color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.8rem; font-weight: bold;">
+                            {{ product.discount_percentage }}% تخفیف
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="product-info p-4">
+                        <h5 class="fw-bold mb-2" style="color: var(--text-primary);">{{ product.name }}</h5>
+                        <p class="text-muted small mb-3" style="height: 40px; overflow: hidden;">{{ product.short_description }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="price-info">
+                                {% if product.discount_price %}
+                                <span class="text-muted text-decoration-line-through small">{{ product.price|floatformat:0 }} تومان</span>
+                                <div class="current-price fw-bold" style="color: #dc2626; font-size: 1.1rem;">{{ product.discount_price|floatformat:0 }} تومان</div>
+                                {% else %}
+                                <div class="current-price fw-bold" style="color: var(--text-primary); font-size: 1.1rem;">{{ product.price|floatformat:0 }} تومان</div>
                                 {% endif %}
                             </div>
+                            <a href="{% url 'gym_shop:product_detail' product.slug %}" class="btn btn-sm" style="background: var(--primary-gradient); color: white; border-radius: 15px; padding: 8px 16px;">
+                                <i class="fas fa-eye me-1"></i>
+                                مشاهده
+                            </a>
                         </div>
                     </div>
                 </div>
+            </div>
             {% endfor %}
+        </div>
+        
+        <div class="text-center mt-5">
+            <a href="{% url 'gym_shop:product_list' %}" class="btn btn-lg" style="background: var(--primary-gradient); color: white; border-radius: 25px; padding: 12px 30px;">
+                <i class="fas fa-arrow-left me-2"></i>
+                مشاهده همه محصولات
+            </a>
         </div>
     </div>
 </section>
 {% endif %}
 
 <!-- Features Section -->
-<section class="py-5 bg-light">
+<section class="py-6">
     <div class="container">
         <div class="row g-4">
-            <div class="col-lg-3 col-md-6 text-center">
-                <div class="p-4">
-                    <i class="fas fa-shipping-fast text-primary fa-3x mb-3"></i>
-                    <h5>ارسال سریع</h5>
-                    <p class="text-muted">ارسال در کمترین زمان ممکن</p>
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-card text-center p-4" style="background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 2px solid #f3f4f6; transition: all 0.3s ease;">
+                    <div class="feature-icon mb-3" style="width: 80px; height: 80px; margin: 0 auto; background: linear-gradient(135deg, #374151 0%, #dc2626 50%, #000000 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-shipping-fast" style="font-size: 2rem; color: white;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">ارسال رایگان</h5>
+                    <p class="text-muted small">برای خریدهای بالای ۵۰۰ هزار تومان</p>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6 text-center">
-                <div class="p-4">
-                    <i class="fas fa-medal text-primary fa-3x mb-3"></i>
-                    <h5>کیفیت تضمینی</h5>
-                    <p class="text-muted">تضمین اصالت و کیفیت محصولات</p>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-card text-center p-4" style="background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 2px solid #f3f4f6; transition: all 0.3s ease;">
+                    <div class="feature-icon mb-3" style="width: 80px; height: 80px; margin: 0 auto; background: linear-gradient(135deg, #7f1d1d 0%, #dc2626 50%, #000000 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-medal" style="font-size: 2rem; color: white;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">کیفیت تضمینی</h5>
+                    <p class="text-muted small">محصولات اصل با گارانتی معتبر</p>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6 text-center">
-                <div class="p-4">
-                    <i class="fas fa-headset text-primary fa-3x mb-3"></i>
-                    <h5>پشتیبانی ۲۴/۷</h5>
-                    <p class="text-muted">پشتیبانی در تمام ساعات روز</p>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-card text-center p-4" style="background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 2px solid #f3f4f6; transition: all 0.3s ease;">
+                    <div class="feature-icon mb-3" style="width: 80px; height: 80px; margin: 0 auto; background: linear-gradient(135deg, #000000 0%, #dc2626 50%, #991b1b 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-headset" style="font-size: 2rem; color: white;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">پشتیبانی ۲۴/۷</h5>
+                    <p class="text-muted small">آماده پاسخگویی در تمام ساعات</p>
                 </div>
             </div>
-            <div class="col-lg-3 col-md-6 text-center">
-                <div class="p-4">
-                    <i class="fas fa-undo text-primary fa-3x mb-3"></i>
-                    <h5>ضمانت بازگشت</h5>
-                    <p class="text-muted">امکان بازگشت کالا تا ۷ روز</p>
+            
+            <div class="col-lg-3 col-md-6">
+                <div class="feature-card text-center p-4" style="background: white; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); border: 2px solid #f3f4f6; transition: all 0.3s ease;">
+                    <div class="feature-icon mb-3" style="width: 80px; height: 80px; margin: 0 auto; background: linear-gradient(135deg, #1f1f1f 0%, #ef4444 50%, #7f1d1d 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-undo" style="font-size: 2rem; color: white;"></i>
+                    </div>
+                    <h5 class="fw-bold mb-2">بازگشت آسان</h5>
+                    <p class="text-muted small">امکان مرجوع کالا تا ۷ روز</p>
                 </div>
             </div>
         </div>
     </div>
 </section>
+
+<style>
+/* Modern Animations */
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+}
+
+@keyframes particleFloat {
+    0%, 100% { 
+        transform: translateY(0px) scale(1);
+        opacity: 0.7;
+    }
+    50% { 
+        transform: translateY(-15px) scale(1.1);
+        opacity: 1;
+    }
+}
+
+.modern-card {
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+}
+
+.modern-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.1);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modern-card:hover::before {
+    opacity: 1;
+}
+
+.modern-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.product-card:hover .product-image-wrapper img {
+    transform: scale(1.1);
+}
+
+.category-card:hover .category-image-wrapper img {
+    transform: scale(1.1);
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15) !important;
+}
+
+.hero-content {
+    animation-delay: 0.2s;
+}
+
+.slide-up {
+    animation: slideUpFade 0.8s ease-out;
+}
+
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive enhancements */
+@media (max-width: 768px) {
+    .display-3 {
+        font-size: 2.5rem;
+    }
+    
+    .hero-buttons {
+        justify-content: center;
+    }
+    
+    .hero-buttons .btn {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .floating-icon i {
+        font-size: 5rem !important;
+    }
+}
+</style>
 {% endblock %} 

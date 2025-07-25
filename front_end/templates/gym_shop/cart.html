@@ -1,12 +1,13 @@
 {% extends 'gym_shop/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}سبد خرید - فروشگاه تجهیزات ورزشی{% endblock %}
 
 {% block breadcrumb %}
 <div class="container mt-3">
     <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
+        <ol class="breadcrumb modern-breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'gym_shop:home' %}">خانه</a></li>
             <li class="breadcrumb-item active" aria-current="page">سبد خرید</li>
         </ol>
@@ -16,216 +17,812 @@
 
 {% block content %}
 <div class="container my-5">
+    {% if cart_items %}
     <div class="row">
+            <!-- Cart Items Section -->
         <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="mb-0">
-                        <i class="fas fa-shopping-cart me-2"></i>
+                <div class="cart-section">
+                    <div class="cart-header mb-4">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <h2 class="cart-title">
+                                <i class="fas fa-shopping-cart me-3"></i>
                         سبد خرید شما
-                    </h4>
+                            </h2>
+                            <div class="cart-badge-container">
+                                <span class="items-count">{{ cart_items|length }} کالا</span>
+                            </div>
+                        </div>
                 </div>
-                <div class="card-body">
-                    {% if cart.items.all %}
-                        <div class="table-responsive">
-                            <table class="table align-middle">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>محصول</th>
-                                        <th>قیمت واحد</th>
-                                        <th>تعداد</th>
-                                        <th>قیمت کل</th>
-                                        <th>عملیات</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for item in cart.items.all %}
-                                    <tr>
-                                        <td>
-                                            <div class="d-flex align-items-center">
+                    
+                    <div class="cart-items">
+                        {% for item in cart_items %}
+                            <div class="cart-item modern-cart-item" id="cart-item-{{ item.id }}">
+                                <div class="row align-items-center">
+                                    <!-- Product Image -->
+                                    <div class="col-md-3">
+                                        <div class="product-image-wrapper">
                                                 {% if item.product.image %}
-                                                    <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" 
-                                                         class="rounded me-3" style="width: 60px; height: 60px; object-fit: cover;">
-                                                {% else %}
-                                                    <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center" 
-                                                         style="width: 60px; height: 60px;">
-                                                        <i class="fas fa-image text-muted"></i>
-                                                    </div>
+                                                <img src="{{ item.product.image.url }}" 
+                                                     alt="{{ item.product.name }}" 
+                                                     class="cart-product-image">
+                                            {% else %}
+                                                <div class="cart-image-placeholder">
+                                                    <i class="fas fa-image"></i>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Product Details -->
+                                    <div class="col-md-5">
+                                        <div class="product-details">
+                                            <h6 class="product-name">
+                                                <a href="{% url 'gym_shop:product_detail' item.product.slug %}">
+                                                    {{ item.product.name }}
+                                                </a>
+                                            </h6>
+                                            <div class="product-meta">
+                                                <span class="category-tag">{{ item.product.category.name }}</span>
+                                                {% if item.product.brand %}
+                                                    <span class="brand-tag">{{ item.product.brand }}</span>
                                                 {% endif %}
-                                                <div>
-                                                    <h6 class="mb-1">{{ item.product.name }}</h6>
-                                                    {% if item.size %}
-                                                        <small class="text-muted">سایز: {{ item.size }}</small>
-                                                    {% endif %}
+                                            </div>
+                                            <div class="stock-info">
+                                                {% if item.product.stock > 0 %}
+                                                    <span class="in-stock">
+                                                        <i class="fas fa-check-circle"></i> موجود در انبار
+                                                    </span>
+                                                {% else %}
+                                                    <span class="out-of-stock">
+                                                        <i class="fas fa-exclamation-triangle"></i> ناموجود
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Quantity & Price -->
+                                    <div class="col-md-4">
+                                        <div class="item-controls">
+                                            <!-- Quantity Controls -->
+                                            <div class="quantity-section mb-3">
+                                                <label class="quantity-label">تعداد:</label>
+                                                <div class="quantity-controls">
+                                                    <form method="POST" action="{% url 'gym_shop:update_cart_item' %}" class="quantity-form">
+                                                        {% csrf_token %}
+                                                        <input type="hidden" name="item_id" value="{{ item.id }}">
+                                                        <div class="quantity-input-group">
+                                                            <button type="button" class="qty-btn minus" onclick="decreaseQuantity(this)">
+                                                                <i class="fas fa-minus"></i>
+                                                            </button>
+                                                            <input type="number" name="quantity" 
+                                                                   value="{{ item.quantity }}" 
+                                                                   min="1" max="{{ item.product.stock }}"
+                                                                   class="quantity-input"
+                                                                   onchange="updateQuantity(this)">
+                                                            <button type="button" class="qty-btn plus" onclick="increaseQuantity(this)">
+                                                                <i class="fas fa-plus"></i>
+                                                            </button>
+                                                        </div>
+                                                    </form>
                                                 </div>
                                             </div>
-                                        </td>
-                                        <td>
-                                            <span class="fw-bold">{{ item.product.final_price|floatformat:0 }} تومان</span>
-                                        </td>
-                                        <td>
-                                            <form method="POST" action="{% url 'gym_shop:update_cart_item' %}" class="d-flex align-items-center">
-                                                {% csrf_token %}
-                                                <input type="hidden" name="item_id" value="{{ item.id }}">
-                                                <input type="number" name="quantity" value="{{ item.quantity }}" 
-                                                       min="1" max="{{ item.product.stock }}" 
-                                                       class="form-control form-control-sm me-2" style="width: 80px;">
-                                                <button type="submit" class="btn btn-outline-primary btn-sm">
-                                                    <i class="fas fa-sync"></i>
-                                                </button>
-                                            </form>
-                                        </td>
-                                        <td>
-                                            <span class="fw-bold text-success">{{ item.total_price|floatformat:0 }} تومان</span>
-                                        </td>
-                                        <td>
+                                            
+                                            <!-- Price Section -->
+                                            <div class="price-section">
+                                                {% if item.product.discount_price %}
+                                                    <div class="discounted-price">
+                                                        <span class="current-price">{{ item.total_price|floatformat:0 }}</span>
+                                                        <span class="currency">تومان</span>
+                                                    </div>
+                                                    <div class="original-price">{{ item.original_total_price|floatformat:0 }} تومان</div>
+                                                {% else %}
+                                                    <div class="single-price">
+                                                        <span class="current-price">{{ item.total_price|floatformat:0 }}</span>
+                                                        <span class="currency">تومان</span>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <!-- Remove Button -->
+                                            <div class="remove-section mt-3">
                                             <a href="{% url 'gym_shop:remove_from_cart' item.id %}" 
-                                               class="btn btn-outline-danger btn-sm"
+                                                   class="remove-btn"
                                                onclick="return confirm('آیا از حذف این محصول اطمینان دارید؟')">
-                                                <i class="fas fa-trash"></i>
+                                                    <i class="fas fa-trash me-2"></i>حذف
                                             </a>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        <div class="d-flex justify-content-between mt-4">
-                            <a href="{% url 'gym_shop:product_list' %}" class="btn btn-outline-primary">
-                                <i class="fas fa-arrow-right me-2"></i>
-                                ادامه خرید
-                            </a>
-                            <a href="{% url 'gym_shop:checkout' %}" class="btn btn-primary">
-                                <i class="fas fa-credit-card me-2"></i>
-                                تسویه حساب
-                            </a>
-                        </div>
-                    {% else %}
-                        <div class="text-center py-5">
-                            <i class="fas fa-shopping-cart fa-5x text-muted mb-3"></i>
-                            <h4>سبد خرید شما خالی است</h4>
-                            <p class="text-muted">محصولی به سبد خرید خود اضافه نکرده‌اید.</p>
-                            <a href="{% url 'gym_shop:product_list' %}" class="btn btn-primary">
-                                <i class="fas fa-shopping-bag me-2"></i>
-                                شروع خرید
-                            </a>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-        
-        {% if cart.items.all %}
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">خلاصه سفارش</h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>تعداد محصولات:</span>
-                        <span class="fw-bold">{{ cart.total_items }} عدد</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>جمع خرید:</span>
-                        <span class="fw-bold">{{ cart.total_price|floatformat:0 }} تومان</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>هزینه ارسال:</span>
-                        <span class="fw-bold">50,000 تومان</span>
-                    </div>
-                    <hr>
-                    <div class="d-flex justify-content-between mb-3">
-                        <span class="h5">مجموع:</span>
-                        <span class="h5 text-success fw-bold">{{ cart.total_price|add:50000|floatformat:0 }} تومان</span>
-                    </div>
-                    
-                    <div class="d-grid">
-                        <a href="{% url 'gym_shop:checkout' %}" class="btn btn-primary btn-lg">
-                            <i class="fas fa-credit-card me-2"></i>
-                            تسویه حساب
-                        </a>
-                    </div>
-                    
-                    <div class="mt-3">
-                        <small class="text-muted">
-                            <i class="fas fa-shield-alt me-1"></i>
-                            خرید شما امن و محفوظ است
-                        </small>
-                    </div>
-                    
-                    <div class="mt-2">
-                        <small class="text-muted">
-                            <i class="fas fa-truck me-1"></i>
-                            ارسال رایگان برای خریدهای بالای 500,000 تومان
-                        </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
                     </div>
                 </div>
             </div>
             
-            <!-- Recommended Products -->
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h6 class="mb-0">محصولات پیشنهادی</h6>
-                </div>
-                <div class="card-body">
-                    <div class="text-center text-muted">
-                        <i class="fas fa-lightbulb fa-2x mb-2"></i>
-                        <p class="small">محصولات پیشنهادی بر اساس سبد خرید شما نمایش داده خواهد شد.</p>
+            <!-- Order Summary Section -->
+            <div class="col-lg-4">
+                <div class="order-summary-section">
+                    <div class="summary-card modern-summary-card">
+                        <div class="summary-header">
+                            <h5 class="summary-title">
+                                <i class="fas fa-receipt me-2"></i>
+                                خلاصه سفارش
+                            </h5>
+                        </div>
+                        
+                        <div class="summary-body">
+                            <!-- Items Summary -->
+                            <div class="summary-items mb-4">
+                                {% for item in cart_items %}
+                                    <div class="summary-item">
+                                        <span class="item-name">{{ item.product.name|truncatechars:25 }}</span>
+                                        <span class="item-quantity">× {{ item.quantity }}</span>
+                                        <span class="item-price">{{ item.total_price|floatformat:0 }} تومان</span>
+                                    </div>
+                                    {% endfor %}
+                            </div>
+                            
+                            <!-- Calculations -->
+                            <div class="summary-calculations">
+                                <div class="calc-row">
+                                    <span class="calc-label">جمع کل:</span>
+                                    <span class="calc-value">{{ cart.total_price|floatformat:0 }} تومان</span>
+                                </div>
+                                
+                                {% if total_discount > 0 %}
+                                    <div class="calc-row discount">
+                                        <span class="calc-label">تخفیف:</span>
+                                        <span class="calc-value">{{ total_discount|floatformat:0 }} تومان</span>
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="calc-row shipping">
+                                    <span class="calc-label">هزینه ارسال:</span>
+                                    {% if cart.total_price >= 500000 %}
+                                        <span class="calc-value free">رایگان</span>
+                                    {% else %}
+                                        <span class="calc-value">50,000 تومان</span>
+                                    {% endif %}
+                                </div>
+                                
+                                <hr class="summary-divider">
+                                
+                                <div class="calc-row total">
+                                    <span class="calc-label">مبلغ نهایی:</span>
+                                    <span class="calc-value">
+                                        {% if cart.total_price >= 500000 %}
+                                            {{ cart.total_price|floatformat:0 }}
+                                        {% else %}
+                                            {{ cart.total_price|add:50000|floatformat:0 }}
+                                        {% endif %}
+                                        تومان
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="summary-footer">
+                            <!-- Discount Code -->
+                            <div class="discount-section mb-3">
+                                <button class="discount-toggle-btn" onclick="toggleDiscountForm()">
+                                    <i class="fas fa-tag me-2"></i>کد تخفیف دارید؟
+                                </button>
+                                <div class="discount-form" id="discountForm" style="display: none;">
+                                    <form method="POST" action="{% url 'gym_shop:apply_discount' %}">
+                                        {% csrf_token %}
+                                        <div class="input-group">
+                                            <input type="text" name="discount_code" 
+                                                   class="form-control discount-input" 
+                                                   placeholder="کد تخفیف را وارد کنید">
+                                            <button class="btn btn-outline-primary" type="submit">
+                                                اعمال
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <!-- Checkout Button -->
+                            <a href="{% url 'gym_shop:checkout' %}" class="checkout-btn">
+                                <i class="fas fa-credit-card me-2"></i>
+                                ادامه فرآیند خرید
+                            </a>
+                            
+                            <!-- Continue Shopping -->
+                            <a href="{% url 'gym_shop:product_list' %}" class="continue-shopping-btn">
+                                <i class="fas fa-arrow-right me-2"></i>
+                                ادامه خرید
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Trust Badges -->
+                    <div class="trust-badges mt-4">
+                        <div class="trust-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>خرید امن</span>
+                        </div>
+                        <div class="trust-item">
+                            <i class="fas fa-truck"></i>
+                            <span>ارسال سریع</span>
+                    </div>
+                        <div class="trust-item">
+                            <i class="fas fa-undo"></i>
+                            <span>بازگشت آسان</span>
+                    </div>
                     </div>
                 </div>
             </div>
+                </div>
+    {% else %}
+        <!-- Empty Cart -->
+        <div class="empty-cart-section">
+            <div class="empty-cart-content">
+                <div class="empty-cart-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                <h3 class="empty-cart-title">سبد خرید شما خالی است</h3>
+                <p class="empty-cart-text">
+                    هنوز محصولی به سبد خرید خود اضافه نکرده‌اید.<br>
+                    محصولات جذاب ما را کاوش کنید!
+                </p>
+                <a href="{% url 'gym_shop:product_list' %}" class="start-shopping-btn">
+                    <i class="fas fa-shopping-bag me-2"></i>
+                    شروع خرید
+                </a>
+            </div>
         </div>
         {% endif %}
-    </div>
 </div>
 
 <style>
-    .table th {
-        border-top: none;
+/* Modern Breadcrumb */
+.modern-breadcrumb {
+    background: none;
+    padding: 0;
+}
+
+.modern-breadcrumb .breadcrumb-item a {
+    color: #dc2626;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+/* Cart Header */
+.cart-title {
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+    margin: 0;
+}
+
+.items-count {
+    background: linear-gradient(135deg, #374151 0%, #dc2626 50%, #000000 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* Modern Cart Items */
+.modern-cart-item {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.modern-cart-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+/* Product Image */
+.product-image-wrapper {
+    position: relative;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.cart-product-image {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 15px;
+    transition: transform 0.3s ease;
+}
+
+.modern-cart-item:hover .cart-product-image {
+    transform: scale(1.05);
+}
+
+.cart-image-placeholder {
+    width: 100%;
+    height: 120px;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+    font-size: 2rem;
+}
+
+/* Product Details */
+.product-name a {
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: color 0.3s ease;
+}
+
+.product-name a:hover {
+    color: #dc2626;
+}
+
+.product-meta {
+    margin: 0.5rem 0;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.category-tag, .brand-tag {
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.category-tag {
+    background: var(--accent-gradient);
+    color: white;
+}
+
+.brand-tag {
+    background: var(--cool-gradient);
+    color: white;
+}
+
+.stock-info {
+    margin-top: 0.5rem;
+}
+
+.in-stock {
+    color: #28a745;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.out-of-stock {
+    color: #dc3545;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Quantity Controls */
+.quantity-label {
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.quantity-input-group {
+    display: flex;
+    align-items: center;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    width: fit-content;
+}
+
+.qty-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: #f8f9fa;
+    color: #dc2626;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.qty-btn:hover {
+    background: linear-gradient(135deg, #000000 0%, #dc2626 50%, #991b1b 100%);
+    color: white;
+}
+
+.quantity-input {
+    width: 60px;
+    height: 40px;
+    border: none;
+    text-align: center;
+    font-weight: 600;
+    background: white;
+}
+
+.quantity-input:focus {
+    outline: none;
+}
+
+/* Price Section */
+.price-section {
+    text-align: center;
+}
+
+.current-price {
+    font-size: 1.4rem;
+    font-weight: 800;
+    background: var(--success-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.currency {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.original-price {
+    text-decoration: line-through;
+    color: var(--text-light);
+    font-size: 0.9rem;
+    margin-top: 0.25rem;
+}
+
+/* Remove Button */
+.remove-btn {
+    color: #dc3545;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+}
+
+.remove-btn:hover {
+    color: #c82333;
+    transform: translateX(-2px);
+}
+
+/* Order Summary */
+.modern-summary-card {
+    background: white;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 20px;
+}
+
+.summary-header {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 1.5rem;
+}
+
+.summary-title {
+    margin: 0;
+    font-weight: 700;
+}
+
+.summary-body {
+    padding: 1.5rem;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f3f4;
+    font-size: 0.9rem;
+}
+
+.summary-item:last-child {
+    border-bottom: none;
+}
+
+.item-name {
+    flex: 1;
+    color: var(--text-primary);
+}
+
+.item-quantity {
+    color: var(--text-secondary);
+    margin: 0 0.5rem;
+}
+
+.item-price {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Calculations */
+.calc-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    font-size: 0.95rem;
+}
+
+.calc-row.discount .calc-value {
+    color: #28a745;
+    font-weight: 600;
+}
+
+.calc-row.shipping .calc-value.free {
+    color: #28a745;
         font-weight: 600;
-        color: #495057;
+}
+
+.calc-row.total {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
     }
     
-    .card {
+.summary-divider {
         border: none;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary-gradient));
+    margin: 1rem 0;
+    border-radius: 2px;
+}
+
+/* Discount Section */
+.discount-toggle-btn {
+    background: none;
+    border: 2px dashed #dc2626;
+    color: #dc2626;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    width: 100%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+}
+
+.discount-toggle-btn:hover {
+    background: linear-gradient(135deg, #000000 0%, #dc2626 50%, #991b1b 100%);
+    color: white;
+    border-style: solid;
+}
+
+.discount-form {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
         border-radius: 10px;
     }
     
-    .card-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.discount-input {
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.discount-input:focus {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+/* Checkout Buttons */
+.checkout-btn {
+    background: var(--primary-gradient);
+    color: white;
+    text-decoration: none;
+    padding: 1rem 2rem;
+    border-radius: 15px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    display: block;
+    text-align: center;
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+}
+
+.checkout-btn:hover {
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.continue-shopping-btn {
+    background: transparent;
+    color: #dc2626;
+    text-decoration: none;
+    padding: 0.75rem 1.5rem;
+    border: 2px solid #dc2626;
+    border-radius: 15px;
+    font-weight: 600;
+    display: block;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.continue-shopping-btn:hover {
+    background: linear-gradient(135deg, #000000 0%, #dc2626 50%, #991b1b 100%);
+    color: white;
+    border-color: transparent;
+}
+
+/* Trust Badges */
+.trust-badges {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.trust-item {
+    text-align: center;
+    padding: 1rem;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.trust-item:hover {
+    transform: translateY(-3px);
+}
+
+.trust-item i {
+    font-size: 1.5rem;
+    color: #dc2626;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.trust-item span {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+/* Empty Cart */
+.empty-cart-section {
+    background: white;
+    border-radius: 20px;
+    padding: 4rem 2rem;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.empty-cart-icon i {
+    font-size: 5rem;
+    background: var(--cool-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 2rem;
+}
+
+.empty-cart-title {
+    color: var(--text-primary);
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.empty-cart-text {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
+
+.start-shopping-btn {
+    background: var(--primary-gradient);
+    color: white;
+    text-decoration: none;
+    padding: 1rem 2rem;
+    border-radius: 15px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.start-shopping-btn:hover {
         color: white;
-        border-radius: 10px 10px 0 0 !important;
-        border: none;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
     }
     
-    .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        transition: all 0.3s ease;
+/* Responsive Design */
+@media (max-width: 768px) {
+    .modern-cart-item {
+        padding: 1.5rem;
     }
     
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    .cart-product-image {
+        height: 100px;
     }
     
-    .table-responsive {
-        border-radius: 8px;
-        overflow: hidden;
+    .quantity-input-group {
+        justify-content: center;
     }
     
-    .form-control-sm {
-        border-radius: 6px;
-        border: 2px solid #e9ecef;
-        transition: border-color 0.3s ease;
+    .trust-badges {
+        grid-template-columns: 1fr;
     }
     
-    .form-control-sm:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    .empty-cart-section {
+        padding: 3rem 1.5rem;
+    }
+    
+    .empty-cart-icon i {
+        font-size: 4rem;
+    }
     }
 </style>
+
+<script>
+function toggleDiscountForm() {
+    const form = document.getElementById('discountForm');
+    if (form.style.display === 'none') {
+        form.style.display = 'block';
+    } else {
+        form.style.display = 'none';
+    }
+}
+
+function increaseQuantity(btn) {
+    const input = btn.parentElement.querySelector('.quantity-input');
+    const currentValue = parseInt(input.value);
+    const maxValue = parseInt(input.getAttribute('max'));
+    
+    if (currentValue < maxValue) {
+        input.value = currentValue + 1;
+        updateQuantity(input);
+    }
+}
+
+function decreaseQuantity(btn) {
+    const input = btn.parentElement.querySelector('.quantity-input');
+    const currentValue = parseInt(input.value);
+    
+    if (currentValue > 1) {
+        input.value = currentValue - 1;
+        updateQuantity(input);
+    }
+}
+
+function updateQuantity(input) {
+    const form = input.closest('.quantity-form');
+    const formData = new FormData(form);
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Reload page to update totals
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+</script>
 {% endblock %} 

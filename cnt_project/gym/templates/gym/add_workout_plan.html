@@ -148,6 +148,111 @@
                             {% endif %}
                         </div>
                         
+                        {% if is_admin and goal_form %}
+                        <!-- Monthly Goal Section -->
+                        <div class="card mt-4 mb-4 border-success">
+                            <div class="card-header bg-success text-white">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-bullseye me-2"></i>ایجاد هدف ماهانه (اختیاری)
+                                    </h5>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="create_monthly_goal" name="create_monthly_goal" onchange="toggleMonthlyGoalForm()">
+                                        <label class="form-check-label text-white" for="create_monthly_goal">
+                                            ایجاد هدف
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body" id="monthly-goal-form" style="display: none;">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    همزمان با ایجاد برنامه تمرینی، می‌توانید برای این کاربر یک هدف ماهانه نیز تعیین کنید.
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ goal_form.start_date.id_for_label }}" class="form-label">تاریخ شروع هدف</label>
+                                            {{ goal_form.start_date }}
+                                            {% if goal_form.start_date.errors %}
+                                                <div class="text-danger mt-1">{{ goal_form.start_date.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="{{ goal_form.end_date.id_for_label }}" class="form-label">تاریخ پایان هدف</label>
+                                            {{ goal_form.end_date }}
+                                            {% if goal_form.end_date.errors %}
+                                                <div class="text-danger mt-1">{{ goal_form.end_date.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="{{ goal_form.target_weight.id_for_label }}" class="form-label">هدف وزن (کیلوگرم)</label>
+                                            {{ goal_form.target_weight }}
+                                            {% if goal_form.target_weight.errors %}
+                                                <div class="text-danger mt-1">{{ goal_form.target_weight.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="{{ goal_form.weight_goal_direction.id_for_label }}" class="form-label">نوع هدف وزن</label>
+                                            {{ goal_form.weight_goal_direction }}
+                                            {% if goal_form.weight_goal_direction.errors %}
+                                                <div class="text-danger mt-1">{{ goal_form.weight_goal_direction.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="{{ goal_form.target_body_fat_percentage.id_for_label }}" class="form-label">هدف درصد چربی (%)</label>
+                                            {{ goal_form.target_body_fat_percentage }}
+                                            {% if goal_form.target_body_fat_percentage.errors %}
+                                                <div class="text-danger mt-1">{{ goal_form.target_body_fat_percentage.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="{{ goal_form.body_fat_goal_direction.id_for_label }}" class="form-label">نوع هدف چربی</label>
+                                            {{ goal_form.body_fat_goal_direction }}
+                                            {% if goal_form.body_fat_goal_direction.errors %}
+                                                <div class="text-danger mt-1">{{ goal_form.body_fat_goal_direction.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="{{ goal_form.target_muscle_mass.id_for_label }}" class="form-label">هدف توده عضلانی (کیلوگرم)</label>
+                                            {{ goal_form.target_muscle_mass }}
+                                            {% if goal_form.target_muscle_mass.errors %}
+                                                <div class="text-danger mt-1">{{ goal_form.target_muscle_mass.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="{{ goal_form.muscle_mass_goal_direction.id_for_label }}" class="form-label">نوع هدف عضله</label>
+                                            {{ goal_form.muscle_mass_goal_direction }}
+                                            {% if goal_form.muscle_mass_goal_direction.errors %}
+                                                <div class="text-danger mt-1">{{ goal_form.muscle_mass_goal_direction.errors }}</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ goal_form.coach_notes.id_for_label }}" class="form-label">یادداشت مربی</label>
+                                    {{ goal_form.coach_notes }}
+                                    {% if goal_form.coach_notes.errors %}
+                                        <div class="text-danger mt-1">{{ goal_form.coach_notes.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                             {% if target_user %}
                             <a href="{% url 'gym:workout_plans' %}" class="btn btn-outline-secondary">انصراف</a>
@@ -168,4 +273,37 @@
         </div>
     </div>
 </div>
+
+<script>
+function toggleMonthlyGoalForm() {
+    const checkbox = document.getElementById('create_monthly_goal');
+    const form = document.getElementById('monthly-goal-form');
+    
+    if (checkbox.checked) {
+        form.style.display = 'block';
+    } else {
+        form.style.display = 'none';
+    }
+}
+
+// Auto-populate end date when start date is selected
+document.addEventListener('DOMContentLoaded', function() {
+    const startDateInput = document.querySelector('input[name="start_date"]');
+    const endDateInput = document.querySelector('input[name="end_date"]');
+    
+    if (startDateInput && endDateInput) {
+        startDateInput.addEventListener('change', function() {
+            if (this.value) {
+                const startDate = new Date(this.value);
+                const endDate = new Date(startDate);
+                endDate.setDate(startDate.getDate() + 30); // Add 30 days
+                
+                const endDateString = endDate.toISOString().split('T')[0];
+                endDateInput.value = endDateString;
+            }
+        });
+    }
+});
+</script>
+
 {% endblock %} 

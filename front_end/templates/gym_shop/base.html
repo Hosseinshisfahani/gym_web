@@ -19,278 +19,615 @@
             font-family: 'Vazirmatn', sans-serif;
         }
         
+        :root {
+            /* Black-Red Color Palette */
+            --primary-gradient: linear-gradient(135deg, #000000 0%, #dc2626 50%, #991b1b 100%);
+            --secondary-gradient: linear-gradient(135deg, #1f1f1f 0%, #ef4444 50%, #7f1d1d 100%);
+            --success-gradient: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            --accent-gradient: linear-gradient(135deg, #374151 0%, #dc2626 50%, #000000 100%);
+            --warm-gradient: linear-gradient(135deg, #7f1d1d 0%, #dc2626 50%, #000000 100%);
+            --cool-gradient: linear-gradient(135deg, #111827 0%, #374151 50%, #1f2937 100%);
+            --danger-gradient: linear-gradient(135deg, #dc2626 0%, #7f1d1d 100%);
+            --dark-gradient: linear-gradient(135deg, #000000 0%, #1f1f1f 50%, #374151 100%);
+            
+            /* Card & Surface Colors */
+            --card-bg: #ffffff;
+            --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            --card-shadow-hover: 0 20px 40px rgba(220, 38, 38, 0.3);
+            
+            /* Text Colors */
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --text-light: #9ca3af;
+            --text-white: #ffffff;
+            
+            /* Background */
+            --bg-primary: #f9fafb;
+            --bg-secondary: #f3f4f6;
+            --bg-dark: #111827;
+        }
+        
         body {
-            background-color: #f8f9fa;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-weight: 400;
+            line-height: 1.6;
+        }
+        
+        /* Modern Navigation */
+        .navbar {
+            background: var(--primary-gradient) !important;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 1rem 0;
         }
         
         .navbar-brand {
             font-weight: 700;
-            font-size: 1.5rem;
+            font-size: 1.8rem;
+            color: white !important;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
         
+        .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-weight: 500;
+            padding: 0.7rem 1.2rem !important;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            margin: 0 0.2rem;
+        }
+        
+                 .navbar-nav .nav-link:hover {
+             background: rgba(220, 38, 38, 0.2);
+             color: white !important;
+             transform: translateY(-1px);
+         }
+        
+                 /* Hero Header Styling */
         .shop-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+             background: linear-gradient(135deg, #000000 0%, #dc2626 30%, #991b1b 70%, #000000 100%);
             color: white;
-            padding: 2rem 0;
+             padding: 4rem 0;
+             position: relative;
+             overflow: hidden;
+         }
+        
+                 .shop-header::before {
+             content: '';
+             position: absolute;
+             top: 0;
+             left: 0;
+             right: 0;
+             bottom: 0;
+             background: radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+             pointer-events: none;
         }
         
+        /* Fix overlapping issues */
+        .shop-header {
+            position: relative;
+            z-index: 2;
+            padding: 80px 0 !important;
+        }
+        
+        .hero-content {
+            position: relative;
+            z-index: 3;
+        }
+        
+        .hero-buttons {
+            margin-top: 2rem;
+        }
+        
+        .hero-buttons .btn {
+            margin-bottom: 1rem;
+            min-width: 180px;
+        }
+        
+        .min-vh-50 {
+            min-height: 50vh;
+        }
+        
+        /* Ensure proper spacing between sections */
+        section {
+            position: relative;
+        }
+        
+        section + section {
+            margin-top: 0;
+        }
+        
+        /* Fix z-index stacking */
+        .navbar {
+            z-index: 1030;
+        }
+        
+        .dropdown-menu {
+            z-index: 1020;
+        }
+        
+        /* Modern Card Design */
         .card {
             border: none;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            background: var(--card-bg);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--accent-gradient);
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
         
         .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+            transform: translateY(-8px);
+            box-shadow: var(--card-shadow-hover);
+        }
+        
+        .card:hover::before {
+            opacity: 1;
+        }
+        
+        .card-header {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 1.5rem;
+            border-radius: 16px 16px 0 0 !important;
+            position: relative;
+        }
+        
+        .card-header::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            right: 0;
+            height: 10px;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), transparent);
+        }
+        
+        /* Product Cards */
+        .product-card {
+            position: relative;
+            height: 100%;
         }
         
         .product-card .card-img-top {
-            height: 250px;
+            height: 280px;
             object-fit: cover;
-            border-radius: 0.375rem 0.375rem 0 0;
+            border-radius: 16px 16px 0 0;
+            transition: transform 0.3s ease;
         }
         
-        .price {
-            font-weight: 700;
-            color: #28a745;
-            font-size: 1.25rem;
+        .product-card:hover .card-img-top {
+            transform: scale(1.05);
         }
         
-        .original-price {
-            text-decoration: line-through;
-            color: #6c757d;
-            font-size: 1rem;
+        .product-card .card-body {
+            padding: 1.5rem;
         }
         
-        .discount-badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #dc3545;
-            color: white;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.375rem;
-            font-size: 0.8rem;
+        /* Modern Button Styles */
+        .btn {
+            border-radius: 12px;
             font-weight: 600;
+            padding: 0.8rem 2rem;
+            border: none;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            text-transform: none;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            padding: 0.75rem 2rem;
-            font-weight: 500;
-            border-radius: 0.5rem;
-            transition: all 0.3s ease;
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
         
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: var(--secondary-gradient);
+            color: white;
+            box-shadow: 0 4px 15px rgba(240, 147, 251, 0.3);
+        }
+        
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(240, 147, 251, 0.4);
+            color: white;
+        }
+        
+        .btn-success {
+            background: var(--success-gradient);
+            color: white;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+            color: white;
         }
         
         .btn-outline-primary {
             color: #667eea;
-            border-color: #667eea;
+            border: 2px solid #667eea;
+            background: transparent;
         }
         
         .btn-outline-primary:hover {
-            background: #667eea;
-            border-color: #667eea;
+            background: var(--primary-gradient);
+            border-color: transparent;
+            color: white;
+            transform: translateY(-2px);
         }
         
-        .cart-badge {
+        /* Price Styling */
+        .price {
+            font-weight: 800;
+            font-size: 1.4rem;
+            background: var(--success-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .original-price {
+            text-decoration: line-through;
+            color: var(--text-light);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        
+        /* Discount Badge */
+        .discount-badge {
             position: absolute;
-            top: -8px;
-            right: -8px;
-            background: #dc3545;
+            top: 15px;
+            right: 15px;
+            background: var(--secondary-gradient);
             color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            font-size: 0.75rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            box-shadow: 0 2px 10px rgba(245, 87, 108, 0.4);
+            z-index: 2;
         }
         
+        /* Category Cards */
         .category-card {
-            background: white;
-            border-radius: 1rem;
-            padding: 2rem;
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 2.5rem;
             text-align: center;
-            transition: all 0.3s ease;
-        }
-        
-        .category-card:hover {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        
-        .category-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            color: #667eea;
-            transition: color 0.3s ease;
-        }
-        
-        .category-card:hover .category-icon {
-            color: white;
-        }
-        
-        .footer {
-            background: linear-gradient(135deg, #4a5568 0%, #2d3748 50%, #1a202c 100%);
-            color: #f7fafc;
-            padding: 3rem 0 1rem;
-            margin-top: 4rem;
+            transition: all 0.4s ease;
+            border: 2px solid transparent;
             position: relative;
             overflow: hidden;
         }
         
-        .footer::before {
+        .category-card::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-            pointer-events: none;
-        }
-        
-        .footer .container {
-            position: relative;
+            background: var(--accent-gradient);
+            opacity: 0;
+            transition: opacity 0.3s ease;
             z-index: 1;
         }
         
-        .footer h5 {
-            color: #ffffff;
-            font-weight: 700;
-            margin-bottom: 1rem;
+        .category-card:hover::before {
+            opacity: 1;
         }
         
-        .footer h6 {
-            color: #e2e8f0;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            font-size: 1.1rem;
-        }
-        
-        .footer .text-muted {
-            color: #cbd5e0 !important;
-            line-height: 1.6;
-        }
-        
-        .footer a.text-muted {
-            color: #a0aec0 !important;
-            transition: all 0.3s ease;
-            text-decoration: none;
-        }
-        
-        .footer a.text-muted:hover {
-            color: #667eea !important;
-            padding-right: 0.5rem;
-            transform: translateX(-0.25rem);
-        }
-        
-        .footer .list-unstyled li {
-            margin-bottom: 0.5rem;
-        }
-        
-        .footer .social-links a {
-            color: #a0aec0 !important;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-        }
-        
-        .footer .social-links a:hover {
-            color: #ffffff !important;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-        }
-        
-        .footer hr {
-            border-color: rgba(255, 255, 255, 0.2);
-            margin: 2rem 0;
-        }
-        
-        .footer .footer-bottom {
-            color: #a0aec0;
-            font-size: 0.9rem;
-        }
-        
-        .search-box {
-            border-radius: 2rem;
-            border: 2px solid #e9ecef;
-            padding: 0.75rem 1.5rem;
-            transition: border-color 0.3s ease;
-        }
-        
-        .search-box:focus {
-            border-color: #667eea;
-            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-        }
-        
-        .breadcrumb {
-            background: none;
-            padding: 0;
-        }
-        
-        .breadcrumb-item a {
-            color: #667eea;
-            text-decoration: none;
-        }
-        
-        .alert {
-            border: none;
-            border-radius: 0.75rem;
-            padding: 1rem 1.5rem;
-        }
-        
-        .product-gallery {
-            position: relative;
-        }
-        
-        .gallery-nav {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(0,0,0,0.5);
+        .category-card:hover {
+            transform: translateY(-10px);
             color: white;
-            border: none;
+            border-color: transparent;
+        }
+        
+        .category-card > * {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .category-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            transition: all 0.3s ease;
+        }
+        
+        .category-card:hover .category-icon {
+            -webkit-text-fill-color: white;
+        }
+        
+        /* Cart Badge */
+        .cart-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--secondary-gradient);
+            color: white;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 24px;
+            height: 24px;
+            font-size: 0.8rem;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(245, 87, 108, 0.4);
         }
         
-        .gallery-nav.prev {
-            left: 10px;
+        /* Form Controls */
+        .form-control, .form-select {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            transition: all 0.3s ease;
+            background: white;
         }
         
-        .gallery-nav.next {
-            right: 10px;
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
         
+        /* Pagination */
+        .page-link {
+            border-radius: 8px;
+            border: none;
+            margin: 0 0.2rem;
+            color: #667eea;
+            background: white;
+            transition: all 0.3s ease;
+        }
         
+        .page-link:hover {
+            background: var(--primary-gradient);
+            color: white;
+            transform: translateY(-1px);
+        }
+        
+        .page-item.active .page-link {
+            background: var(--primary-gradient);
+            border: none;
+        }
+        
+                 /* Footer */
+         .footer {
+             background: linear-gradient(135deg, #000000 0%, #1f1f1f 30%, #dc2626 70%, #991b1b 100%);
+             color: white;
+             padding: 3rem 0 1rem;
+             margin-top: 4rem;
+             position: relative;
+             overflow: hidden;
+        }
+        
+         .footer::after {
+             content: '';
+             position: absolute;
+             top: 0;
+             left: 0;
+             right: 0;
+             height: 4px;
+             background: linear-gradient(90deg, #dc2626, #ef4444, #dc2626);
+             z-index: 3;
+         }
+         
+         .footer .container {
+             position: relative;
+             z-index: 2;
+         }
+         
+         .footer h5, .footer h6 {
+             color: white;
+             margin-bottom: 1.5rem;
+             font-weight: 700;
+            position: relative;
+        }
+        
+         .footer h5::after {
+             content: '';
+             position: absolute;
+             bottom: -0.5rem;
+             left: 0;
+             width: 50px;
+             height: 3px;
+             background: linear-gradient(90deg, #dc2626, #ef4444);
+             border-radius: 2px;
+         }
+         
+         .footer a {
+             color: rgba(255, 255, 255, 0.85);
+             text-decoration: none;
+             transition: all 0.3s ease;
+             position: relative;
+             display: inline-block;
+         }
+         
+         .footer a:hover {
+             color: #ef4444;
+             transform: translateX(5px);
+         }
+         
+         .footer a::before {
+             content: '';
+            position: absolute;
+             bottom: -2px;
+             left: 0;
+             width: 0;
+             height: 2px;
+             background: #dc2626;
+             transition: width 0.3s ease;
+         }
+         
+         .footer a:hover::before {
+             width: 100%;
+         }
+         
+         .footer .social-links {
+             display: flex;
+             gap: 1rem;
+             margin-top: 1rem;
+         }
+         
+         .footer .social-link {
+             width: 45px;
+             height: 45px;
+             background: linear-gradient(135deg, #1f1f1f 0%, #dc2626 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+             color: white;
+             font-size: 1.2rem;
+             transition: all 0.3s ease;
+             border: 2px solid transparent;
+        }
+        
+         .footer .social-link:hover {
+             background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
+             transform: translateY(-3px);
+             box-shadow: 0 8px 20px rgba(220, 38, 38, 0.4);
+             border-color: rgba(239, 68, 68, 0.3);
+         }
+         
+         .footer .contact-info {
+             background: rgba(0, 0, 0, 0.3);
+             padding: 1.5rem;
+             border-radius: 15px;
+             border: 1px solid rgba(220, 38, 38, 0.2);
+             backdrop-filter: blur(10px);
+        }
+        
+         .footer .contact-item {
+             display: flex;
+             align-items: center;
+             margin-bottom: 1rem;
+             padding: 0.5rem 0;
+         }
+         
+         .footer .contact-item i {
+             width: 20px;
+             color: #dc2626;
+             margin-left: 1rem;
+             font-size: 1.1rem;
+         }
+         
+         .footer .footer-bottom {
+             border-top: 2px solid rgba(220, 38, 38, 0.3);
+             margin-top: 2rem;
+             padding-top: 2rem;
+             text-align: center;
+             color: rgba(255, 255, 255, 0.7);
+         }
+         
+         .footer .footer-bottom .heart {
+             color: #dc2626;
+             animation: heartbeat 2s ease-in-out infinite;
+         }
+         
+         @keyframes heartbeat {
+             0%, 100% { transform: scale(1); }
+             50% { transform: scale(1.1); }
+         }
+        
+        /* Animations */
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+        }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .slide-up {
+            animation: slideUp 0.6s ease-out;
+        }
+        
+        /* Responsive Design */
         @media (max-width: 768px) {
             .shop-header {
-                padding: 1rem 0;
+                padding: 2rem 0;
+            }
+            
+            .card {
+                border-radius: 12px;
             }
             
             .btn {
+                padding: 0.6rem 1.5rem;
                 font-size: 0.9rem;
-                padding: 0.5rem 1rem;
+            }
+            
+            .category-card {
+                padding: 1.5rem;
+            }
+            
+            .category-icon {
+                font-size: 2.5rem;
+            }
+        }
+        
+        /* Loading Animation */
+        .loading-shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+            100% {
+                background-position: 200% 0;
             }
         }
     </style>
@@ -299,10 +636,10 @@
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #000000 0%, #dc2626 50%, #991b1b 100%);">
         <div class="container">
             <a class="navbar-brand" href="{% url 'gym_shop:home' %}">
-                <i class="fas fa-dumbbell me-2"></i>
+                <i class="fas fa-dumbbell me-2" style="color: #ef4444;"></i>
                 فروشگاه ورزشی
             </a>
             
@@ -329,8 +666,18 @@
                             <i class="fas fa-list me-1"></i>
                             دسته‌بندی‌ها
                         </a>
-                        <ul class="dropdown-menu">
-                            <!-- Categories will be loaded dynamically -->
+                        <ul class="dropdown-menu" style="min-width: 200px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+                            {% for category in categories %}
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'gym_shop:category_detail' category.slug %}" 
+                                       style="padding: 10px 15px; transition: all 0.3s ease;">
+                                        <i class="fas fa-tag me-2" style="color: #dc2626;"></i>
+                                        {{ category.name }}
+                                    </a>
+                                </li>
+                            {% empty %}
+                                <li><span class="dropdown-item-text text-muted">هیچ دسته‌بندی موجود نیست</span></li>
+                            {% endfor %}
                         </ul>
                     </li>
                 </ul>
@@ -412,55 +759,78 @@
             <div class="row">
                 <div class="col-md-4 mb-4">
                     <h5>
-                        <i class="fas fa-dumbbell me-2"></i>
+                        <i class="fas fa-dumbbell me-2" style="color: #dc2626;"></i>
                         فروشگاه ورزشی
                     </h5>
-                    <p class="text-muted">
+                    <p style="color: rgba(255, 255, 255, 0.8); line-height: 1.6;">
                         ارائه دهنده بهترین تجهیزات ورزشی و لباس‌های ورزشی با کیفیت بالا
+                        برای تمامی علاقه‌مندان به ورزش و تناسب اندام
                     </p>
+                    <div class="mt-3">
+                        <span style="background: linear-gradient(135deg, #dc2626, #ef4444); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem; font-weight: 600;">
+                            <i class="fas fa-star me-1"></i>کیفیت برتر
+                        </span>
+                    </div>
                 </div>
                 <div class="col-md-2 mb-4">
                     <h6>لینک‌های مفید</h6>
                     <ul class="list-unstyled">
-                        <li><a href="{% url 'gym_shop:home' %}" class="text-muted text-decoration-none">خانه</a></li>
-                        <li><a href="{% url 'gym_shop:product_list' %}" class="text-muted text-decoration-none">محصولات</a></li>
-                        <li><a href="#" class="text-muted text-decoration-none">درباره ما</a></li>
-                        <li><a href="#" class="text-muted text-decoration-none">تماس با ما</a></li>
+                        <li class="mb-2"><a href="{% url 'gym_shop:home' %}">خانه</a></li>
+                        <li class="mb-2"><a href="{% url 'gym_shop:product_list' %}">محصولات</a></li>
+                        <li class="mb-2"><a href="#">درباره ما</a></li>
+                        <li class="mb-2"><a href="#">تماس با ما</a></li>
                     </ul>
                 </div>
                 <div class="col-md-3 mb-4">
                     <h6>دسته‌بندی‌ها</h6>
                     <ul class="list-unstyled">
-                        <li><a href="#" class="text-muted text-decoration-none">لباس ورزشی</a></li>
-                        <li><a href="#" class="text-muted text-decoration-none">تجهیزات بدنسازی</a></li>
-                        <li><a href="#" class="text-muted text-decoration-none">کفش ورزشی</a></li>
-                        <li><a href="#" class="text-muted text-decoration-none">مکمل‌ها</a></li>
+                        <li class="mb-2"><a href="{% url 'gym_shop:product_list' %}">همه محصولات</a></li>
+                        <li class="mb-2"><a href="{% url 'gym_shop:product_list' %}?search=لباس">لباس ورزشی</a></li>
+                        <li class="mb-2"><a href="{% url 'gym_shop:product_list' %}?search=تجهیزات">تجهیزات بدنسازی</a></li>
+                        <li class="mb-2"><a href="{% url 'gym_shop:product_list' %}?search=کفش">کفش ورزشی</a></li>
+                        <li class="mb-2"><a href="{% url 'gym_shop:product_list' %}?search=مکمل">مکمل‌ها</a></li>
                     </ul>
                 </div>
                 <div class="col-md-3 mb-4">
+                    <div class="contact-info">
                     <h6>تماس با ما</h6>
-                    <p class="text-muted mb-1">
-                        <i class="fas fa-phone me-2"></i>
-                        021-12345678
-                    </p>
-                    <p class="text-muted mb-1">
-                        <i class="fas fa-envelope me-2"></i>
-                        info@gymshop.ir
-                    </p>
-                    <div class="mt-3 social-links">
-                        <a href="#" class="text-muted me-3"><i class="fab fa-telegram fa-lg"></i></a>
-                        <a href="#" class="text-muted me-3"><i class="fab fa-instagram fa-lg"></i></a>
-                        <a href="#" class="text-muted"><i class="fab fa-whatsapp fa-lg"></i></a>
+                        <div class="contact-item">
+                            <i class="fas fa-phone"></i>
+                            <span>021-12345678</span>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <span>info@gymshop.ir</span>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>تهران، خیابان ورزش</span>
+                        </div>
+                        <div class="social-links">
+                            <a href="#" class="social-link">
+                                <i class="fab fa-telegram"></i>
+                            </a>
+                            <a href="#" class="social-link">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                            <a href="#" class="social-link">
+                                <i class="fab fa-whatsapp"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
-            <hr class="my-4">
-            <div class="row footer-bottom">
+            <div class="footer-bottom">
+                <div class="row align-items-center">
                 <div class="col-md-6">
-                    <p class="text-muted mb-0">© 2024 فروشگاه ورزشی. تمامی حقوق محفوظ است.</p>
+                        <p class="mb-0">© 2024 فروشگاه ورزشی. تمامی حقوق محفوظ است.</p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <p class="text-muted mb-0">طراحی و توسعه با ❤️</p>
+                        <p class="mb-0">
+                            طراحی و توسعه با 
+                            <span class="heart">❤️</span>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

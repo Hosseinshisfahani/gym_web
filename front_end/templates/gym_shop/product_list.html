@@ -6,7 +6,7 @@
 {% block breadcrumb %}
 <div class="container mt-3">
     <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
+        <ol class="breadcrumb modern-breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'gym_shop:home' %}">خانه</a></li>
             <li class="breadcrumb-item active" aria-current="page">محصولات</li>
         </ol>
@@ -17,172 +17,244 @@
 {% block content %}
 <div class="container my-4">
     <div class="row">
-        <!-- Sidebar for Filters -->
+        <!-- Enhanced Sidebar for Filters -->
         <div class="col-lg-3 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">
+            <div class="filter-sidebar">
+                <div class="card modern-filter-card">
+                    <div class="card-header modern-filter-header">
+                        <h5 class="mb-0 text-white">
                         <i class="fas fa-filter me-2"></i>
-                        فیلترها
+                            فیلترهای هوشمند
                     </h5>
                 </div>
                 <div class="card-body">
-                    <form method="GET" id="filterForm">
-                        <!-- Category Filter -->
-                        <div class="mb-4">
-                            <h6>دسته‌بندی</h6>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="category" value="" id="all-categories"
-                                       {% if not current_category %}checked{% endif %}>
-                                <label class="form-check-label" for="all-categories">
-                                    همه محصولات
+                        <form method="GET" class="filter-form">
+                            <!-- Search Filter -->
+                            <div class="filter-group mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-search me-2 text-primary"></i>جستجو
                                 </label>
+                                <input type="text" name="search" class="form-control modern-input" 
+                                       placeholder="نام محصول..." value="{{ search_query }}">
                             </div>
+                            
+                            <!-- Category Filter -->
+                            <div class="filter-group mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-tags me-2 text-success"></i>دسته‌بندی
+                                </label>
+                                <select name="category" class="form-select modern-select">
+                                    <option value="">همه دسته‌ها</option>
                             {% for category in categories %}
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="category" value="{{ category.slug }}" id="cat-{{ category.id }}"
-                                           {% if current_category == category.slug %}checked{% endif %}>
-                                    <label class="form-check-label" for="cat-{{ category.id }}">
+                                        <option value="{{ category.slug }}" {% if current_category == category.slug %}selected{% endif %}>
                                         {{ category.name }}
-                                    </label>
-                                </div>
+                                        </option>
                             {% endfor %}
+                                </select>
                         </div>
 
-                        <!-- Price Filter -->
-                        <div class="mb-4">
-                            <h6>محدوده قیمت (تومان)</h6>
-                            <div class="row">
-                                <div class="col-6">
-                                    <input type="number" class="form-control form-control-sm" name="min_price" 
-                                           placeholder="حداقل" value="{{ min_price }}">
+                            <!-- Price Range Filter -->
+                            <div class="filter-group mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-dollar-sign me-2 text-warning"></i>محدوده قیمت
+                                </label>
+                                <div class="row g-2">
+                                    <div class="col">
+                                        <input type="number" name="min_price" class="form-control modern-input" 
+                                               placeholder="از" value="{{ min_price }}">
+                                    </div>
+                                    <div class="col">
+                                        <input type="number" name="max_price" class="form-control modern-input" 
+                                               placeholder="تا" value="{{ max_price }}">
                                 </div>
-                                <div class="col-6">
-                                    <input type="number" class="form-control form-control-sm" name="max_price" 
-                                           placeholder="حداکثر" value="{{ max_price }}">
                                 </div>
                             </div>
+                            
+                            <!-- Sort Filter -->
+                            <div class="filter-group mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-sort me-2 text-info"></i>مرتب‌سازی
+                                </label>
+                                <select name="sort" class="form-select modern-select">
+                                    <option value="name" {% if sort_by == 'name' %}selected{% endif %}>نام محصول</option>
+                                    <option value="price" {% if sort_by == 'price' %}selected{% endif %}>قیمت (کم به زیاد)</option>
+                                    <option value="-price" {% if sort_by == '-price' %}selected{% endif %}>قیمت (زیاد به کم)</option>
+                                    <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>جدیدترین</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-actions d-grid gap-2">
+                                <button type="submit" class="btn btn-primary modern-btn">
+                                    <i class="fas fa-search me-2"></i>اعمال فیلتر
+                                </button>
+                                <a href="{% url 'gym_shop:product_list' %}" class="btn btn-outline-secondary modern-btn">
+                                    <i class="fas fa-refresh me-2"></i>پاک کردن
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Quick Stats Card -->
+                <div class="card modern-stats-card mt-4">
+                    <div class="card-body text-center">
+                        <div class="stats-icon mb-3">
+                            <i class="fas fa-chart-bar"></i>
                         </div>
-
-                        <!-- Search -->
-                        <div class="mb-4">
-                            <h6>جستجو</h6>
-                            <input type="text" class="form-control" name="search" 
-                                   placeholder="نام محصول، برند..." value="{{ search_query }}">
+                        <h6 class="fw-bold mb-2">آمار فروشگاه</h6>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-number">{{ products.count }}</div>
+                                <div class="stat-label">محصول</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-number">{{ categories.count }}</div>
+                                <div class="stat-label">دسته‌بندی</div>
+                            </div>
                         </div>
-
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-search me-2"></i>
-                            اعمال فیلتر
-                        </button>
-                        
-                        {% if search_query or current_category or min_price or max_price %}
-                            <a href="{% url 'gym_shop:product_list' %}" class="btn btn-outline-secondary w-100 mt-2">
-                                <i class="fas fa-times me-2"></i>
-                                پاک کردن فیلترها
-                            </a>
-                        {% endif %}
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Products -->
+        <!-- Enhanced Products Grid -->
         <div class="col-lg-9">
-            <!-- Sort and Results Info -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    {% if page_obj.paginator.count %}
-                        <span class="text-muted">
-                            {{ page_obj.paginator.count }} محصول یافت شد
-                        </span>
+            <!-- Results Header -->
+            <div class="results-header mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h3 class="fw-bold text-gradient">
+                            {% if search_query %}
+                                نتایج جستجو برای "{{ search_query }}"
+                            {% elif current_category %}
+                                {% for category in categories %}
+                                    {% if category.slug == current_category %}{{ category.name }}{% endif %}
+                                {% endfor %}
+                            {% else %}
+                                همه محصولات
                     {% endif %}
+                        </h3>
+                        <p class="text-muted mb-0">{{ page_obj.paginator.count }} محصول یافت شد</p>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <div class="view-toggle">
+                            <span class="me-2 text-muted">نمایش:</span>
+                            <button class="btn btn-sm btn-outline-primary active" onclick="toggleView('grid')">
+                                <i class="fas fa-th"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-primary" onclick="toggleView('list')">
+                                <i class="fas fa-list"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
-                <form method="GET" class="d-flex align-items-center">
-                    <!-- Preserve filters -->
-                    {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
-                    {% if search_query %}<input type="hidden" name="search" value="{{ search_query }}">{% endif %}
-                    {% if min_price %}<input type="hidden" name="min_price" value="{{ min_price }}">{% endif %}
-                    {% if max_price %}<input type="hidden" name="max_price" value="{{ max_price }}">{% endif %}
-                    
-                    <label class="me-2">مرتب‌سازی:</label>
-                    <select name="sort" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
-                        <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>جدیدترین</option>
-                        <option value="price_low" {% if sort_by == 'price_low' %}selected{% endif %}>ارزان‌ترین</option>
-                        <option value="price_high" {% if sort_by == 'price_high' %}selected{% endif %}>گران‌ترین</option>
-                        <option value="name" {% if sort_by == 'name' %}selected{% endif %}>نام محصول</option>
-                    </select>
-                </form>
             </div>
 
-            <!-- Products Grid -->
-            {% if page_obj.object_list %}
+            {% if page_obj %}
+                <!-- Enhanced Products Grid -->
+                <div class="products-grid" id="productsContainer">
                 <div class="row g-4">
-                    {% for product in page_obj.object_list %}
-                        <div class="col-lg-4 col-md-6">
-                            <div class="card product-card h-100 position-relative">
+                        {% for product in page_obj %}
+                            <div class="col-lg-4 col-md-6 product-item">
+                                <div class="product-card modern-product-card h-100">
                                 {% if product.discount_percentage %}
-                                    <div class="discount-badge">
-                                        {{ product.discount_percentage }}% تخفیف
+                                        <div class="discount-badge modern-discount">
+                                            <i class="fas fa-percent me-1"></i>{{ product.discount_percentage }}
                                     </div>
                                 {% endif %}
                                 
+                                    <div class="product-image-container">
                                 <a href="{% url 'gym_shop:product_detail' product.slug %}">
                                     {% if product.image %}
-                                        <img src="{{ product.image.url }}" alt="{{ product.name }}" class="card-img-top">
+                                                <img src="{{ product.image.url }}" alt="{{ product.name }}" 
+                                                     class="product-image">
                                     {% else %}
-                                        <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 250px;">
-                                            <i class="fas fa-image fa-3x text-muted"></i>
+                                                <div class="product-placeholder">
+                                                    <i class="fas fa-image"></i>
+                                                    <span>بدون تصویر</span>
                                         </div>
                                     {% endif %}
                                 </a>
                                 
-                                <div class="card-body d-flex flex-column">
-                                    <h6 class="card-title">
-                                        <a href="{% url 'gym_shop:product_detail' product.slug %}" class="text-decoration-none text-dark">
+                                        <!-- Quick Actions Overlay -->
+                                        <div class="product-overlay">
+                                            <div class="quick-actions">
+                                                <button class="action-btn" title="مشاهده سریع">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="action-btn" title="افزودن به علاقه‌مندی‌ها">
+                                                    <i class="fas fa-heart"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="product-content">
+                                        <div class="product-category">
+                                            <span class="category-badge">{{ product.category.name }}</span>
+                                        </div>
+                                        
+                                        <h6 class="product-title">
+                                            <a href="{% url 'gym_shop:product_detail' product.slug %}">
                                             {{ product.name }}
                                         </a>
                                     </h6>
-                                    <p class="card-text text-muted flex-grow-1">{{ product.short_description|truncatewords:15 }}</p>
+                                        
+                                        <p class="product-description">
+                                            {{ product.short_description|truncatewords:12 }}
+                                        </p>
                                     
-                                    <div class="mt-auto">
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div class="product-rating mb-2">
+                                            <div class="stars">
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="far fa-star"></i>
+                                            </div>
+                                            <span class="rating-text">(۴.۲)</span>
+                                        </div>
+                                        
+                                        <div class="product-footer">
+                                            <div class="price-section">
                                             {% if product.discount_price %}
-                                                <div>
-                                                    <span class="price">{{ product.discount_price|floatformat:0 }} تومان</span>
-                                                    <small class="original-price ms-2">{{ product.price|floatformat:0 }}</small>
+                                                    <div class="price-group">
+                                                        <span class="current-price">{{ product.discount_price|floatformat:0 }}</span>
+                                                        <span class="currency">تومان</span>
                                                 </div>
+                                                    <div class="original-price">{{ product.price|floatformat:0 }} تومان</div>
                                             {% else %}
-                                                <span class="price">{{ product.price|floatformat:0 }} تومان</span>
+                                                    <div class="price-group">
+                                                        <span class="current-price">{{ product.price|floatformat:0 }}</span>
+                                                        <span class="currency">تومان</span>
+                                                    </div>
                                             {% endif %}
+                                            </div>
                                             
+                                            <div class="stock-status">
                                             {% if product.stock > 0 %}
-                                                <small class="text-success">
-                                                    <i class="fas fa-check-circle me-1"></i>
-                                                    موجود
-                                                </small>
+                                                    <span class="in-stock">
+                                                        <i class="fas fa-check-circle"></i> موجود
+                                                    </span>
                                             {% else %}
-                                                <small class="text-danger">
-                                                    <i class="fas fa-times-circle me-1"></i>
-                                                    ناموجود
-                                                </small>
+                                                    <span class="out-of-stock">
+                                                        <i class="fas fa-times-circle"></i> ناموجود
+                                                    </span>
                                             {% endif %}
                                         </div>
                                         
                                         {% if user.is_authenticated and product.stock > 0 %}
-                                            <form method="POST" action="{% url 'gym_shop:add_to_cart' %}" class="d-grid">
+                                                <form method="POST" action="{% url 'gym_shop:add_to_cart' %}" class="add-to-cart-form">
                                                 {% csrf_token %}
                                                 <input type="hidden" name="product_id" value="{{ product.id }}">
                                                 <input type="hidden" name="quantity" value="1">
-                                                <button type="submit" class="btn btn-primary btn-sm">
-                                                    <i class="fas fa-cart-plus me-1"></i>
-                                                    افزودن به سبد
+                                                    <button type="submit" class="btn btn-primary add-to-cart-btn">
+                                                        <i class="fas fa-cart-plus me-2"></i>افزودن به سبد
                                                 </button>
                                             </form>
                                         {% elif not user.is_authenticated %}
-                                            <a href="{% url 'gym:login' %}" class="btn btn-outline-primary btn-sm d-grid">
-                                                <i class="fas fa-sign-in-alt me-1"></i>
-                                                ورود برای خرید
+                                                <a href="{% url 'gym:login' %}" class="btn btn-outline-primary login-btn">
+                                                    <i class="fas fa-sign-in-alt me-2"></i>ورود برای خرید
                                             </a>
                                         {% endif %}
                                     </div>
@@ -190,12 +262,14 @@
                             </div>
                         </div>
                     {% endfor %}
+                    </div>
                 </div>
 
-                <!-- Pagination -->
-                {% if page_obj.has_other_pages %}
-                    <nav aria-label="صفحه‌بندی محصولات" class="mt-5">
-                        <ul class="pagination justify-content-center">
+                <!-- Enhanced Pagination -->
+                {% if is_paginated %}
+                    <div class="pagination-wrapper mt-5">
+                        <nav aria-label="صفحه‌بندی محصولات">
+                            <ul class="pagination modern-pagination justify-content-center">
                             {% if page_obj.has_previous %}
                                 <li class="page-item">
                                     <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if current_category %}category={{ current_category }}&{% endif %}{% if sort_by %}sort={{ sort_by }}&{% endif %}{% if min_price %}min_price={{ min_price }}&{% endif %}{% if max_price %}max_price={{ max_price }}&{% endif %}page={{ page_obj.previous_page_number }}">
@@ -225,13 +299,17 @@
                             {% endif %}
                         </ul>
                     </nav>
+                    </div>
                 {% endif %}
             {% else %}
-                <!-- No Products Found -->
+                <!-- Enhanced No Products Found -->
+                <div class="no-products-found">
                 <div class="text-center py-5">
-                    <i class="fas fa-search fa-4x text-muted mb-3"></i>
-                    <h4>محصولی یافت نشد</h4>
-                    <p class="text-muted">
+                        <div class="empty-state-icon mb-4">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <h4 class="fw-bold mb-3">محصولی یافت نشد</h4>
+                        <p class="text-muted mb-4">
                         {% if search_query or current_category or min_price or max_price %}
                             با فیلترهای اعمال شده محصولی یافت نشد. فیلترها را تغییر دهید.
                         {% else %}
@@ -240,10 +318,10 @@
                     </p>
                     {% if search_query or current_category or min_price or max_price %}
                         <a href="{% url 'gym_shop:product_list' %}" class="btn btn-primary">
-                            <i class="fas fa-times me-2"></i>
-                            پاک کردن فیلترها
+                                <i class="fas fa-refresh me-2"></i>پاک کردن فیلترها
                         </a>
                     {% endif %}
+                    </div>
                 </div>
             {% endif %}
         </div>
@@ -251,38 +329,414 @@
 </div>
 
 <style>
-.discount-badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: #dc3545;
+/* Modern Breadcrumb */
+.modern-breadcrumb {
+    background: none;
+    padding: 0;
+}
+
+.modern-breadcrumb .breadcrumb-item a {
+    color: #dc2626;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+/* Enhanced Filter Sidebar */
+.modern-filter-card {
+    border: none;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.modern-filter-header {
+    background: var(--primary-gradient);
+    border: none;
+    padding: 1.5rem;
+}
+
+.filter-group {
+    padding: 0.5rem 0;
+}
+
+.modern-input, .modern-select {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 0.75rem;
+    transition: all 0.3s ease;
+    background: #f8f9fa;
+}
+
+.modern-input:focus, .modern-select:focus {
+    border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+    background: white;
+}
+
+.modern-btn {
+    border-radius: 10px;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+/* Stats Card */
+.modern-stats-card {
+    background: var(--cool-gradient);
+    border: none;
+    border-radius: 20px;
     color: white;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.375rem;
+}
+
+.stats-icon i {
+    font-size: 2rem;
+    color: white;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+/* Results Header */
+.text-gradient {
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.view-toggle button.active {
+    background: linear-gradient(135deg, #000000 0%, #dc2626 50%, #991b1b 100%);
+    border-color: transparent;
+    color: white;
+}
+
+/* Enhanced Product Cards */
+.modern-product-card {
+    border: none;
+    border-radius: 20px;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+}
+
+.modern-product-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.product-image-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.product-image {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.modern-product-card:hover .product-image {
+    transform: scale(1.1);
+}
+
+.product-placeholder {
+    width: 100%;
+    height: 250px;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+}
+
+.product-placeholder i {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Product Overlay */
+.product-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modern-product-card:hover .product-overlay {
+    opacity: 1;
+}
+
+.quick-actions {
+    display: flex;
+    gap: 1rem;
+}
+
+.action-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    background: white;
+    color: #dc2626;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.action-btn:hover {
+    background: linear-gradient(135deg, #000000 0%, #dc2626 50%, #991b1b 100%);
+    color: white;
+    transform: scale(1.1);
+}
+
+/* Product Content */
+.product-content {
+    padding: 1.5rem;
+}
+
+.category-badge {
+    background: var(--accent-gradient);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 15px;
     font-size: 0.8rem;
     font-weight: 600;
-    z-index: 1;
 }
 
-.product-card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+.product-title a {
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
 }
 
-.product-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+.product-title a:hover {
+    color: #dc2626;
 }
 
-.price {
-    font-weight: 700;
-    color: #28a745;
-    font-size: 1.1rem;
+.product-description {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Rating */
+.product-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.stars {
+    color: #ffc107;
+}
+
+.rating-text {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+/* Product Footer */
+.product-footer {
+    margin-top: auto;
+}
+
+.price-section {
+    margin-bottom: 1rem;
+}
+
+.price-group {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.current-price {
+    font-size: 1.3rem;
+    font-weight: 800;
+    background: var(--success-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.currency {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
 }
 
 .original-price {
     text-decoration: line-through;
-    color: #6c757d;
+    color: var(--text-light);
     font-size: 0.9rem;
 }
+
+.stock-status {
+    margin-bottom: 1rem;
+}
+
+.in-stock {
+    color: #28a745;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.out-of-stock {
+    color: #dc3545;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Discount Badge */
+.modern-discount {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: var(--secondary-gradient);
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+    z-index: 2;
+}
+
+/* Buttons */
+.add-to-cart-btn {
+    background: var(--primary-gradient);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.add-to-cart-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    color: white;
+}
+
+.login-btn {
+    border: 2px solid #667eea;
+    border-radius: 10px;
+    color: #667eea;
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.login-btn:hover {
+    background: var(--primary-gradient);
+    border-color: transparent;
+    color: white;
+}
+
+/* Pagination */
+.modern-pagination .page-link {
+    border: none;
+    border-radius: 10px;
+    margin: 0 0.25rem;
+    padding: 0.75rem 1rem;
+    color: #667eea;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.modern-pagination .page-link:hover {
+    background: var(--primary-gradient);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.modern-pagination .page-item.active .page-link {
+    background: var(--primary-gradient);
+    color: white;
+}
+
+/* Empty State */
+.no-products-found {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    padding: 3rem;
+}
+
+.empty-state-icon i {
+    font-size: 4rem;
+    color: var(--text-light);
+    background: var(--cool-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .modern-product-card {
+        border-radius: 15px;
+    }
+    
+    .product-image {
+        height: 200px;
+    }
+    
+    .product-content {
+        padding: 1rem;
+    }
+    
+    .view-toggle {
+        margin-top: 1rem;
+    }
+}
 </style>
+
+<script>
+function toggleView(viewType) {
+    // Toggle view functionality
+    const buttons = document.querySelectorAll('.view-toggle button');
+    buttons.forEach(btn => btn.classList.remove('active'));
+    event.target.closest('button').classList.add('active');
+    
+    const container = document.getElementById('productsContainer');
+    if (viewType === 'list') {
+        container.classList.add('list-view');
+    } else {
+        container.classList.remove('list-view');
+    }
+}
+</script>
 {% endblock %} 

@@ -129,8 +129,16 @@ def category_detail(request, slug):
 def cart_view(request):
     """مشاهده سبد خرید"""
     cart, created = Cart.objects.get_or_create(user=request.user)
+    cart_items = cart.items.all()
+    
+    # Calculate total discount
+    total_original_price = sum(item.quantity * item.product.price for item in cart_items)
+    total_discount = total_original_price - cart.total_price if cart.total_price < total_original_price else 0
+    
     context = {
         'cart': cart,
+        'cart_items': cart_items,
+        'total_discount': total_discount,
     }
     return render(request, 'gym_shop/cart.html', context)
 

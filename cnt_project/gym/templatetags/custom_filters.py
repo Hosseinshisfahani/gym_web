@@ -29,6 +29,14 @@ def multiply(value, arg):
         return 0
 
 @register.filter
+def subtract(value, arg):
+    """Subtract the argument from the value"""
+    try:
+        return float(value) - float(arg)
+    except (ValueError, TypeError):
+        return 0
+
+@register.filter
 def get_item(dictionary, key):
     """Get an item from a dictionary using its key"""
     return dictionary.get(key)

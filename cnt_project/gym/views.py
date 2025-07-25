@@ -362,7 +362,15 @@ def add_workout_plan(request, user_id=None):
     
     if request.method == 'POST':
         form = WorkoutPlanForm(request.POST, request.FILES)
-        if form.is_valid():
+        
+        # Initialize monthly goal form if admin is creating plan
+        goal_form = None
+        create_goal = False
+        if request.user.is_staff and request.POST.get('create_monthly_goal') == 'on':
+            goal_form = MonthlyGoalForm(request.POST)
+            create_goal = True
+        
+        if form.is_valid() and (not create_goal or (goal_form and goal_form.is_valid())):
             try:
                 plan = form.save(commit=False)
                 
@@ -387,6 +395,19 @@ def add_workout_plan(request, user_id=None):
                 
                 plan.save()
                 
+                # Create monthly goal if requested
+                if create_goal and goal_form and request.user.is_staff:
+                    goal = goal_form.save(commit=False)
+                    goal.user = plan.user  # Assign to same user as the plan
+                    
+                    # Set default title if not provided
+                    if not goal.title:
+                        user_name = plan.user.userprofile.name if hasattr(plan.user, 'userprofile') and plan.user.userprofile.name else plan.user.username
+                        goal.title = f"هدف ماهانه {user_name} - برنامه تمرینی"
+                    
+                    goal.save()
+                    success_message += ' همچنین هدف ماهانه با موفقیت ایجاد شد!'
+                
                 # Mark the related request as completed if it exists
                 if plan_request:
                     plan_request.status = 'completed'
@@ -406,8 +427,21 @@ def add_workout_plan(request, user_id=None):
                     else:
                         field_name = form.fields[field].label or field
                         messages.error(request, f'{field_name}: {error}')
+            
+            # Handle goal form errors
+            if goal_form and goal_form.errors:
+                for field, errors in goal_form.errors.items():
+                    for error in errors:
+                        field_name = goal_form.fields[field].label or field
+                        messages.error(request, f'هدف ماهانه - {field_name}: {error}')
     else:
         form = WorkoutPlanForm()
+        goal_form = None
+        if request.user.is_staff:
+            goal_form = MonthlyGoalForm()
+            # Pre-populate user if target_user is set
+            if target_user:
+                goal_form.initial['user'] = target_user.id
     
     # Get users for dropdown if admin and no target user
     users = []
@@ -416,9 +450,11 @@ def add_workout_plan(request, user_id=None):
     
     context = {
         'form': form,
+        'goal_form': goal_form,
         'target_user': target_user,
         'plan_request': plan_request,
-        'users': users
+        'users': users,
+        'is_admin': request.user.is_staff
     }
     return render(request, 'gym/add_workout_plan.html', context)
 
@@ -605,7 +641,15 @@ def add_diet_plan(request, user_id=None):
     
     if request.method == 'POST':
         form = DietPlanForm(request.POST, request.FILES)
-        if form.is_valid():
+        
+        # Initialize monthly goal form if admin is creating plan
+        goal_form = None
+        create_goal = False
+        if request.user.is_staff and request.POST.get('create_monthly_goal') == 'on':
+            goal_form = MonthlyGoalForm(request.POST)
+            create_goal = True
+        
+        if form.is_valid() and (not create_goal or (goal_form and goal_form.is_valid())):
             try:
                 plan = form.save(commit=False)
                 
@@ -630,6 +674,19 @@ def add_diet_plan(request, user_id=None):
                 
                 plan.save()
                 
+                # Create monthly goal if requested
+                if create_goal and goal_form and request.user.is_staff:
+                    goal = goal_form.save(commit=False)
+                    goal.user = plan.user  # Assign to same user as the plan
+                    
+                    # Set default title if not provided
+                    if not goal.title:
+                        user_name = plan.user.userprofile.name if hasattr(plan.user, 'userprofile') and plan.user.userprofile.name else plan.user.username
+                        goal.title = f"هدف ماهانه {user_name} - برنامه غذایی"
+                    
+                    goal.save()
+                    success_message += ' همچنین هدف ماهانه با موفقیت ایجاد شد!'
+                
                 # Mark the related request as completed if it exists
                 if plan_request:
                     plan_request.status = 'completed'
@@ -649,8 +706,21 @@ def add_diet_plan(request, user_id=None):
                     else:
                         field_name = form.fields[field].label or field
                         messages.error(request, f'{field_name}: {error}')
+            
+            # Handle goal form errors
+            if goal_form and goal_form.errors:
+                for field, errors in goal_form.errors.items():
+                    for error in errors:
+                        field_name = goal_form.fields[field].label or field
+                        messages.error(request, f'هدف ماهانه - {field_name}: {error}')
     else:
         form = DietPlanForm()
+        goal_form = None
+        if request.user.is_staff:
+            goal_form = MonthlyGoalForm()
+            # Pre-populate user if target_user is set
+            if target_user:
+                goal_form.initial['user'] = target_user.id
     
     # Get users for dropdown if admin and no target user
     users = []
@@ -659,9 +729,11 @@ def add_diet_plan(request, user_id=None):
     
     context = {
         'form': form,
+        'goal_form': goal_form,
         'target_user': target_user,
         'plan_request': plan_request,
-        'users': users
+        'users': users,
+        'is_admin': request.user.is_staff
     }
     return render(request, 'gym/add_diet_plan.html', context)
 
@@ -1339,50 +1411,50 @@ def plan_request_payment(request):
                 messages.error(request, 'در حال حاضر امکان پرداخت دستی وجود ندارد.')
                 return redirect('gym:profile')
                 
-            form = PaymentForm(request.POST, request.FILES)
-            if form.is_valid():
-                # Create the payment
-                payment = form.save(commit=False)
-                payment.user = request.user
-                payment.payment_method = 'manual'
-                payment.payment_type = 'workout_plan' if plan_data['plan_type'] == 'workout' else 'diet_plan'
-                payment.save()
-                
-                # Send email notification to admins for payment upload
-                try:
-                    from gym.utils.email_notifications import send_payment_upload_notification
-                    send_payment_upload_notification(payment, request)
-                except Exception as e:
-                    import logging
-                    logger = logging.getLogger(__name__)
-                    logger.error(f"Failed to send payment upload notification email: {str(e)}")
-                
-                # Create the plan request after successful payment upload
-                plan_request = PlanRequest.objects.create(
-                    user=request.user,
-                    plan_type=plan_data['plan_type'],
-                    description=plan_data['description']
-                )
-                
-                # Send email notification to admins
-                try:
-                    from gym.utils.email_notifications import send_plan_request_notification
-                    send_plan_request_notification(plan_request, request)
-                except Exception as e:
-                    import logging
-                    logger = logging.getLogger(__name__)
-                    logger.error(f"Failed to send plan request notification email: {str(e)}")
-                
-                # Store plan data for status display and clear pending request
-                request.session['completed_plan_request'] = {
-                    'plan_type': plan_data['plan_type'],
-                    'description': plan_data['description'],
-                    'request_id': plan_request.id
-                }
-                del request.session['pending_plan_request']
-                
-                messages.success(request, 'پرداخت شما با موفقیت ثبت شد و درخواست برنامه شما در انتظار بررسی است.')
-                return redirect('gym:plan_request_flow', step='status')
+        form = PaymentForm(request.POST, request.FILES)
+        if form.is_valid():
+            # Create the payment
+            payment = form.save(commit=False)
+            payment.user = request.user
+            payment.payment_method = 'manual'
+            payment.payment_type = 'workout_plan' if plan_data['plan_type'] == 'workout' else 'diet_plan'
+            payment.save()
+            
+            # Send email notification to admins for payment upload
+            try:
+                from gym.utils.email_notifications import send_payment_upload_notification
+                send_payment_upload_notification(payment, request)
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to send payment upload notification email: {str(e)}")
+            
+            # Create the plan request after successful payment upload
+            plan_request = PlanRequest.objects.create(
+                user=request.user,
+                plan_type=plan_data['plan_type'],
+                description=plan_data['description']
+            )
+            
+            # Send email notification to admins
+            try:
+                from gym.utils.email_notifications import send_plan_request_notification
+                send_plan_request_notification(plan_request, request)
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to send plan request notification email: {str(e)}")
+            
+            # Store plan data for status display and clear pending request
+            request.session['completed_plan_request'] = {
+                'plan_type': plan_data['plan_type'],
+                'description': plan_data['description'],
+                'request_id': plan_request.id
+            }
+            del request.session['pending_plan_request']
+            
+            messages.success(request, 'پرداخت شما با موفقیت ثبت شد و درخواست برنامه شما در انتظار بررسی است.')
+            return redirect('gym:plan_request_flow', step='status')
     
     # For GET requests, prepare form for manual payment
     initial_data = {
@@ -2561,3 +2633,64 @@ def test_email_notifications(request):
     }
     
     return render(request, 'gym/admin/test_email_notifications.html', context)
+
+@login_required
+def quick_add_measurement(request):
+    """AJAX view for quick measurement entry"""
+    if request.method == 'POST':
+        try:
+            measurement_type = request.POST.get('measurement_type')
+            value = request.POST.get('value')
+            notes = request.POST.get('notes', '')
+            
+            # Validate inputs
+            if not measurement_type or not value:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'نوع اندازه‌گیری و مقدار ضروری است.'
+                })
+            
+            # Set proper unit based on measurement type
+            unit_map = {
+                'weight': 'kg',
+                'body_fat': '%',
+                'muscle_mass': 'kg',
+                'waist': 'cm',
+                'chest': 'cm',
+                'arm': 'cm',
+                'thigh': 'cm'
+            }
+            unit = unit_map.get(measurement_type, 'kg')
+            
+            # Create progress analysis entry
+            progress = ProgressAnalysis.objects.create(
+                user=request.user,
+                measurement_type=measurement_type,
+                value=value,
+                unit=unit,
+                measurement_date=timezone.now().date(),
+                notes=notes
+            )
+            
+            # Get updated current measurement for display
+            current_value = float(value)
+            measurement_display = dict(ProgressAnalysis.MEASUREMENT_TYPES)[measurement_type]
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'{measurement_display} با موفقیت ثبت شد!',
+                'current_value': current_value,
+                'unit': unit,
+                'date': progress.measurement_date.strftime('%Y/%m/%d')
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': f'خطا در ثبت اندازه‌گیری: {str(e)}'
+            })
+    
+    return JsonResponse({
+        'success': False,
+        'message': 'درخواست نامعتبر'
+    })

@@ -76,6 +76,7 @@ urlpatterns = [
     # Progress Analysis
     path('progress/', views.progress_analysis, name='progress_analysis'),
     path('progress/delete/<int:entry_id>/', views.delete_progress_entry, name='delete_progress_entry'),
+    path('progress/quick-add/', views.quick_add_measurement, name='quick_add_measurement'),
     
     # Placeholder routes for removed features
     path('attendance/', lambda request: render(request, 'gym/attendance.html'), name='attendance'),
