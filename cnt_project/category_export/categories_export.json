@@ -1,0 +1,66 @@
+{
+  "metadata": {
+    "export_date": "2025-07-26T03:06:45.763279",
+    "total_categories": 5,
+    "active_categories": 5,
+    "include_images": true,
+    "version": "1.0"
+  },
+  "categories": [
+    {
+      "id": 2,
+      "name": "تجهیزات ورزشی",
+      "name_en": "fitness-equipment",
+      "slug": "fitness-equipment",
+      "description": "تجهیزات حرفه‌ای بدنسازی و ورزش شامل دمبل، کتل بل، باربل و تجهیزات کاردیو",
+      "is_active": true,
+      "created_at": "2025-07-21T21:33:58.542042+00:00",
+      "updated_at": "2025-07-21T22:57:06.722450+00:00",
+      "image_filename": "images_5.jpeg"
+    },
+    {
+      "id": 6,
+      "name": "لوازم جانبی",
+      "name_en": "accessories",
+      "slug": "accessories",
+      "description": "لوازم جانبی ورزشی مانند کیف، دستکش، کمربند و سایر تجهیزات کمکی",
+      "is_active": true,
+      "created_at": "2025-07-21T21:33:58.551094+00:00",
+      "updated_at": "2025-07-21T22:57:49.089848+00:00",
+      "image_filename": "images_6.jpeg"
+    },
+    {
+      "id": 5,
+      "name": "مکمل‌های ورزشی",
+      "name_en": "supplements",
+      "slug": "supplements",
+      "description": "مکمل‌های غذایی ورزشی شامل پروتئین، کراتین، BCAA و ویتامین‌ها",
+      "is_active": true,
+      "created_at": "2025-07-21T21:33:58.548017+00:00",
+      "updated_at": "2025-07-21T22:58:44.741200+00:00",
+      "image_filename": "best-black-friday-supplements-deals-2017_orig.jpg"
+    },
+    {
+      "id": 3,
+      "name": "پوشاک ورزشی",
+      "name_en": "sportswear",
+      "slug": "sportswear",
+      "description": "لباس‌های ورزشی مردانه و زنانه با کیفیت بالا برای انواع ورزش‌ها",
+      "is_active": true,
+      "created_at": "2025-07-21T21:33:58.544508+00:00",
+      "updated_at": "2025-07-21T22:59:20.702674+00:00",
+      "image_filename": "recovery-sportswear-voguebus-may-22-inline-2.webp"
+    },
+    {
+      "id": 4,
+      "name": "کفش ورزشی",
+      "name_en": "athletic-shoes",
+      "slug": "athletic-shoes",
+      "description": "کفش‌های ورزشی تخصصی برای دویدن، ورزش‌های قدرتی و کراس تریننگ",
+      "is_active": true,
+      "created_at": "2025-07-21T21:33:58.546253+00:00",
+      "updated_at": "2025-07-21T23:00:13.857157+00:00",
+      "image_filename": "images_7.jpeg"
+    }
+  ]
+}
