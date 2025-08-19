@@ -23,3 +23,7 @@ chardet==5.2.0  # Character encoding detector
 
 # Persian Date Support
 jdatetime==5.2.0  # Persian (Jalali) date and datetime support
+
+# OAuth and Social Authentication
+django-allauth==0.60.1  # For social authentication (Google, Facebook, etc.)
+requests==2.31.0  # For HTTP requests

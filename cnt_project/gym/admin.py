@@ -212,3 +212,45 @@ class PaymentCardAdmin(admin.ModelAdmin):
     ]
 
 admin_site.register(PaymentCard, PaymentCardAdmin)
+
+# Google OAuth Admin Configuration
+from django.contrib.sites.models import Site
+from allauth.socialaccount.models import SocialApp, SocialAccount, SocialToken
+from allauth.account.models import EmailAddress
+
+# Register Site model for allauth
+admin_site.register(Site)
+
+# Register SocialApp for Google OAuth configuration
+class SocialAppAdmin(admin.ModelAdmin):
+    list_display = ('provider', 'name', 'client_id')
+    list_filter = ('provider',)
+    search_fields = ('name', 'client_id')
+
+admin_site.register(SocialApp, SocialAppAdmin)
+
+# Register SocialAccount for managing user social accounts
+class SocialAccountAdmin(admin.ModelAdmin):
+    list_display = ('user', 'provider', 'uid', 'date_joined')
+    list_filter = ('provider', 'date_joined')
+    search_fields = ('user__email', 'user__username', 'uid')
+    readonly_fields = ('date_joined', 'last_login')
+
+admin_site.register(SocialAccount, SocialAccountAdmin)
+
+# Register SocialToken for managing OAuth tokens
+class SocialTokenAdmin(admin.ModelAdmin):
+    list_display = ('account', 'token', 'expires_at')
+    list_filter = ('expires_at',)
+    search_fields = ('account__user__email', 'account__user__username')
+    readonly_fields = ('token', 'token_secret', 'expires_at')
+
+admin_site.register(SocialToken, SocialTokenAdmin)
+
+# Register EmailAddress for email verification
+class EmailAddressAdmin(admin.ModelAdmin):
+    list_display = ('user', 'email', 'primary', 'verified')
+    list_filter = ('primary', 'verified')
+    search_fields = ('user__email', 'user__username', 'email')
+
+admin_site.register(EmailAddress, EmailAddressAdmin)

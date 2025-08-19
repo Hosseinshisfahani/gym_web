@@ -1474,93 +1474,9 @@ def plan_request_payment(request):
 
 @login_required
 def payment_gateway_callback(request):
-    """Handle payment gateway callback"""
-    authority = request.GET.get('Authority') or request.POST.get('authority')
-    status = request.GET.get('Status')
-    
-    # Get pending payment from session
-    payment_id = request.session.get('pending_payment_id')
-    
-    if not payment_id:
-        messages.error(request, 'اطلاعات پرداخت یافت نشد.')
-        return redirect('gym:profile')
-    
-    try:
-        payment = Payment.objects.get(id=payment_id, user=request.user)
-    except Payment.DoesNotExist:
-        messages.error(request, 'پرداخت مورد نظر یافت نشد.')
-        return redirect('gym:profile')
-    
-    # Clear payment ID from session
-    if 'pending_payment_id' in request.session:
-        del request.session['pending_payment_id']
-    
-    if status == 'OK' and authority:
-        # Verify payment with gateway
-        from gym.utils.payment_gateway import PaymentGateway
-        gateway = PaymentGateway(payment.gateway_type)
-        
-        success, result = gateway.verify_payment(authority, payment.amount)
-        
-        if success:
-            # Payment successful
-            payment.status = 'approved'
-            payment.gateway_ref_id = result.get('ref_id')
-            payment.gateway_response = json.dumps(result)
-            payment.save()
-            
-            # Get plan data from session
-            plan_data = request.session.get('pending_plan_request')
-            
-            if plan_data:
-                # Create the plan request after successful payment
-                plan_request = PlanRequest.objects.create(
-                    user=request.user,
-                    plan_type=plan_data['plan_type'],
-                    description=plan_data['description']
-                )
-                
-                # Send email notifications
-                try:
-                    from gym.utils.email_notifications import send_payment_upload_notification, send_plan_request_notification
-                    send_payment_upload_notification(payment, request)
-                    send_plan_request_notification(plan_request, request)
-                except Exception as e:
-                    import logging
-                    logger = logging.getLogger(__name__)
-                    logger.error(f"Failed to send notification emails: {str(e)}")
-                
-                # Store plan data for status display and clear pending request
-                request.session['completed_plan_request'] = {
-                    'plan_type': plan_data['plan_type'],
-                    'description': plan_data['description'],
-                    'request_id': plan_request.id
-                }
-                del request.session['pending_plan_request']
-                
-                messages.success(request, f'پرداخت با موفقیت انجام شد. شماره پیگیری: {payment.gateway_ref_id}')
-                return redirect('gym:plan_request_flow', step='status')
-            else:
-                messages.success(request, f'پرداخت با موفقیت انجام شد. شماره پیگیری: {payment.gateway_ref_id}')
-                return redirect('gym:payments')
-        else:
-            # Payment verification failed
-            payment.status = 'failed'
-            payment.gateway_response = json.dumps(result)
-            payment.save()
-            messages.error(request, f'خطا در تایید پرداخت: {result.get("error", "خطای ناشناخته")}')
-    else:
-        # Payment cancelled or failed
-        payment.status = 'failed'
-        payment.gateway_response = f'Status: {status}, Authority: {authority}'
-        payment.save()
-        
-        if status == 'NOK':
-            messages.error(request, 'پرداخت توسط کاربر لغو شد.')
-        else:
-            messages.error(request, 'خطا در انجام پرداخت.')
-    
-    return redirect('gym:profile')
+    """Handle payment gateway callback - redirects to payment verification"""
+    # Redirect to the new payment verification view
+    return redirect('gym:payment_verify')
 
 def password_reset(request):
     """Handle user password reset requests"""
@@ -2694,3 +2610,177 @@ def quick_add_measurement(request):
         'success': False,
         'message': 'درخواست نامعتبر'
     })
+
+@login_required
+def payment_success(request):
+    """Payment success page"""
+    # Get payment info from session or query parameters
+    payment_id = request.session.get('completed_payment_id')
+    ref_id = request.GET.get('ref_id')
+    
+    context = {
+        'payment_id': payment_id,
+        'ref_id': ref_id,
+        'success': True
+    }
+    
+    # Clear session data
+    if 'completed_payment_id' in request.session:
+        del request.session['completed_payment_id']
+    
+    return render(request, 'gym/payment_success.html', context)
+
+@login_required
+def payment_failure(request):
+    """Payment failure page"""
+    error_message = request.GET.get('error', 'خطا در انجام پرداخت')
+    payment_id = request.session.get('failed_payment_id')
+    
+    context = {
+        'payment_id': payment_id,
+        'error_message': error_message,
+        'success': False
+    }
+    
+    # Clear session data
+    if 'failed_payment_id' in request.session:
+        del request.session['failed_payment_id']
+    
+    return render(request, 'gym/payment_failure.html', context)
+
+@login_required
+def payment_cancel(request):
+    """Payment cancellation page"""
+    payment_id = request.session.get('cancelled_payment_id')
+    
+    context = {
+        'payment_id': payment_id,
+        'success': False
+    }
+    
+    # Clear session data
+    if 'cancelled_payment_id' in request.session:
+        del request.session['cancelled_payment_id']
+    
+    return render(request, 'gym/payment_cancel.html', context)
+
+@login_required
+def payment_verify(request):
+    """Payment verification page - handles Zarinpal callback"""
+    authority = request.GET.get('Authority')
+    status = request.GET.get('Status')
+    
+    if not authority:
+        messages.error(request, 'اطلاعات پرداخت نامعتبر است.')
+        return redirect('gym:payment_failure')
+    
+    # Get pending payment from session
+    payment_id = request.session.get('pending_payment_id')
+    
+    if not payment_id:
+        messages.error(request, 'اطلاعات پرداخت یافت نشد.')
+        return redirect('gym:payment_failure')
+    
+    try:
+        payment = Payment.objects.get(id=payment_id, user=request.user)
+    except Payment.DoesNotExist:
+        messages.error(request, 'پرداخت مورد نظر یافت نشد.')
+        return redirect('gym:payment_failure')
+    
+    # Clear payment ID from session
+    if 'pending_payment_id' in request.session:
+        del request.session['pending_payment_id']
+    
+    if status == 'OK':
+        # Verify payment with gateway
+        from gym.utils.payment_gateway import PaymentGateway
+        gateway = PaymentGateway(payment.gateway_type)
+        
+        success, result = gateway.verify_payment(authority, payment.amount)
+        
+        if success:
+            # Payment successful
+            payment.status = 'approved'
+            payment.gateway_ref_id = result.get('ref_id')
+            payment.gateway_response = json.dumps(result)
+            payment.save()
+            
+            # Get plan data from session
+            plan_data = request.session.get('pending_plan_request')
+            
+            if plan_data:
+                # Create the plan request after successful payment
+                plan_request = PlanRequest.objects.create(
+                    user=request.user,
+                    plan_type=plan_data['plan_type'],
+                    description=plan_data['description']
+                )
+                
+                # Send email notifications
+                try:
+                    from gym.utils.email_notifications import send_payment_upload_notification, send_plan_request_notification
+                    send_payment_upload_notification(payment, request)
+                    send_plan_request_notification(plan_request, request)
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(f"Failed to send notification emails: {str(e)}")
+                
+                # Store plan data for status display and clear pending request
+                request.session['completed_plan_request'] = {
+                    'plan_type': plan_data['plan_type'],
+                    'description': plan_data['description'],
+                    'request_id': plan_request.id
+                }
+                del request.session['pending_plan_request']
+                
+                messages.success(request, f'پرداخت با موفقیت انجام شد. شماره پیگیری: {payment.gateway_ref_id}')
+                return redirect('gym:plan_request_flow', step='status')
+            else:
+                # Store completed payment ID for success page
+                request.session['completed_payment_id'] = payment.id
+                
+                messages.success(request, f'پرداخت با موفقیت انجام شد. شماره پیگیری: {payment.gateway_ref_id}')
+                return redirect('gym:payment_success')
+        else:
+            # Payment verification failed
+            payment.status = 'failed'
+            payment.gateway_response = json.dumps(result)
+            payment.save()
+            
+            # Store failed payment ID for failure page
+            request.session['failed_payment_id'] = payment.id
+            
+            messages.error(request, f'خطا در تایید پرداخت: {result.get("error", "خطای ناشناخته")}')
+            return redirect('gym:payment_failure')
+    else:
+        # Payment cancelled or failed
+        payment.status = 'failed'
+        payment.gateway_response = f'Status: {status}, Authority: {authority}'
+        payment.save()
+        
+        # Store cancelled payment ID for cancel page
+        request.session['cancelled_payment_id'] = payment.id
+        
+        if status == 'NOK':
+            messages.error(request, 'پرداخت توسط کاربر لغو شد.')
+        else:
+            messages.error(request, 'خطا در انجام پرداخت.')
+        
+        return redirect('gym:payment_cancel')
+
+@login_required
+def payment_gateway_status(request):
+    """Payment gateway status page"""
+    from django.conf import settings
+    
+    context = {
+        'zarinpal_merchant_id': getattr(settings, 'ZARINPAL_MERCHANT_ID', 'Not configured'),
+        'callback_url': getattr(settings, 'ZARINPAL_CALLBACK_URL', 'Not configured'),
+        'sandbox_mode': getattr(settings, 'ZARINPAL_SANDBOX', True),
+        'success_url': getattr(settings, 'PAYMENT_SUCCESS_URL', '/payment/success/'),
+        'failure_url': getattr(settings, 'PAYMENT_FAILURE_URL', '/payment/failure/'),
+        'cancel_url': getattr(settings, 'PAYMENT_CANCEL_URL', '/payment/cancel/'),
+    }
+    
+    return render(request, 'gym/payment_gateway_status.html', context)

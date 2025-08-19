@@ -10,10 +10,17 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from datetime import datetime, timedelta
 import json
+from decimal import Decimal
 from django.contrib.auth.models import User
 
 from .models import Category, Product, Cart, CartItem, Order, OrderItem, ProductImage
 from .forms import ProductForm, CategoryForm, ProductImageForm, ProductSearchForm
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, Decimal):
+            return str(obj)
+        return super().default(obj)
 
 def shop_home(request):
     """صفحه اصلی فروشگاه"""
@@ -155,6 +162,11 @@ def add_to_cart(request):
     
     # بررسی موجودی
     if quantity > product.stock:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': False,
+                'message': 'تعداد درخواستی بیشتر از موجودی انبار است.'
+            })
         messages.error(request, 'تعداد درخواستی بیشتر از موجودی انبار است.')
         return redirect('gym_shop:product_detail', slug=product.slug)
     
@@ -169,11 +181,25 @@ def add_to_cart(request):
     if not created:
         new_quantity = cart_item.quantity + quantity
         if new_quantity > product.stock:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': False,
+                    'message': 'تعداد درخواستی بیشتر از موجودی انبار است.'
+                })
             messages.error(request, 'تعداد درخواستی بیشتر از موجودی انبار است.')
             return redirect('gym_shop:product_detail', slug=product.slug)
         cart_item.quantity = new_quantity
         cart_item.save()
     
+    # Handle AJAX requests
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'message': f'{product.name} به سبد خرید اضافه شد.',
+            'cart_count': cart.total_items
+        })
+    
+    # Handle regular form submissions
     messages.success(request, f'{product.name} به سبد خرید اضافه شد.')
     return redirect('gym_shop:cart')
 
@@ -216,13 +242,13 @@ def checkout(request):
             return JsonResponse({
                 'success': False,
                 'message': 'سبد خرید شما خالی است.'
-            })
+            }, encoder=DecimalEncoder)
         messages.error(request, 'سبد خرید شما خالی است.')
         return redirect('gym_shop:cart')
     
     if request.method == 'POST':
         try:
-            # ایجاد سفارش جدید
+            # Create pending order first
             order = Order.objects.create(
                 user=request.user,
                 first_name=request.POST.get('first_name'),
@@ -235,10 +261,11 @@ def checkout(request):
                 subtotal=cart.total_price,
                 shipping_cost=50000,  # هزینه ارسال ثابت
                 total=cart.total_price + 50000,
-                notes=request.POST.get('notes', '')
+                notes=request.POST.get('notes', ''),
+                status='pending'  # Set status to pending until payment is verified
             )
             
-            # اضافه کردن آیتم‌های سفارش
+            # Add order items
             for cart_item in cart.items.all():
                 OrderItem.objects.create(
                     order=order,
@@ -248,38 +275,53 @@ def checkout(request):
                     price=cart_item.product.final_price,
                     total=cart_item.total_price
                 )
+            
+            # Initialize payment gateway
+            from gym.utils.payment_gateway import PaymentGateway
+            from django.urls import reverse
+            
+            payment_gateway = PaymentGateway()
+            callback_url = request.build_absolute_uri(reverse('gym_shop:payment_verify'))
+            
+            # Create payment request
+            success, payment_data = payment_gateway.create_payment_request(
+                amount=order.total,
+                description=f"سفارش {order.order_number} - {order.first_name} {order.last_name}",
+                callback_url=callback_url,
+                mobile=order.phone,
+                email=order.email
+            )
+            
+            if success:
+                # Store payment authority in session for verification
+                request.session['payment_authority'] = payment_data['authority']
+                request.session['order_id'] = order.id
                 
-                # کم کردن از موجودی
-                cart_item.product.stock -= cart_item.quantity
-                cart_item.product.save()
-            
-            # خالی کردن سبد خرید
-            cart.items.all().delete()
-            
-            # Send email notification to admins
-            try:
-                from gym.utils.email_notifications import send_shop_order_notification
-                send_shop_order_notification(order, request)
-            except Exception as e:
-                # Log error but don't interrupt the order process
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.error(f"Failed to send order notification email: {str(e)}")
-            
-            # Check if this is an AJAX request
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
-                # Return JSON response for AJAX requests
-                from django.urls import reverse
-                return JsonResponse({
-                    'success': True,
-                    'message': f'سفارش شما با شماره {order.order_number} ثبت شد.',
-                    'order_url': reverse('gym_shop:order_detail', kwargs={'order_number': order.order_number}),
-                    'order_number': order.order_number
-                })
+                # Clear cart
+                cart.items.all().delete()
+                
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'در حال انتقال به درگاه پرداخت...',
+                        'payment_url': payment_data['gateway_url']
+                    }, encoder=DecimalEncoder)
+                else:
+                    # Redirect to payment gateway
+                    return redirect(payment_data['gateway_url'])
             else:
-                # Return redirect for regular form submissions
-                messages.success(request, f'سفارش شما با شماره {order.order_number} ثبت شد.')
-                return redirect('gym_shop:order_detail', order_number=order.order_number)
+                # Payment gateway error
+                order.delete()  # Delete the order if payment gateway fails
+                error_message = payment_data.get('error', 'خطا در اتصال به درگاه پرداخت')
+                
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+                    return JsonResponse({
+                        'success': False,
+                        'message': error_message
+                    }, encoder=DecimalEncoder)
+                else:
+                    messages.error(request, error_message)
+                    return redirect('gym_shop:checkout')
                 
         except Exception as e:
             # Handle any errors during order creation
@@ -291,15 +333,17 @@ def checkout(request):
                 return JsonResponse({
                     'success': False,
                     'message': 'خطا در ثبت سفارش. لطفاً مجدداً تلاش کنید.'
-                })
+                }, encoder=DecimalEncoder)
             else:
                 messages.error(request, 'خطا در ثبت سفارش. لطفاً مجدداً تلاش کنید.')
                 return redirect('gym_shop:checkout')
     
     context = {
         'cart': cart,
+        'cart_items': cart.items.all(),
+        'subtotal': cart.total_price,
         'shipping_cost': 50000,
-        'total_with_shipping': cart.total_price + 50000,
+        'total': cart.total_price + 50000,
     }
     return render(request, 'gym_shop/checkout.html', context)
 
@@ -316,7 +360,7 @@ def apply_discount(request):
                 return JsonResponse({
                     'success': False,
                     'message': 'کد تخفیف وارد نشده است.'
-                })
+                }, encoder=DecimalEncoder)
             
             # بررسی کد تخفیف (در حال حاضر فقط یک کد نمونه)
             # می‌توانید مدل DiscountCode اضافه کنید
@@ -327,7 +371,7 @@ def apply_discount(request):
                     'success': True,
                     'message': f'کد تخفیف {discount_percentage}% با موفقیت اعمال شد.',
                     'discount_percentage': discount_percentage
-                })
+                }, encoder=DecimalEncoder)
             elif discount_code.lower() == 'summer20':
                 # کد تخفیف 20 درصد
                 discount_percentage = 20
@@ -335,28 +379,28 @@ def apply_discount(request):
                     'success': True,
                     'message': f'کد تخفیف {discount_percentage}% با موفقیت اعمال شد.',
                     'discount_percentage': discount_percentage
-                })
+                }, encoder=DecimalEncoder)
             else:
                 return JsonResponse({
                     'success': False,
                     'message': 'کد تخفیف وارد شده معتبر نیست.'
-                })
+                }, encoder=DecimalEncoder)
                 
         except json.JSONDecodeError:
             return JsonResponse({
                 'success': False,
                 'message': 'خطا در پردازش داده‌ها.'
-            })
+            }, encoder=DecimalEncoder)
         except Exception as e:
             return JsonResponse({
                 'success': False,
                 'message': 'خطا در اعمال کد تخفیف.'
-            })
+            }, encoder=DecimalEncoder)
     
     return JsonResponse({
         'success': False,
         'message': 'روش درخواست نامعتبر است.'
-    })
+    }, encoder=DecimalEncoder)
 
 @login_required
 def order_detail(request, order_number):
@@ -379,7 +423,7 @@ def cancel_order(request, order_id):
                 return JsonResponse({
                     'success': False,
                     'message': 'این سفارش قابل لغو نیست.'
-                })
+                }, encoder=DecimalEncoder)
             
             # تغییر وضعیت سفارش به لغو شده
             order.status = 'cancelled'
@@ -394,7 +438,7 @@ def cancel_order(request, order_id):
             return JsonResponse({
                 'success': True,
                 'message': 'سفارش با موفقیت لغو شد.'
-            })
+            }, encoder=DecimalEncoder)
             
         except Exception as e:
             import logging
@@ -404,7 +448,7 @@ def cancel_order(request, order_id):
             return JsonResponse({
                 'success': False,
                 'message': 'خطا در لغو سفارش.'
-            })
+            }, encoder=DecimalEncoder)
     
     return JsonResponse({
         'success': False,
@@ -437,7 +481,7 @@ def get_cart_count(request):
     else:
         count = 0
     
-    return JsonResponse({'count': count})
+    return JsonResponse({'count': count}, encoder=DecimalEncoder)
 
 
 # مدیریت مالی فروشگاه (Shop Financial Management)
@@ -892,7 +936,7 @@ def financial_api_data(request):
     return JsonResponse({
         'months_data': months_data,
         'success': True
-    })
+    }, encoder=DecimalEncoder)
 
 
 # Product Management Views
@@ -1235,7 +1279,7 @@ def update_order_status(request, order_id):
                     'message': f'وضعیت سفارش به {new_status_display} تغییر کرد.',
                     'new_status': new_status,
                     'new_status_display': new_status_display
-                })
+                }, encoder=DecimalEncoder)
         else:
             messages.error(request, 'وضعیت انتخاب شده معتبر نیست.')
             
@@ -1243,7 +1287,7 @@ def update_order_status(request, order_id):
                 return JsonResponse({
                     'success': False,
                     'message': 'وضعیت انتخاب شده معتبر نیست.'
-                })
+                }, encoder=DecimalEncoder)
     
     return redirect('gym_shop:admin_order_detail', order_id=order_id)
 
@@ -1391,3 +1435,73 @@ def order_statistics(request):
         'top_customers': top_customers,
     }
     return render(request, 'gym_shop/admin/order_statistics.html', context)
+
+@login_required
+def payment_verify(request):
+    """Payment verification - handles payment gateway callback"""
+    authority = request.GET.get('Authority')
+    status = request.GET.get('Status')
+    
+    if not authority:
+        messages.error(request, 'کد پیگیری یافت نشد.')
+        return redirect('gym_shop:order_list')
+    
+    # Get order from session
+    order_id = request.session.get('order_id')
+    if not order_id:
+        messages.error(request, 'سفارش یافت نشد.')
+        return redirect('gym_shop:order_list')
+    
+    try:
+        order = Order.objects.get(id=order_id, user=request.user)
+    except Order.DoesNotExist:
+        messages.error(request, 'سفارش یافت نشد.')
+        return redirect('gym_shop:order_list')
+    
+    if status == 'OK':
+        # Payment was successful, verify with gateway
+        from gym.utils.payment_gateway import PaymentGateway
+        
+        payment_gateway = PaymentGateway()
+        success, verification_data = payment_gateway.verify_payment(authority, order.total)
+        
+        if success:
+            # Update order status to paid
+            order.status = 'paid'
+            order.save()
+            
+            # Reduce product stock
+            for item in order.items.all():
+                item.product.stock -= item.quantity
+                item.product.save()
+            
+            # Send email notification
+            try:
+                from gym.utils.email_notifications import send_shop_order_notification
+                send_shop_order_notification(order, request)
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to send order notification email: {str(e)}")
+            
+            # Clear session data
+            request.session.pop('payment_authority', None)
+            request.session.pop('order_id', None)
+            
+            messages.success(request, f'پرداخت شما با موفقیت انجام شد. شماره سفارش: {order.order_number}')
+            return redirect('gym_shop:order_detail', order_number=order.order_number)
+        else:
+            # Payment verification failed
+            order.status = 'cancelled'
+            order.save()
+            
+            error_message = verification_data.get('error', 'خطا در تایید پرداخت')
+            messages.error(request, f'خطا در تایید پرداخت: {error_message}')
+            return redirect('gym_shop:order_list')
+    else:
+        # Payment was cancelled or failed
+        order.status = 'cancelled'
+        order.save()
+        
+        messages.error(request, 'پرداخت لغو شد یا با خطا مواجه شد.')
+        return redirect('gym_shop:order_list')

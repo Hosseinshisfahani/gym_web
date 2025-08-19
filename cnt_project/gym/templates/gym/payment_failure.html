@@ -1,0 +1,101 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}خطا در پرداخت{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0">
+                <div class="card-body text-center p-5">
+                    <!-- Error Icon -->
+                    <div class="mb-4">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-danger rounded-circle" style="width: 80px; height: 80px;">
+                            <i class="fas fa-times text-white" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Error Message -->
+                    <h2 class="text-danger mb-3">خطا در انجام پرداخت!</h2>
+                    <p class="text-muted mb-4">متأسفانه پرداخت شما با مشکل مواجه شده است.</p>
+                    
+                    <!-- Error Details -->
+                    {% if error_message %}
+                    <div class="alert alert-danger">
+                        <strong>خطا:</strong> {{ error_message }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if payment_id %}
+                    <div class="alert alert-info">
+                        <strong>شناسه پرداخت:</strong> {{ payment_id }}
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
+                        <a href="{% url 'gym:payments' %}" class="btn btn-primary me-md-2">
+                            <i class="fas fa-redo me-2"></i>تلاش مجدد
+                        </a>
+                        <a href="{% url 'gym:profile' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-user me-2"></i>پروفایل کاربری
+                        </a>
+                    </div>
+                    
+                    <!-- Help Information -->
+                    <div class="mt-4 pt-3 border-top">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-2">راهنمای رفع مشکل:</h6>
+                                <ul class="text-muted small text-start">
+                                    <li>اطمینان از صحت اطلاعات کارت بانکی</li>
+                                    <li>بررسی موجودی کافی در حساب</li>
+                                    <li>بررسی فعال بودن کارت بانکی</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-2">تماس با پشتیبانی:</h6>
+                                <p class="text-muted small text-start">
+                                    در صورت تکرار مشکل، با پشتیبانی تماس بگیرید.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border-radius: 15px;
+}
+
+.bg-danger {
+    background-color: #dc3545 !important;
+}
+
+.btn {
+    border-radius: 8px;
+    padding: 10px 20px;
+}
+
+.alert {
+    border-radius: 8px;
+    border: none;
+}
+
+ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+ul li:before {
+    content: "• ";
+    color: #6c757d;
+    font-weight: bold;
+}
+</style>
+{% endblock %} 

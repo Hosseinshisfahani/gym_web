@@ -44,7 +44,15 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',  # For number formatting filters like intcomma
+    'django.contrib.sites',  # Required for allauth
     'widget_tweaks',
+    
+    # Allauth apps
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    
     'gym',
     'gym_shop',
 ]
@@ -57,6 +65,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 ROOT_URLCONF = 'gym_website.urls'
@@ -101,11 +110,20 @@ DATABASES_POSTGRESQL = {
     }
 }
 
-# SQLite configuration (for development)
+# PostgreSQL configuration (for production)
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'gymdb',
+        'USER': 'gymuser',
+        'PASSWORD': 'strongpassword',
+        'HOST': 'localhost',
+        'PORT': '5432',
+        'CONN_MAX_AGE': 60,  # Keep connections alive for 60 seconds
+        'OPTIONS': {
+            'connect_timeout': 10,
+            'client_encoding': 'UTF8',
+        },
     }
 }
 
@@ -223,10 +241,52 @@ CSRF_TRUSTED_ORIGINS = [
 
 # Payment Gateway Configuration
 # ZarinPal Configuration
-ZARINPAL_MERCHANT_ID = 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'  # Replace with your merchant ID
+ZARINPAL_MERCHANT_ID = '464a4cee-3b87-497c-bb4f-93fb5d3a3fa7'  # Your Zarinpal merchant ID
+ZARINPAL_SANDBOX = False  # Set to False for production
+ZARINPAL_CALLBACK_URL = 'https://shirneshansport.ir/payment/verify/'  # Your callback URL
 
-# IDPay Configuration  
-IDPAY_API_KEY = 'your-api-key'  # Replace with your API key
+PAYMENT_GATEWAY_TYPE = 'zarinpal'  
 
-# Payment Gateway Settings
-PAYMENT_GATEWAY_TYPE = 'zarinpal'  # Options: 'zarinpal', 'idpay'
+# Payment URLs
+PAYMENT_SUCCESS_URL = '/payment/success/'
+PAYMENT_FAILURE_URL = '/payment/failure/'
+PAYMENT_CANCEL_URL = '/payment/cancel/'
+
+# Allauth Configuration
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+SITE_ID = 1
+
+# Allauth Account Settings
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
+
+# Allauth Social Account Settings
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': [
+            'profile',
+            'email',
+        ],
+        'AUTH_PARAMS': {
+            'access_type': 'online',
+        },
+        'OAUTH_PKCE_ENABLED': True,
+    }
+}
+
+# Login/Logout URLs
+LOGIN_URL = '/accounts/login/'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
+
+# Google OAuth Settings (Add these to your .env file in production)
+GOOGLE_OAUTH_CLIENT_ID = 'your-google-client-id'
+GOOGLE_OAUTH_CLIENT_SECRET = 'your-google-client-secret'

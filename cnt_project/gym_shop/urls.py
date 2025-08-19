@@ -23,6 +23,7 @@ urlpatterns = [
     
     # تسویه حساب و سفارش
     path('checkout/', views.checkout, name='checkout'),
+    path('payment/verify/', views.payment_verify, name='payment_verify'),
     path('apply-discount/', views.apply_discount, name='apply_discount'),
     path('orders/', views.order_list, name='order_list'),
     path('order/<str:order_number>/', views.order_detail, name='order_detail'),

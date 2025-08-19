@@ -5,6 +5,13 @@ from datetime import datetime, date
 register = template.Library()
 
 @register.filter
+def split(value, arg):
+    """Split a string by the given delimiter"""
+    if not value:
+        return []
+    return value.split(arg)
+
+@register.filter
 def add_class(field, css_class):
     # Check if this is a form field with as_widget method
     if hasattr(field, 'as_widget'):

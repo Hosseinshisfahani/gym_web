@@ -24,8 +24,8 @@ class PaymentGateway:
                 'request_url': 'https://api.zarinpal.com/pg/v4/payment/request.json',
                 'verify_url': 'https://api.zarinpal.com/pg/v4/payment/verify.json',
                 'gateway_url': 'https://www.zarinpal.com/pg/StartPay/',
-                'sandbox_request_url': 'https://sandbox.zarinpal.com/pg/rest/WebGate/PaymentRequest.json',
-                'sandbox_verify_url': 'https://sandbox.zarinpal.com/pg/rest/WebGate/PaymentVerification.json',
+                'sandbox_request_url': 'https://sandbox.zarinpal.com/pg/v4/payment/request.json',
+                'sandbox_verify_url': 'https://sandbox.zarinpal.com/pg/v4/payment/verify.json',
                 'sandbox_gateway_url': 'https://sandbox.zarinpal.com/pg/StartPay/',
             },
             'idpay': {
@@ -39,8 +39,8 @@ class PaymentGateway:
         
         config = gateway_configs.get(self.gateway_type, gateway_configs['zarinpal'])
         
-        # Use sandbox URLs if in debug mode
-        if getattr(settings, 'DEBUG', False):
+        # Use sandbox URLs if ZARINPAL_SANDBOX is True
+        if getattr(settings, 'ZARINPAL_SANDBOX', True):
             if 'sandbox_request_url' in config:
                 config['request_url'] = config['sandbox_request_url']
             if 'sandbox_verify_url' in config:
@@ -84,6 +84,12 @@ class PaymentGateway:
     
     def _zarinpal_request(self, amount, description, callback_url, mobile=None, email=None):
         """ZarinPal payment request"""
+        # Convert Decimal to int for ZarinPal API (amounts should be in Tomans)
+        if hasattr(amount, 'to_integral_value'):  # Check if it's a Decimal
+            amount = int(amount)
+        elif isinstance(amount, float):
+            amount = int(amount)
+        
         data = {
             'merchant_id': self.config['merchant_id'],
             'amount': amount,
@@ -118,6 +124,12 @@ class PaymentGateway:
     
     def _zarinpal_verify(self, authority, amount):
         """ZarinPal payment verification"""
+        # Convert Decimal to int for ZarinPal API (amounts should be in Tomans)
+        if hasattr(amount, 'to_integral_value'):  # Check if it's a Decimal
+            amount = int(amount)
+        elif isinstance(amount, float):
+            amount = int(amount)
+            
         data = {
             'merchant_id': self.config['merchant_id'],
             'amount': amount,

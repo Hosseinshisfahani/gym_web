@@ -302,12 +302,10 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     .then(data => {
         if (data.success) {
             // Show success message
-            alert(data.message || 'سفارش شما با موفقیت ثبت شد');
+            alert(data.message || 'در حال انتقال به درگاه پرداخت...');
             
-            // Redirect to order detail page
-            if (data.order_url) {
-                window.location.href = data.order_url;
-            } else if (data.payment_url) {
+            // Redirect to payment gateway
+            if (data.payment_url) {
                 window.location.href = data.payment_url;
             } else {
                 // Fallback redirect

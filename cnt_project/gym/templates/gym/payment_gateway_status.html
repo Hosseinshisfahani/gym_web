@@ -1,0 +1,173 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}وضعیت درگاه پرداخت{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-credit-card me-2"></i>
+                        وضعیت درگاه پرداخت زرین‌پال
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Gateway Status -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card border-success">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-check-circle text-success" style="font-size: 2rem;"></i>
+                                    <h5 class="mt-2 text-success">درگاه فعال</h5>
+                                    <p class="text-muted">درگاه پرداخت زرین‌پال به درستی پیکربندی شده است.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-info">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-cog text-info" style="font-size: 2rem;"></i>
+                                    <h5 class="mt-2 text-info">حالت تست</h5>
+                                    <p class="text-muted">درگاه در حالت تست (Sandbox) قرار دارد.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configuration Details -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h5 class="mb-3">جزئیات پیکربندی:</h5>
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <tbody>
+                                        <tr>
+                                            <th class="bg-light">نوع درگاه:</th>
+                                            <td>زرین‌پال (ZarinPal)</td>
+                                        </tr>
+                                        <tr>
+                                            <th class="bg-light">شناسه درگاه:</th>
+                                            <td>
+                                                <code>{{ zarinpal_merchant_id }}</code>
+                                                <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('{{ zarinpal_merchant_id }}')">
+                                                    <i class="fas fa-copy"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th class="bg-light">آدرس بازگشت:</th>
+                                            <td>
+                                                <code>{{ callback_url }}</code>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th class="bg-light">حالت:</th>
+                                            <td>
+                                                {% if sandbox_mode %}
+                                                    <span class="badge bg-warning">تست (Sandbox)</span>
+                                                {% else %}
+                                                    <span class="badge bg-success">تولید (Production)</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th class="bg-light">آدرس‌های پرداخت:</th>
+                                            <td>
+                                                <div class="mb-2">
+                                                    <strong>موفقیت:</strong> 
+                                                    <code>{{ success_url }}</code>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <strong>خطا:</strong> 
+                                                    <code>{{ failure_url }}</code>
+                                                </div>
+                                                <div>
+                                                    <strong>لغو:</strong> 
+                                                    <code>{{ cancel_url }}</code>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="row mt-4">
+                        <div class="col-md-12 text-center">
+                            <a href="{% url 'gym:payments' %}" class="btn btn-primary me-2">
+                                <i class="fas fa-list me-2"></i>مشاهده پرداخت‌ها
+                            </a>
+                            <a href="{% url 'gym:add_payment' %}" class="btn btn-success me-2">
+                                <i class="fas fa-plus me-2"></i>پرداخت جدید
+                            </a>
+                            <a href="{% url 'gym:profile' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-user me-2"></i>پروفایل کاربری
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Important Notes -->
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-info-circle me-2"></i>نکات مهم:</h6>
+                                <ul class="mb-0">
+                                    <li>برای استفاده در محیط تولید، حالت Sandbox را غیرفعال کنید.</li>
+                                    <li>اطمینان حاصل کنید که آدرس بازگشت در تنظیمات زرین‌پال صحیح باشد.</li>
+                                    <li>در صورت بروز مشکل، با پشتیبانی تماس بگیرید.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        // Show success message
+        const button = event.target.closest('button');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i>';
+        button.classList.remove('btn-outline-secondary');
+        button.classList.add('btn-success');
+        
+        setTimeout(function() {
+            button.innerHTML = originalText;
+            button.classList.remove('btn-success');
+            button.classList.add('btn-outline-secondary');
+        }, 2000);
+    });
+}
+</script>
+
+<style>
+.card {
+    border-radius: 15px;
+}
+
+.table th {
+    background-color: #f8f9fa !important;
+    font-weight: 600;
+}
+
+.badge {
+    font-size: 0.875rem;
+}
+
+code {
+    background-color: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %} 

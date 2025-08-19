@@ -1,5 +1,6 @@
 {% extends 'gym_shop/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}{{ product.name }} - فروشگاه تجهیزات ورزشی{% endblock %}
 
@@ -31,9 +32,9 @@
                 {% endif %}
                 
                 <!-- Additional Images -->
-                {% if product.images.all %}
+                {% if product.additional_images.all %}
                     <div class="row g-2">
-                        {% for image in product.images.all %}
+                        {% for image in product.additional_images.all %}
                             <div class="col-3">
                                 <img src="{{ image.image.url }}" alt="{{ image.alt_text }}" 
                                      class="img-fluid rounded thumbnail-image" 
@@ -126,7 +127,7 @@
                                     <label class="form-label">انتخاب سایز:</label>
                                     <select name="size" class="form-select" required>
                                         <option value="">انتخاب کنید...</option>
-                                        {% for size in product.available_sizes.split:',' %}
+                                        {% for size in product.available_sizes|split:',' %}
                                             <option value="{{ size.strip }}">{{ size.strip }}</option>
                                         {% endfor %}
                                     </select>
@@ -305,7 +306,8 @@ document.querySelector('.add-to-cart-form')?.addEventListener('submit', function
         method: 'POST',
         body: new FormData(this),
         headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest'
         }
     })
     .then(response => response.json())
@@ -314,9 +316,9 @@ document.querySelector('.add-to-cart-form')?.addEventListener('submit', function
             // Update cart count
             updateCartCount();
             // Show success message
-            alert('محصول به سبد خرید اضافه شد!');
+            alert(data.message || 'محصول به سبد خرید اضافه شد!');
         } else {
-            alert('خطا در افزودن محصول به سبد خرید');
+            alert(data.message || 'خطا در افزودن محصول به سبد خرید');
         }
     })
     .catch(error => {
