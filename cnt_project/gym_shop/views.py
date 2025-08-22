@@ -13,7 +13,7 @@ import json
 from decimal import Decimal
 from django.contrib.auth.models import User
 
-from .models import Category, Product, Cart, CartItem, Order, OrderItem, ProductImage
+from .models import Category, Product, Cart, CartItem, Order, OrderItem, ProductImage, UserShippingAddress
 from .forms import ProductForm, CategoryForm, ProductImageForm, ProductSearchForm
 
 class DecimalEncoder(json.JSONEncoder):
@@ -279,6 +279,38 @@ def checkout(request):
                     total=cart_item.total_price
                 )
             
+            # Save shipping address for future use
+            try:
+                # Check if this exact address already exists for the user
+                existing_address = UserShippingAddress.objects.filter(
+                    user=request.user,
+                    first_name=request.POST.get('first_name'),
+                    last_name=request.POST.get('last_name'),
+                    phone=request.POST.get('phone'),
+                    address=request.POST.get('address'),
+                    city=request.POST.get('city'),
+                    postal_code=request.POST.get('postal_code'),
+                ).first()
+                
+                if not existing_address:
+                    # Create new shipping address
+                    UserShippingAddress.objects.create(
+                        user=request.user,
+                        first_name=request.POST.get('first_name'),
+                        last_name=request.POST.get('last_name'),
+                        phone=request.POST.get('phone'),
+                        address=request.POST.get('address'),
+                        city=request.POST.get('city'),
+                        postal_code=request.POST.get('postal_code'),
+                        # Set as default if user doesn't have any addresses yet
+                        is_default=not UserShippingAddress.objects.filter(user=request.user).exists()
+                    )
+            except Exception as e:
+                # Log error but don't fail the order
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error saving shipping address: {str(e)}")
+            
             # Redirect to invoice preview page instead of directly to payment gateway
             from django.urls import reverse
             
@@ -309,12 +341,18 @@ def checkout(request):
                 messages.error(request, 'خطا در ثبت سفارش. لطفاً مجدداً تلاش کنید.')
                 return redirect('gym_shop:checkout')
     
+    # Get user's saved shipping addresses
+    user_addresses = UserShippingAddress.objects.filter(user=request.user).order_by('-is_default', '-created_at')
+    default_address = user_addresses.filter(is_default=True).first()
+    
     context = {
         'cart': cart,
         'cart_items': cart.items.all(),
         'subtotal': cart.total_price,
         'shipping_cost': cart.shipping_cost,
         'total': cart.final_total,
+        'user_addresses': user_addresses,
+        'default_address': default_address,
     }
     return render(request, 'gym_shop/checkout.html', context)
 

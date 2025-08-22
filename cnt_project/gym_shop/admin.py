@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Product, ProductImage, Cart, CartItem, Order, OrderItem
+from .models import Category, Product, ProductImage, Cart, CartItem, Order, OrderItem, UserShippingAddress
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -160,3 +160,29 @@ class ProductImageAdmin(admin.ModelAdmin):
     list_display = ['product', 'alt_text', 'image']
     list_filter = ['product__category']
     search_fields = ['product__name', 'alt_text']
+
+@admin.register(UserShippingAddress)
+class UserShippingAddressAdmin(admin.ModelAdmin):
+    list_display = ['user', 'first_name', 'last_name', 'city', 'is_default', 'created_at']
+    list_filter = ['is_default', 'city', 'created_at']
+    search_fields = ['user__username', 'first_name', 'last_name', 'phone', 'address']
+    list_editable = ['is_default']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = (
+        ('کاربر', {
+            'fields': ('user',)
+        }),
+        ('اطلاعات شخصی', {
+            'fields': ('first_name', 'last_name', 'phone')
+        }),
+        ('آدرس', {
+            'fields': ('address', 'city', 'postal_code')
+        }),
+        ('تنظیمات', {
+            'fields': ('is_default',)
+        }),
+        ('تاریخ', {
+            'fields': ('created_at', 'updated_at')
+        })
+    )

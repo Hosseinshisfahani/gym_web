@@ -243,6 +243,33 @@ class OrderItem(models.Model):
         super().save(*args, **kwargs)
 
 
+# User Shipping Address Model
+class UserShippingAddress(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='shipping_addresses', verbose_name='کاربر')
+    first_name = models.CharField(max_length=50, verbose_name='نام')
+    last_name = models.CharField(max_length=50, verbose_name='نام خانوادگی')
+    phone = models.CharField(max_length=15, verbose_name='شماره تلفن')
+    address = models.TextField(verbose_name='آدرس کامل')
+    city = models.CharField(max_length=50, verbose_name='شهر')
+    postal_code = models.CharField(max_length=10, verbose_name='کد پستی')
+    is_default = models.BooleanField(default=False, verbose_name='آدرس پیش‌فرض')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
+
+    class Meta:
+        verbose_name = 'آدرس ارسال کاربر'
+        verbose_name_plural = 'آدرس‌های ارسال کاربران'
+
+    def __str__(self):
+        return f'{self.first_name} {self.last_name} - {self.city}'
+
+    def save(self, *args, **kwargs):
+        # If this is set as default, remove default from other addresses
+        if self.is_default:
+            UserShippingAddress.objects.filter(user=self.user, is_default=True).exclude(pk=self.pk).update(is_default=False)
+        super().save(*args, **kwargs)
+
+
 # مدیریت مالی فروشگاه (Shop Financial Management)
 class ShopIncome(models.Model):
     INCOME_TYPE_CHOICES = [
