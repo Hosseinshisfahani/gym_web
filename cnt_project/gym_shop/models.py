@@ -136,6 +136,16 @@ class Cart(models.Model):
     @property
     def total_items(self):
         return sum(item.quantity for item in self.items.all())
+    
+    @property
+    def shipping_cost(self):
+        """Calculate shipping cost based on total price"""
+        return 0 if self.total_price >= 1000000 else 90000
+    
+    @property
+    def final_total(self):
+        """Calculate final total including shipping"""
+        return self.total_price + self.shipping_cost
 
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items', verbose_name='سبد خرید')

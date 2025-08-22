@@ -215,6 +215,61 @@ class PlanRequest(models.Model):
         ('completed', 'تکمیل شده'),
     ]
     
+    # Field 1: Training Goal
+    TRAINING_GOAL_CHOICES = [
+        ('muscle_gain', 'الف) افزایش حجم و قدرت عضلانی (می‌خوام بترکونم و هر چی دمبله جابجا کنم!)'),
+        ('weight_loss', 'ب) کاهش وزن و چربی‌سوزی (می‌خوام مثل شناگر المپیک، بدون چربی باشم!)'),
+        ('endurance', 'ج) افزایش استقامت و آمادگی جسمانی (می‌خوام تو ماراتن شرکت کنم و نفسم نگیره!)'),
+        ('general_health', 'د) بهبود سلامت عمومی و تناسب اندام (فقط می‌خوام سرحال باشم و از زندگی لذت ببرم!)'),
+        ('sexual_health', 'ه) تقویت قوای جنسی و افزایش تستوسترون (هدف اصلی که قبلاً صحبت کردیم، هر روز آماده‌ی آماده باشم!)'),
+    ]
+    
+    # Field 2: Training Frequency  
+    TRAINING_FREQUENCY_CHOICES = [
+        ('2_3_days', 'الف) 2-3 روز (تازه شروع کردم و می‌خوام آروم آروم پیش برم.)'),
+        ('3_4_days', 'ب) 3-4 روز (برنامه تمرینی قبلیم هم همین تعداد بود و بدنم عادت داره.)'),
+        ('4_5_days', 'ج) 4-5 روز (عاشق تمرینم و هر روز باشگاه پاتوقمه!)'),
+        ('6_7_days', 'د) 6-7 روز (من مگه زندگی هم دارم؟! فقط باشگاه!)'),
+    ]
+    
+    # Field 3: Equipment Access
+    EQUIPMENT_ACCESS_CHOICES = [
+        ('full_gym', 'الف) باشگاه بدنسازی با تجهیزات کامل (همه چی هست، فقط بگو چی کار کنم!)'),
+        ('home_gym', 'ب) باشگاه خانگی با تجهیزات محدود (دمبل، کش، میله بارفیکس و…)'),
+        ('bodyweight', 'ج) فقط وزن بدن (هیچی ندارم، فقط خودمم و اراده‌ام!)'),
+        ('outdoor', 'د) فضای باز (پارک، فضای سبز و…)'),
+    ]
+    
+    # Field 4: Session Duration
+    SESSION_DURATION_CHOICES = [
+        ('under_45', 'الف) کمتر از 45 دقیقه (فقط می‌خوام یه کوچولو فعال باشم.)'),
+        ('45_60', 'ب) 45-60 دقیقه (مثل برنامه‌ی قبلیم، عالیه!)'),
+        ('60_90', 'ج) 60-90 دقیقه (من وقت‌گذارم و می‌تونم حسابی وقت بذارم.)'),
+        ('over_90', 'د) بیشتر از 90 دقیقه (می‌خوام سنگ تموم بذارم!)'),
+    ]
+    
+    # Field 5: Injury History
+    INJURY_HISTORY_CHOICES = [
+        ('has_injury', 'الف) بله، سابقه‌ی آسیب‌دیدگی در (لطفاً ذکر کنید کجای بدنتون و نوع آسیب رو) دارم و/یا در (لطفاً ذکر کنید کجای بدنتون) درد مزمن دارم.'),
+        ('no_injury', 'ب) خیر، خدا رو شکر هیچ آسیب‌دیدگی خاصی ندارم و دردی هم احساس نمی‌کنم.'),
+    ]
+    
+    # Field 6: Training Experience
+    TRAINING_EXPERIENCE_CHOICES = [
+        ('beginner', 'الف) مبتدی (کمتر از 6 ماه)'),
+        ('intermediate', 'ب) متوسط (6 ماه تا 2 سال)'),
+        ('advanced', 'ج) پیشرفته (بیشتر از 2 سال)'),
+    ]
+    
+    # Field 7: Preferred Training Time
+    PREFERRED_TIME_CHOICES = [
+        ('early_morning', 'الف) صبح زود (انگار انرژی روزم از همینجا تامین میشه!)'),
+        ('midday', 'ب) اواسط روز (همون تایم ناهار یا یه استراحت کوتاه.)'),
+        ('evening', 'ج) عصر (بعد از کار یا دانشگاه، انرژی‌ام رو می‌ذارم برای باشگاه.)'),
+        ('night', 'د) شب (دنیای خوابالوها رو بیخیال، من زنده‌ام!)'),
+        ('flexible', 'ه) هر زمانی که بشه! (برام فرقی نداره، فقط برنامه‌اش رو بگید!)'),
+    ]
+    
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='plan_requests')
     plan_type = models.CharField(max_length=10, choices=PLAN_TYPES, verbose_name='نوع برنامه')
     description = models.TextField(verbose_name='توضیحات')
@@ -222,6 +277,102 @@ class PlanRequest(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ درخواست')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
     admin_response = models.TextField(blank=True, null=True, verbose_name='پاسخ ادمین')
+    
+    # Diet plan specific fields
+    DIET_GOAL_CHOICES = [
+        ('protein_lover', 'الف) عاشق گوشت و پروتئینم (مرغ، ماهی، گوشت قرمز… هرچی پروتئینه!)'),
+        ('plant_based', 'ب) بیشتر گیاه‌خوارم یا به غذاهای گیاهی علاقه دارم (حبوبات، سبزیجات، غلات…)'),
+        ('omnivore', 'ج) همه‌چی‌خوارم و با بیشتر غذاها مشکلی ندارم.'),
+        ('food_dislikes', 'د) از (لطفاً ذکر کنید) متنفرم و نمی‌تونم بخورم. (مثلاً: بادمجان، کلم بروکلی، شیر…)'),
+    ]
+    
+    DIETARY_RESTRICTIONS_CHOICES = [
+        ('has_allergy', 'الف) بله، به (لطفاً ذکر کنید) آلرژی دارم/عدم تحمل دارم. (مثلاً: گلوتن، لاکتوز، آجیل…)'),
+        ('medical_restriction', 'ب) بله، پزشکم توصیه کرده از (لطفاً ذکر کنید) پرهیز کنم.'),
+        ('no_restrictions', 'ج) خیر، هیچ محدودیت غذایی خاصی ندارم.'),
+    ]
+    
+    COOKING_TIME_CHOICES = [
+        ('plenty_time', 'الف) وقت و حوصله کافی برای آشپزی روزانه دارم. (آشپزی برام تفریحه!)'),
+        ('quick_easy', 'ب) ترجیح می‌دهم غذاهای سریع و آسان آماده کنم. (وقت ندارم، باید زود برم سراغ بقیه‌ی کارام!)'),
+        ('moderate_time', 'ج) حاضرم برای آماده‌سازی غذاهای سالم، کمی وقت بگذارم. (بینابین!)'),
+    ]
+    
+    MEAL_FREQUENCY_CHOICES = [
+        ('3_main_meals', 'الف) 3 وعده‌ی اصلی (صبحانه، ناهار، شام)'),
+        ('3_plus_1_2_snacks', 'ب) 3 وعده‌ی اصلی و 1-2 میان‌وعده'),
+        ('3_plus_3_snacks', 'ج) 3 وعده‌ی اصلی و 3+ میان‌وعده'),
+        ('irregular', 'د) نامنظم (گاهی 2 وعده، گاهی بیشتر…)'),
+    ]
+    
+    DAILY_ACTIVITY_CHOICES = [
+        ('very_low', 'الف) بسیار کم (بیشتر پشت میز نشینم یا کارم بی‌حرکته.)'),
+        ('low', 'ب) کم (حرکت معمولی دارم، مثلاً پیاده‌روی کوتاه یا کارهای سبک خونه.)'),
+        ('moderate', 'ج) متوسط (کارهای روزمره‌ام شامل تحرک نسبی میشه، مثلاً زیاد راه می‌رم.)'),
+        ('high', 'د) زیاد (کارم فیزیکیه یا در طول روز خیلی فعالیت دارم.)'),
+    ]
+    
+    SUPPLEMENT_USE_CHOICES = [
+        ('currently_using', 'الف) بله، در حال حاضر از (لطفاً ذکر کنید) استفاده می‌کنم.'),
+        ('planning_to_use', 'ب) بله، قصد دارم از (لطفاً ذکر کنید) استفاده کنم.'),
+        ('not_using', 'ج) خیر، در حال حاضر هیچ مکملی مصرف نمی‌کنم و قصد هم ندارم.'),
+        ('need_guidance', 'د) نیاز به راهنمایی دارم که چه مکمل‌هایی برای اهدافم مناسبند.'),
+    ]
+    
+    WATER_INTAKE_CHOICES = [
+        ('high', 'الف) بله، روزانه حداقل 8 لیوان یا بیشتر.'),
+        ('moderate', 'ب) متوسط، حدود 4-7 لیوان در روز.'),
+        ('low', 'ج) کم، کمتر از 4 لیوان در روز.'),
+        ('forget', 'د) فراموش می‌کنم یا اصلاً تشنه نمی‌شم.'),
+    ]
+    
+    MEDICAL_CONDITIONS_CHOICES = [
+        ('has_condition_meds', 'الف) بله، (لطفاً ذکر کنید) دارم و (لطفاً ذکر کنید) دارو مصرف می‌کنم.'),
+        ('has_condition_no_meds', 'ب) بله، بیماری خاصی دارم اما داروی خاصی مصرف نمی‌کنم.'),
+        ('no_conditions', 'ج) خیر، هیچ بیماری خاصی ندارم و داروی خاصی هم مصرف نمی‌کنم.'),
+    ]
+    
+    FOOD_TYPE_PREFERENCE_CHOICES = [
+        ('home_cooked', 'الف) بیشتر غذاهای خانگی و تازه.'),
+        ('mixed', 'ب) ترکیب غذاهای خانگی و آماده/رستورانی (برای راحتی).'),
+        ('ready_made', 'ج) بیشتر غذاهای آماده و رستورانی (به دلیل مشغله کاری یا عدم تمایل به آشپزی).'),
+    ]
+    
+    CHRONIC_DISEASE_CHOICES = [
+        ('has_diet_restriction', 'الف) بله، سابقه بیماری (لطفاً ذکر کنید) را دارم و باید (مثلاً: نمک کم بخورم، قند کنترل کنم، گلوتن نخورم و…)'),
+        ('has_no_diet_restriction', 'ب) بله، سابقه بیماری (لطفاً ذکر کنید) را دارم، اما پزشک رژیم غذایی خاصی توصیه نکرده است.'),
+        ('no_chronic_disease', 'ج) خیر، خوشبختانه هیچ سابقه بیماری خاصی ندارم.'),
+        ('unknown_history', 'د) از سابقه بیماری خاصی اطلاع ندارم و تا به حال آزمایشات مربوطه را انجام نداده‌ام.'),
+    ]
+
+    # New optional fields for workout plans
+    training_goal = models.CharField(max_length=20, choices=TRAINING_GOAL_CHOICES, blank=True, null=True, verbose_name='هدف اصلی‌تون از تمرین کردن چیه؟')
+    training_frequency = models.CharField(max_length=20, choices=TRAINING_FREQUENCY_CHOICES, blank=True, null=True, verbose_name='در هفته چند روز می‌تونید تمرین کنید؟')
+    equipment_access = models.CharField(max_length=20, choices=EQUIPMENT_ACCESS_CHOICES, blank=True, null=True, verbose_name='به چه تجهیزاتی دسترسی دارید؟')
+    session_duration = models.CharField(max_length=20, choices=SESSION_DURATION_CHOICES, blank=True, null=True, verbose_name='چقدر زمان برای هر جلسه تمرینی؟')
+    injury_history = models.CharField(max_length=20, choices=INJURY_HISTORY_CHOICES, blank=True, null=True, verbose_name='آیا سابقه‌ی آسیب‌دیدگی خاصی دارید؟')
+    training_experience = models.CharField(max_length=20, choices=TRAINING_EXPERIENCE_CHOICES, blank=True, null=True, verbose_name='سابقه‌ی تمرینی شما چقدره؟')
+    preferred_time = models.CharField(max_length=20, choices=PREFERRED_TIME_CHOICES, blank=True, null=True, verbose_name='معمولاً چه ساعاتی از روز برای تمرین راحت‌ترید؟')
+    injury_details = models.TextField(blank=True, null=True, verbose_name='جزئیات آسیب‌دیدگی (در صورت وجود)')
+    
+    # New optional fields for diet plans
+    diet_goal = models.CharField(max_length=20, choices=DIET_GOAL_CHOICES, blank=True, null=True, verbose_name='هدف اصلی شما از برنامه‌ی غذایی چیه؟')
+    dietary_restrictions = models.CharField(max_length=30, choices=DIETARY_RESTRICTIONS_CHOICES, blank=True, null=True, verbose_name='آیا محدودیت غذایی خاصی دارید؟')
+    cooking_time = models.CharField(max_length=20, choices=COOKING_TIME_CHOICES, blank=True, null=True, verbose_name='چقدر زمان و حوصله برای آشپزی دارید؟')
+    meal_frequency = models.CharField(max_length=20, choices=MEAL_FREQUENCY_CHOICES, blank=True, null=True, verbose_name='در حال حاضر چند وعده غذایی می‌خورید؟')
+    daily_activity = models.CharField(max_length=20, choices=DAILY_ACTIVITY_CHOICES, blank=True, null=True, verbose_name='میزان فعالیت بدنی روزانه‌تون چقدره؟')
+    supplement_use = models.CharField(max_length=20, choices=SUPPLEMENT_USE_CHOICES, blank=True, null=True, verbose_name='آیا از مکمل‌های غذایی استفاده می‌کنید؟')
+    water_intake = models.CharField(max_length=20, choices=WATER_INTAKE_CHOICES, blank=True, null=True, verbose_name='آب کافی در طول روز می‌نوشید؟')
+    medical_conditions = models.CharField(max_length=30, choices=MEDICAL_CONDITIONS_CHOICES, blank=True, null=True, verbose_name='آیا بیماری یا داروی خاصی دارید؟')
+    food_type_preference = models.CharField(max_length=20, choices=FOOD_TYPE_PREFERENCE_CHOICES, blank=True, null=True, verbose_name='ترجیح نوع خوراکی‌ها')
+    chronic_disease_history = models.CharField(max_length=30, choices=CHRONIC_DISEASE_CHOICES, blank=True, null=True, verbose_name='سابقه بیماری خاص')
+    
+    # Text fields for detailed information 
+    food_dislikes_details = models.TextField(blank=True, null=True, verbose_name='جزئیات غذاهای غیرقابل تحمل')
+    allergy_details = models.TextField(blank=True, null=True, verbose_name='جزئیات آلرژی یا محدودیت‌های غذایی')
+    supplement_details = models.TextField(blank=True, null=True, verbose_name='جزئیات مکمل‌های مصرفی')
+    medical_condition_details = models.TextField(blank=True, null=True, verbose_name='جزئیات بیماری یا داروهای مصرفی')
+    chronic_disease_details = models.TextField(blank=True, null=True, verbose_name='جزئیات بیماری خاص و محدودیت‌ها')
     
     class Meta:
         verbose_name = 'درخواست برنامه'
@@ -255,6 +406,31 @@ class BodyAnalysisReport(models.Model):
             return f"آنالیز بدن {self.user.userprofile.name} - {self.report_date}"
         except:
             return f"آنالیز بدن {self.user.username} - {self.report_date}"
+
+class InBodyReport(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'در انتظار بررسی'),
+        ('reviewed', 'بررسی شده'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='inbody_reports')
+    report_date = models.DateField(default=timezone.now, verbose_name='تاریخ آزمایش اینبادی')
+    image = models.ImageField(upload_to='inbody_reports/', verbose_name='تصویر آزمایش اینبادی')
+    description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', verbose_name='وضعیت')
+    admin_response = models.TextField(blank=True, null=True, verbose_name='پاسخ مربی')
+    response_date = models.DateTimeField(blank=True, null=True, verbose_name='تاریخ پاسخ')
+    
+    class Meta:
+        verbose_name = 'گزارش اینبادی'
+        verbose_name_plural = 'گزارش‌های اینبادی'
+        ordering = ['-report_date']
+    
+    def __str__(self):
+        try:
+            return f"اینبادی {self.user.userprofile.name} - {self.report_date}"
+        except:
+            return f"اینبادی {self.user.username} - {self.report_date}"
 
 # اهداف ماهانه (Monthly Goals) - Main section for goal setting
 class MonthlyGoal(models.Model):

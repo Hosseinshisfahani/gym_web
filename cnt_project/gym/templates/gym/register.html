@@ -23,13 +23,18 @@
                         <label for="id_name" class="form-label">نام و نام خانوادگی</label>
                         {{ form.name.errors }}
                         {{ form.name|add_class:"form-control" }}
-                        <small class="form-text text-muted">از این نام برای ورود به سیستم استفاده خواهد شد.</small>
                     </div>
                     
                     <div class="mb-3">
                         <label for="id_phone_number" class="form-label">شماره تلفن</label>
                         {{ form.phone_number.errors }}
                         {{ form.phone_number|add_class:"form-control" }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_melli_code" class="form-label">کد ملی</label>
+                        {{ form.melli_code.errors }}
+                        {{ form.melli_code|add_class:"form-control" }}
                     </div>
                     
                     <div class="mb-3">
@@ -51,7 +56,7 @@
                         </label>
                     </div>
                     
-                    <div id="english-warning" class="alert alert-danger d-none" role="alert" style="font-size: 1rem;">زبان کیبورد شما باید انگلیسی باشد</div>
+                    <div id="english-warning" class="alert alert-danger d-none" role="alert" style="font-size: 1rem;">لطفا فقط از حروف فارسی، انگلیسی، اعداد و علائم مجاز استفاده کنید</div>
                     
                     <button type="submit" class="btn btn-primary w-100">ثبت نام</button>
                 </form>
@@ -241,14 +246,14 @@
     document.addEventListener('DOMContentLoaded', function() {
         var nameInput = document.getElementById('id_name');
         var phoneInput = document.getElementById('id_phone_number');
+        var melliCodeInput = document.getElementById('id_melli_code');
         var warning = document.getElementById('english-warning');
         
-        function checkEnglishOnly(inputElement, value) {
-            // Check for Persian/Arabic characters
-            var persianPattern = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
-            var nonEnglishPattern = /[^A-Za-z0-9\s]/;
+        function checkValidName(inputElement, value) {
+            // Allow Persian/Farsi characters, English letters, numbers, spaces, and common symbols
+            var validNamePattern = /^[A-Za-z0-9\s\.\-\_\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]*$/;
             
-            if (persianPattern.test(value) || nonEnglishPattern.test(value)) {
+            if (!validNamePattern.test(value)) {
                 warning.classList.remove('d-none');
                 inputElement.style.borderColor = '#dc3545';
                 return false;
@@ -261,12 +266,14 @@
         
         if (nameInput) {
             nameInput.addEventListener('input', function() {
-                checkEnglishOnly(nameInput, nameInput.value);
+                checkValidName(nameInput, nameInput.value);
             });
             
             nameInput.addEventListener('keypress', function(e) {
                 var char = String.fromCharCode(e.which);
-                if (!/[A-Za-z0-9\s]/.test(char)) {
+                // Allow Persian/Farsi characters, English letters, numbers, spaces, and common symbols
+                var validNamePattern = /[A-Za-z0-9\s\.\-\_\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
+                if (!validNamePattern.test(char)) {
                     e.preventDefault();
                 }
             });
@@ -287,6 +294,33 @@
             phoneInput.addEventListener('keypress', function(e) {
                 var char = String.fromCharCode(e.which);
                 if (!/[0-9]/.test(char)) {
+                    e.preventDefault();
+                }
+            });
+        }
+        
+        if (melliCodeInput) {
+            melliCodeInput.addEventListener('input', function() {
+                // Only allow numbers and check length
+                if (!/^[0-9]*$/.test(melliCodeInput.value)) {
+                    warning.classList.remove('d-none');
+                    melliCodeInput.style.borderColor = '#dc3545';
+                } else if (melliCodeInput.value.length > 10) {
+                    warning.classList.remove('d-none');
+                    melliCodeInput.style.borderColor = '#dc3545';
+                } else {
+                    warning.classList.add('d-none');
+                    melliCodeInput.style.borderColor = '';
+                }
+            });
+            
+            melliCodeInput.addEventListener('keypress', function(e) {
+                var char = String.fromCharCode(e.which);
+                if (!/[0-9]/.test(char)) {
+                    e.preventDefault();
+                }
+                // Prevent input if already 10 digits
+                if (melliCodeInput.value.length >= 10) {
                     e.preventDefault();
                 }
             });

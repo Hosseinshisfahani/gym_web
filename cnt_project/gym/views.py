@@ -9,13 +9,14 @@ from .forms import (
     DietPlanForm, PaymentForm, TicketForm,
     TicketResponseForm, DocumentForm, PlanRequestForm,
     BodyAnalysisReportForm, BodyAnalysisResponseForm,
+    InBodyReportForm, InBodyResponseForm,
     MonthlyGoalForm, MonthlyGoalUpdateForm, MonthlyGoalCoachForm,
     ProgressAnalysisForm, BodyInformationUserForm
 )
 from .models import (
     UserProfile, WorkoutPlan, DietPlan, 
     Payment, Ticket, TicketResponse, Document, PlanRequest,
-    BodyAnalysisReport, MonthlyGoal, ProgressAnalysis, BodyInformationUser, PaymentCard
+    BodyAnalysisReport, InBodyReport, MonthlyGoal, ProgressAnalysis, BodyInformationUser, PaymentCard
 )
 from django.db.models import Q, Avg, Sum, Count
 import datetime
@@ -53,10 +54,22 @@ def register_view(request):
             user = form.save()
             
             # Mark the agreement as accepted in the user profile
-            profile = user.userprofile
-            profile.agreement_accepted = True
-            profile.save()
+            try:
+                profile = user.userprofile
+                profile.agreement_accepted = True
+                profile.save()
+            except UserProfile.DoesNotExist:
+                # If profile doesn't exist, create it
+                UserProfile.objects.create(
+                    user=user,
+                    name=form.cleaned_data['name'],
+                    phone_number=form.cleaned_data['phone_number'],
+                    melli_code=form.cleaned_data['melli_code'],
+                    agreement_accepted=True
+                )
             
+            # Set backend attribute for login with multiple backends
+            user.backend = 'django.contrib.auth.backends.ModelBackend'
             login(request, user)
             messages.success(request, 'ثبت نام با موفقیت انجام شد.')
             return redirect('gym:profile')
@@ -67,25 +80,25 @@ def register_view(request):
 @csrf_exempt
 def login_view(request):
     if request.method == 'POST':
-        name = request.POST.get('name')
+        phone_number = request.POST.get('phone_number')
         password = request.POST.get('password')
         
-        # Try to find the user by their name in UserProfile
+        # Try to find the user by their phone number in UserProfile
         try:
-            profile = UserProfile.objects.get(name=name)
-            # Get the associated User and authenticate with their username (which is now the name)
+            profile = UserProfile.objects.get(phone_number=phone_number)
+            # Get the associated User and authenticate with their username
             authenticated_user = authenticate(request, username=profile.user.username, password=password)
             
             if authenticated_user is not None:
                 login(request, authenticated_user)
                 return redirect('gym:profile')
             else:
-                messages.error(request, 'نام یا رمز عبور نامعتبر است.')
+                messages.error(request, 'شماره تلفن یا رمز عبور نامعتبر است.')
         except UserProfile.DoesNotExist:
-            messages.error(request, 'کاربری با این نام یافت نشد.')
+            messages.error(request, 'کاربری با این شماره تلفن یافت نشد.')
         except UserProfile.MultipleObjectsReturned:
-            # In case there are multiple users with the same name (should not happen with our validation)
-            messages.error(request, 'چندین کاربر با این نام وجود دارد. لطفاً با پشتیبانی تماس بگیرید.')
+            # In case there are multiple users with the same phone number (should not happen with our validation)
+            messages.error(request, 'چندین کاربر با این شماره تلفن وجود دارد. لطفاً با پشتیبانی تماس بگیرید.')
     
     return render(request, 'gym/login.html')
 
@@ -1386,8 +1399,10 @@ def plan_request_payment(request):
             plan_type_display = 'برنامه تمرینی' if plan_data['plan_type'] == 'workout' else 'برنامه غذایی'
             description = f'پرداخت {plan_type_display} - {user_profile.name}'
             
+            # Convert Toman to Rial for payment gateway (multiply by 10)
+            amount_in_rial = int(plan_price * 10)
             success, result = gateway.create_payment_request(
-                amount=plan_price,
+                amount=amount_in_rial,
                 description=description,
                 callback_url=callback_url,
                 mobile=user_profile.phone_number,
@@ -1605,21 +1620,38 @@ def body_analysis_reports(request):
     else:
         # For regular users, get only their reports
         reports = BodyAnalysisReport.objects.filter(user=request.user).order_by('-report_date')
+        inbody_reports = InBodyReport.objects.filter(user=request.user).order_by('-report_date')
+        
+        # Handle form submissions
+        analysis_form = BodyAnalysisReportForm()
+        inbody_form = InBodyReportForm()
         
         if request.method == 'POST':
-            form = BodyAnalysisReportForm(request.POST, request.FILES)
-            if form.is_valid():
-                report = form.save(commit=False)
-                report.user = request.user
-                report.save()
-                messages.success(request, 'گزارش آنالیز بدن با موفقیت ثبت شد و در انتظار بررسی است.')
-                return redirect('gym:body_analysis_reports')
-        else:
-            form = BodyAnalysisReportForm()
+            form_type = request.POST.get('form_type')
+            
+            if form_type == 'analysis':
+                analysis_form = BodyAnalysisReportForm(request.POST, request.FILES)
+                if analysis_form.is_valid():
+                    report = analysis_form.save(commit=False)
+                    report.user = request.user
+                    report.save()
+                    messages.success(request, 'گزارش آنالیز بدن با موفقیت ثبت شد و در انتظار بررسی است.')
+                    return redirect('gym:body_analysis_reports')
+            
+            elif form_type == 'inbody':
+                inbody_form = InBodyReportForm(request.POST, request.FILES)
+                if inbody_form.is_valid():
+                    report = inbody_form.save(commit=False)
+                    report.user = request.user
+                    report.save()
+                    messages.success(request, 'گزارش اینبادی با موفقیت ثبت شد و در انتظار بررسی است.')
+                    return redirect('gym:body_analysis_reports')
         
         context = {
             'reports': reports,
-            'form': form
+            'inbody_reports': inbody_reports,
+            'analysis_form': analysis_form,
+            'inbody_form': inbody_form
         }
         
         return render(request, 'gym/body_analysis_reports.html', context)
@@ -1658,6 +1690,42 @@ def body_analysis_detail(request, report_id):
     }
     
     return render(request, 'gym/body_analysis_detail.html', context)
+
+@login_required
+def inbody_detail(request, report_id):
+    """View and respond to a specific InBody report"""
+    report = get_object_or_404(InBodyReport, id=report_id)
+    
+    # Check permissions
+    if not request.user.is_staff and request.user != report.user:
+        messages.error(request, 'شما دسترسی لازم برای مشاهده این گزارش را ندارید.')
+        return redirect('gym:body_analysis_reports')
+    
+    # Handle response from admin
+    if request.user.is_staff and request.method == 'POST':
+        form = InBodyResponseForm(request.POST, instance=report)
+        if form.is_valid():
+            updated_report = form.save(commit=False)
+            updated_report.status = 'reviewed'
+            updated_report.response_date = timezone.now()
+            updated_report.save()
+            messages.success(request, 'پاسخ شما با موفقیت ثبت شد.')
+            return redirect('gym:body_analysis_reports')
+    
+    # Prepare form for admin response
+    if request.user.is_staff:
+        form = InBodyResponseForm(instance=report)
+    else:
+        form = None
+    
+    context = {
+        'report': report,
+        'form': form,
+        'is_admin': request.user.is_staff,
+        'is_inbody': True
+    }
+    
+    return render(request, 'gym/inbody_detail.html', context)
 
 # Monthly Goals
 @login_required
@@ -2236,12 +2304,37 @@ def plan_request_flow(request, step=None):
             description = request.POST.get('description')
             
             if plan_type in ['workout', 'diet'] and description:
-                # Store plan request data in session
-                request.session['pending_plan_request'] = {
+                # Capture all optional preference fields
+                plan_data = {
                     'plan_type': plan_type,
                     'description': description,
                     'current_step': 'body_info'
                 }
+                
+                # Add optional fields if provided - both workout and diet specific
+                workout_fields = [
+                    'training_goal', 'training_frequency', 'equipment_access',
+                    'session_duration', 'injury_history', 'training_experience',
+                    'preferred_time', 'injury_details'
+                ]
+                
+                diet_fields = [
+                    'diet_goal', 'dietary_restrictions', 'cooking_time', 'meal_frequency',
+                    'daily_activity', 'supplement_use', 'water_intake', 'medical_conditions',
+                    'food_type_preference', 'chronic_disease_history', 'food_dislikes_details',
+                    'allergy_details', 'supplement_details', 'medical_condition_details',
+                    'chronic_disease_details'
+                ]
+                
+                all_optional_fields = workout_fields + diet_fields
+                
+                for field in all_optional_fields:
+                    value = request.POST.get(field)
+                    if value:
+                        plan_data[field] = value
+                
+                # Store plan request data in session
+                request.session['pending_plan_request'] = plan_data
                 # Don't show success message here as user hasn't completed the process yet
                 return redirect('gym:plan_request_flow', step='body_info')
             else:
@@ -2696,7 +2789,9 @@ def payment_verify(request):
         from gym.utils.payment_gateway import PaymentGateway
         gateway = PaymentGateway(payment.gateway_type)
         
-        success, result = gateway.verify_payment(authority, payment.amount)
+        # Convert Toman to Rial for verification (multiply by 10)
+        amount_in_rial = int(payment.amount * 10)
+        success, result = gateway.verify_payment(authority, amount_in_rial)
         
         if success:
             # Payment successful
@@ -2710,11 +2805,34 @@ def payment_verify(request):
             
             if plan_data:
                 # Create the plan request after successful payment
-                plan_request = PlanRequest.objects.create(
-                    user=request.user,
-                    plan_type=plan_data['plan_type'],
-                    description=plan_data['description']
-                )
+                plan_request_kwargs = {
+                    'user': request.user,
+                    'plan_type': plan_data['plan_type'],
+                    'description': plan_data['description']
+                }
+                
+                # Add optional preference fields if they exist in plan_data
+                workout_fields = [
+                    'training_goal', 'training_frequency', 'equipment_access',
+                    'session_duration', 'injury_history', 'training_experience',
+                    'preferred_time', 'injury_details'
+                ]
+                
+                diet_fields = [
+                    'diet_goal', 'dietary_restrictions', 'cooking_time', 'meal_frequency',
+                    'daily_activity', 'supplement_use', 'water_intake', 'medical_conditions',
+                    'food_type_preference', 'chronic_disease_history', 'food_dislikes_details',
+                    'allergy_details', 'supplement_details', 'medical_condition_details',
+                    'chronic_disease_details'
+                ]
+                
+                all_optional_fields = workout_fields + diet_fields
+                
+                for field in all_optional_fields:
+                    if field in plan_data:
+                        plan_request_kwargs[field] = plan_data[field]
+                
+                plan_request = PlanRequest.objects.create(**plan_request_kwargs)
                 
                 # Send email notifications
                 try:

@@ -32,7 +32,7 @@ admin_site = CustomAdminSite(name='admin')
 from .models import (
     UserProfile, WorkoutPlan, DietPlan, 
     Payment, Ticket, TicketResponse, Document, PlanRequest,
-    BodyAnalysisReport, MonthlyGoal, ProgressAnalysis, BodyInformationUser, PaymentCard, EmailNotificationSettings
+    BodyAnalysisReport, InBodyReport, MonthlyGoal, ProgressAnalysis, BodyInformationUser, PaymentCard, EmailNotificationSettings
 )
 
 # Import shop models
@@ -113,6 +113,12 @@ class BodyAnalysisReportAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'user__userprofile__name', 'description', 'admin_response')
     ordering = ('-report_date',)
 
+class InBodyReportAdmin(admin.ModelAdmin):
+    list_display = ('user', 'report_date', 'status', 'response_date')
+    list_filter = ('status',)
+    search_fields = ('user__username', 'user__userprofile__name', 'description', 'admin_response')
+    ordering = ('-report_date',)
+
 class MonthlyGoalAdmin(admin.ModelAdmin):
     list_display = ('title', 'user', 'start_date', 'end_date', 'status', 'progress')
     list_filter = ('status',)
@@ -174,6 +180,7 @@ admin_site.register(PlanRequest, PlanRequestAdmin)
 admin_site.register(User, UserAdmin)
 admin_site.register(Group, GroupAdmin)
 admin_site.register(BodyAnalysisReport, BodyAnalysisReportAdmin)
+admin_site.register(InBodyReport, InBodyReportAdmin)
 admin_site.register(MonthlyGoal, MonthlyGoalAdmin)
 admin_site.register(ProgressAnalysis, ProgressAnalysisAdmin)
 admin_site.register(BodyInformationUser, BodyInformationUserAdmin)

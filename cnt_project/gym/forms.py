@@ -3,7 +3,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from .models import (
     UserProfile, WorkoutPlan, DietPlan, Payment, 
-    Ticket, Document, PlanRequest, BodyAnalysisReport, 
+    Ticket, Document, PlanRequest, BodyAnalysisReport, InBodyReport,
     MonthlyGoal, ProgressAnalysis, BodyInformationUser
 )
 import jdatetime
@@ -92,6 +92,15 @@ class UserRegistrationForm(UserCreationForm):
             'required': 'لطفا شماره تلفن خود را وارد کنید.'
         }
     )
+    melli_code = forms.CharField(
+        max_length=10, 
+        required=True,
+        label='کد ملی',
+        help_text='لطفا کد ملی ۱۰ رقمی خود را وارد کنید.',
+        error_messages={
+            'required': 'لطفا کد ملی خود را وارد کنید.'
+        }
+    )
     password1 = forms.CharField(
         widget=forms.PasswordInput(attrs={'placeholder': 'رمز عبور شما'}),
         label='رمز عبور',
@@ -113,7 +122,7 @@ class UserRegistrationForm(UserCreationForm):
     
     class Meta:
         model = User
-        fields = ['name', 'phone_number', 'password1', 'password2']
+        fields = ['name', 'phone_number', 'melli_code', 'password1', 'password2']
     
     def clean_name(self):
         name = self.cleaned_data.get('name')
@@ -126,13 +135,14 @@ class UserRegistrationForm(UserCreationForm):
             raise forms.ValidationError('این نام قبلاً استفاده شده است. لطفاً نام دیگری انتخاب کنید.')
         
         import re
-        # Allow English letters, numbers, spaces, and common symbols
-        if not re.match(r'^[A-Za-z0-9\s\.\-\_]+$', name):
-            raise forms.ValidationError('نام باید شامل حروف انگلیسی، اعداد، فاصله و علائم مجاز باشد')
-        # Check if name contains any Persian/Arabic characters
+        # Allow Persian/Farsi characters, English letters, numbers, spaces, and common symbols
         persian_pattern = r'[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]'
-        if re.search(persian_pattern, name):
-            raise forms.ValidationError('لطفاً از حروف انگلیسی استفاده کنید')
+        english_pattern = r'[A-Za-z]'
+        
+        # Check if name contains valid characters (Persian, English, numbers, spaces, common symbols)
+        if not re.match(r'^[A-Za-z0-9\s\.\-\_\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]+$', name):
+            raise forms.ValidationError('نام باید شامل حروف فارسی، انگلیسی، اعداد، فاصله و علائم مجاز باشد')
+        
         return name
     
     def clean_phone_number(self):
@@ -152,7 +162,22 @@ class UserRegistrationForm(UserCreationForm):
             raise forms.ValidationError('این شماره تلفن قبلا ثبت شده است.')
         return phone_number
     
-
+    def clean_melli_code(self):
+        melli_code = self.cleaned_data.get('melli_code')
+        if not melli_code:
+            raise forms.ValidationError('لطفا کد ملی خود را وارد کنید.')
+            
+        if not melli_code.isdigit():
+            raise forms.ValidationError('کد ملی باید فقط شامل اعداد باشد.')
+            
+        if len(melli_code) != 10:
+            raise forms.ValidationError('کد ملی باید ۱۰ رقم باشد.')
+            
+        # Check if melli code is already used by another user
+        from .models import UserProfile
+        if UserProfile.objects.filter(melli_code=melli_code).exists():
+            raise forms.ValidationError('این کد ملی قبلا ثبت شده است.')
+        return melli_code
     
     def clean_password1(self):
         password1 = self.cleaned_data.get('password1')
@@ -187,11 +212,21 @@ class UserRegistrationForm(UserCreationForm):
         
         if commit:
             user.save()
-            UserProfile.objects.create(
+            # Create or get the user profile to avoid duplicates
+            profile, created = UserProfile.objects.get_or_create(
                 user=user,
-                name=self.cleaned_data['name'],
-                phone_number=self.cleaned_data['phone_number'],
+                defaults={
+                    'name': self.cleaned_data['name'],
+                    'phone_number': self.cleaned_data['phone_number'],
+                    'melli_code': self.cleaned_data['melli_code'],
+                }
             )
+            if not created:
+                # Update existing profile
+                profile.name = self.cleaned_data['name']
+                profile.phone_number = self.cleaned_data['phone_number']
+                profile.melli_code = self.cleaned_data['melli_code']
+                profile.save()
         return user
 
 class UserProfileForm(forms.ModelForm):
@@ -204,7 +239,7 @@ class UserProfileForm(forms.ModelForm):
         fields = ['profile_image', 'name', 'melli_code', 'phone_number', 'post_code', 'home_address']
         labels = {
             'profile_image': 'عکس پروفایل',
-            'name': 'نام',
+            'name': 'نام و نام خانوادگی',
             'melli_code': 'کد ملی',
             'phone_number': 'شماره تلفن',
             'post_code': 'کد پستی (اختیاری)',
@@ -220,6 +255,21 @@ class UserProfileForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.user:
             self.fields['email'].initial = self.instance.user.email
+    
+    def clean_profile_image(self):
+        profile_image = self.cleaned_data.get('profile_image')
+        if profile_image:
+            # Check file size (5MB = 5 * 1024 * 1024 bytes)
+            if profile_image.size > 5 * 1024 * 1024:
+                raise forms.ValidationError('حجم فایل نباید بیشتر از 5 مگابایت باشد.')
+            
+            # Check file type
+            allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif']
+            content_type = profile_image.content_type
+            if content_type not in allowed_types:
+                raise forms.ValidationError('فقط فایل‌های تصویری با فرمت JPG، PNG یا GIF مجاز است.')
+        
+        return profile_image
     
     def clean(self):
         cleaned_data = super().clean()
@@ -316,6 +366,23 @@ class BodyAnalysisReportForm(forms.ModelForm):
 class BodyAnalysisResponseForm(forms.ModelForm):
     class Meta:
         model = BodyAnalysisReport
+        fields = ['admin_response', 'status']
+        widgets = {
+            'admin_response': forms.Textarea(attrs={'rows': 4, 'placeholder': 'پاسخ خود را بنویسید...'}),
+        }
+
+class InBodyReportForm(forms.ModelForm):
+    class Meta:
+        model = InBodyReport
+        fields = ['image', 'description', 'report_date']
+        widgets = {
+            'report_date': PersianDateWidget(),
+            'description': forms.Textarea(attrs={'rows': 3, 'placeholder': 'توضیحات اضافی خود را وارد کنید...'}),
+        }
+
+class InBodyResponseForm(forms.ModelForm):
+    class Meta:
+        model = InBodyReport
         fields = ['admin_response', 'status']
         widgets = {
             'admin_response': forms.Textarea(attrs={'rows': 4, 'placeholder': 'پاسخ خود را بنویسید...'}),

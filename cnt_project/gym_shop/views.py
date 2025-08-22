@@ -248,6 +248,9 @@ def checkout(request):
     
     if request.method == 'POST':
         try:
+            # Use cart's shipping cost calculation
+            shipping_cost = cart.shipping_cost
+            
             # Create pending order first
             order = Order.objects.create(
                 user=request.user,
@@ -259,8 +262,8 @@ def checkout(request):
                 city=request.POST.get('city'),
                 postal_code=request.POST.get('postal_code'),
                 subtotal=cart.total_price,
-                shipping_cost=50000,  # هزینه ارسال ثابت
-                total=cart.total_price + 50000,
+                shipping_cost=shipping_cost,
+                total=cart.total_price + shipping_cost,
                 notes=request.POST.get('notes', ''),
                 status='pending'  # Set status to pending until payment is verified
             )
@@ -276,58 +279,26 @@ def checkout(request):
                     total=cart_item.total_price
                 )
             
-            # Initialize payment gateway
-            from gym.utils.payment_gateway import PaymentGateway
+            # Redirect to invoice preview page instead of directly to payment gateway
             from django.urls import reverse
             
-            payment_gateway = PaymentGateway()
-            callback_url = request.build_absolute_uri(reverse('gym_shop:payment_verify'))
-            
-            # Create payment request
-            success, payment_data = payment_gateway.create_payment_request(
-                amount=order.total,
-                description=f"سفارش {order.order_number} - {order.first_name} {order.last_name}",
-                callback_url=callback_url,
-                mobile=order.phone,
-                email=order.email
-            )
-            
-            if success:
-                # Store payment authority in session for verification
-                request.session['payment_authority'] = payment_data['authority']
-                request.session['order_id'] = order.id
-                
-                # Clear cart
-                cart.items.all().delete()
-                
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
-                    return JsonResponse({
-                        'success': True,
-                        'message': 'در حال انتقال به درگاه پرداخت...',
-                        'payment_url': payment_data['gateway_url']
-                    }, encoder=DecimalEncoder)
-                else:
-                    # Redirect to payment gateway
-                    return redirect(payment_data['gateway_url'])
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
+                return JsonResponse({
+                    'success': True,
+                    'message': 'در حال انتقال به صفحه پیش‌فاکتور...',
+                    'redirect_url': reverse('gym_shop:invoice_preview', kwargs={'order_id': order.id})
+                }, encoder=DecimalEncoder)
             else:
-                # Payment gateway error
-                order.delete()  # Delete the order if payment gateway fails
-                error_message = payment_data.get('error', 'خطا در اتصال به درگاه پرداخت')
-                
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
-                    return JsonResponse({
-                        'success': False,
-                        'message': error_message
-                    }, encoder=DecimalEncoder)
-                else:
-                    messages.error(request, error_message)
-                    return redirect('gym_shop:checkout')
+                # Redirect to invoice preview
+                return redirect('gym_shop:invoice_preview', order_id=order.id)
                 
         except Exception as e:
             # Handle any errors during order creation
             import logging
+            import traceback
             logger = logging.getLogger(__name__)
             logger.error(f"Error creating order: {str(e)}")
+            logger.error(f"Traceback: {traceback.format_exc()}")
             
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in request.headers.get('Accept', ''):
                 return JsonResponse({
@@ -342,10 +313,71 @@ def checkout(request):
         'cart': cart,
         'cart_items': cart.items.all(),
         'subtotal': cart.total_price,
-        'shipping_cost': 50000,
-        'total': cart.total_price + 50000,
+        'shipping_cost': cart.shipping_cost,
+        'total': cart.final_total,
     }
     return render(request, 'gym_shop/checkout.html', context)
+
+@login_required
+def invoice_preview(request, order_id):
+    """نمایش پیش‌فاکتور سفارش"""
+    order = get_object_or_404(Order, id=order_id, user=request.user, status='pending')
+    
+    context = {
+        'order': order,
+    }
+    return render(request, 'gym_shop/invoice_preview.html', context)
+
+@login_required
+def proceed_to_payment(request, order_id):
+    """ادامه به درگاه پرداخت"""
+    if request.method != 'POST':
+        return redirect('gym_shop:invoice_preview', order_id=order_id)
+    
+    order = get_object_or_404(Order, id=order_id, user=request.user, status='pending')
+    
+    try:
+        # Initialize payment gateway
+        from gym.utils.payment_gateway import PaymentGateway
+        from django.urls import reverse
+        
+        payment_gateway = PaymentGateway()
+        callback_url = request.build_absolute_uri(reverse('gym_shop:payment_verify'))
+        
+        # Create payment request (convert Toman to Rial - multiply by 10)
+        amount_in_rial = int(order.total * 10)
+        success, payment_data = payment_gateway.create_payment_request(
+            amount=amount_in_rial,
+            description=f"سفارش {order.order_number} - {order.first_name} {order.last_name}",
+            callback_url=callback_url,
+            mobile=order.phone,
+            email=order.email
+        )
+        
+        if success:
+            # Store payment authority in session for verification
+            request.session['payment_authority'] = payment_data['authority']
+            request.session['order_id'] = order.id
+            
+            # Clear cart (only after successful payment gateway connection)
+            cart = Cart.objects.filter(user=request.user).first()
+            if cart:
+                cart.items.all().delete()
+            
+            # Redirect to payment gateway
+            return redirect(payment_data['gateway_url'])
+        else:
+            # Payment gateway error
+            error_message = payment_data.get('error', 'خطا در اتصال به درگاه پرداخت')
+            messages.error(request, error_message)
+            return redirect('gym_shop:invoice_preview', order_id=order.id)
+            
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error in payment gateway: {str(e)}")
+        messages.error(request, 'خطا در اتصال به درگاه پرداخت. لطفاً مجدداً تلاش کنید.')
+        return redirect('gym_shop:invoice_preview', order_id=order.id)
 
 @login_required
 def apply_discount(request):
@@ -1463,7 +1495,9 @@ def payment_verify(request):
         from gym.utils.payment_gateway import PaymentGateway
         
         payment_gateway = PaymentGateway()
-        success, verification_data = payment_gateway.verify_payment(authority, order.total)
+        # Convert Toman to Rial for verification (multiply by 10)
+        amount_in_rial = int(order.total * 10)
+        success, verification_data = payment_gateway.verify_payment(authority, amount_in_rial)
         
         if success:
             # Update order status to paid

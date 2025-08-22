@@ -84,6 +84,579 @@
                                 <small class="text-muted">هرچه توضیحات بیشتری ارائه دهید، برنامه بهتری برای شما تهیه خواهد شد.</small>
                             </div>
 
+                            <!-- Conditional Preference Fields -->
+                            <div class="alert alert-secondary mb-4">
+                                <h6><i class="fas fa-cog me-2"></i>تنظیمات اختیاری برنامه</h6>
+                                <p class="mb-0">فیلدهای زیر اختیاری هستند و کمک می‌کنند تا برنامه بهتری برای شما طراحی شود.</p>
+                            </div>
+
+                            <!-- Workout Plan Fields -->
+                            <div id="workout_fields" class="plan-specific-fields" style="display: none;">
+                                <!-- Field 1: Training Goal -->
+                                <div class="mb-4">
+                                    <label class="form-label">هدف اصلی‌تون از تمرین کردن چیه؟ (اگه می‌خواید مثل آرنولد بشید یا فقط یه بدن سلامت داشته باشید، بگید بهم!)</label>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="training_goal" value="muscle_gain" id="goal_muscle">
+                                                <label class="form-check-label" for="goal_muscle">
+                                                    الف) افزایش حجم و قدرت عضلانی (می‌خوام بترکونم و هر چی دمبله جابجا کنم!)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="training_goal" value="weight_loss" id="goal_weight">
+                                                <label class="form-check-label" for="goal_weight">
+                                                    ب) کاهش وزن و چربی‌سوزی (می‌خوام مثل شناگر المپیک، بدون چربی باشم!)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="training_goal" value="endurance" id="goal_endurance">
+                                                <label class="form-check-label" for="goal_endurance">
+                                                    ج) افزایش استقامت و آمادگی جسمانی (می‌خوام تو ماراتن شرکت کنم و نفسم نگیره!)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="training_goal" value="general_health" id="goal_general">
+                                                <label class="form-check-label" for="goal_general">
+                                                    د) بهبود سلامت عمومی و تناسب اندام (فقط می‌خوام سرحال باشم و از زندگی لذت ببرم!)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="training_goal" value="sexual_health" id="goal_sexual">
+                                                <label class="form-check-label" for="goal_sexual">
+                                                    ه) تقویت قوای جنسی و افزایش تستوسترون (هدف اصلی که قبلاً صحبت کردیم، هر روز آماده‌ی آماده باشم!)
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Field 2: Training Frequency -->
+                                <div class="mb-4">
+                                    <label class="form-label">در هفته چند روز می‌تونید حسابی عرق بریزید و تمرین کنید؟ (واقع‌بین باشید، قرار نیست از همون اول قهرمان جهان شید!)</label>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="training_frequency" value="2_3_days" id="freq_2_3">
+                                                <label class="form-check-label" for="freq_2_3">
+                                                    الف) 2-3 روز (تازه شروع کردم و می‌خوام آروم آروم پیش برم.)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="training_frequency" value="3_4_days" id="freq_3_4">
+                                                <label class="form-check-label" for="freq_3_4">
+                                                    ب) 3-4 روز (برنامه تمرینی قبلیم هم همین تعداد بود و بدنم عادت داره.)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="training_frequency" value="4_5_days" id="freq_4_5">
+                                                <label class="form-check-label" for="freq_4_5">
+                                                    ج) 4-5 روز (عاشق تمرینم و هر روز باشگاه پاتوقمه!)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="training_frequency" value="6_7_days" id="freq_6_7">
+                                                <label class="form-check-label" for="freq_6_7">
+                                                    د) 6-7 روز (من مگه زندگی هم دارم؟! فقط باشگاه!)
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Field 3: Equipment Access -->
+                                <div class="mb-4">
+                                    <label class="form-label">به چه تجهیزاتی دسترسی دارید؟ (باشگاه کامل یا فقط یه جفت دمبل تو خونه؟)</label>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="equipment_access" value="full_gym" id="equip_full">
+                                                <label class="form-check-label" for="equip_full">
+                                                    الف) باشگاه بدنسازی با تجهیزات کامل (همه چی هست، فقط بگو چی کار کنم!)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="equipment_access" value="home_gym" id="equip_home">
+                                                <label class="form-check-label" for="equip_home">
+                                                    ب) باشگاه خانگی با تجهیزات محدود (دمبل، کش، میله بارفیکس و…)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="equipment_access" value="bodyweight" id="equip_body">
+                                                <label class="form-check-label" for="equip_body">
+                                                    ج) فقط وزن بدن (هیچی ندارم، فقط خودمم و اراده‌ام!)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="equipment_access" value="outdoor" id="equip_outdoor">
+                                                <label class="form-check-label" for="equip_outdoor">
+                                                    د) فضای باز (پارک، فضای سبز و…)
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Field 4: Session Duration -->
+                                <div class="mb-4">
+                                    <label class="form-label">چقدر زمان می‌تونید برای هر جلسه‌ی تمرینی اختصاص بدید؟ (اگه قراره مثل فشفشه بیاید و برید یا می‌خواید با تمرکز کار کنید؟)</label>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="session_duration" value="under_45" id="duration_under_45">
+                                                <label class="form-check-label" for="duration_under_45">
+                                                    الف) کمتر از 45 دقیقه (فقط می‌خوام یه کوچولو فعال باشم.)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="session_duration" value="45_60" id="duration_45_60">
+                                                <label class="form-check-label" for="duration_45_60">
+                                                    ب) 45-60 دقیقه (مثل برنامه‌ی قبلیم، عالیه!)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="session_duration" value="60_90" id="duration_60_90">
+                                                <label class="form-check-label" for="duration_60_90">
+                                                    ج) 60-90 دقیقه (من وقت‌گذارم و می‌تونم حسابی وقت بذارم.)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="session_duration" value="over_90" id="duration_over_90">
+                                                <label class="form-check-label" for="duration_over_90">
+                                                    د) بیشتر از 90 دقیقه (می‌خوام سنگ تموم بذارم!)
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Field 5: Injury History -->
+                                <div class="mb-4">
+                                    <label class="form-label">آیا سابقه‌ی آسیب‌دیدگی خاصی دارید؟ (مثل زانو، کمر، شانه، مچ و…) یا درد مزمنی در قسمتی از بدنتون احساس می‌کنید؟</label>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="injury_history" value="has_injury" id="injury_yes">
+                                                <label class="form-check-label" for="injury_yes">
+                                                    الف) بله، سابقه‌ی آسیب‌دیدگی در (لطفاً ذکر کنید کجای بدنتون و نوع آسیب رو) دارم و/یا در (لطفاً ذکر کنید کجای بدنتون) درد مزمن دارم.
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="injury_history" value="no_injury" id="injury_no">
+                                                <label class="form-check-label" for="injury_no">
+                                                    ب) خیر، خدا رو شکر هیچ آسیب‌دیدگی خاصی ندارم و دردی هم احساس نمی‌کنم.
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3" id="injury_details_div" style="display: none;">
+                                        <label for="injury_details" class="form-label">جزئیات آسیب‌دیدگی:</label>
+                                        <textarea class="form-control" id="injury_details" name="injury_details" rows="3"
+                                            placeholder="در صورت انتخاب گزینه الف در سوال قبل، لطفاً جزئیات آسیب‌دیدگی خود را شرح دهید..."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Field 6: Training Experience -->
+                                <div class="mb-4">
+                                    <label class="form-label">سابقه‌ی تمرینی شما چقدره؟ (یعنی کلاً چند وقته که به صورت جدی ورزش می‌کنید؟)</label>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="training_experience" value="beginner" id="exp_beginner">
+                                                <label class="form-check-label" for="exp_beginner">
+                                                    الف) مبتدی (کمتر از 6 ماه)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="training_experience" value="intermediate" id="exp_intermediate">
+                                                <label class="form-check-label" for="exp_intermediate">
+                                                    ب) متوسط (6 ماه تا 2 سال)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="training_experience" value="advanced" id="exp_advanced">
+                                                <label class="form-check-label" for="exp_advanced">
+                                                    ج) پیشرفته (بیشتر از 2 سال)
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Field 7: Preferred Training Time -->
+                                <div class="mb-4">
+                                    <label class="form-label">معمولاً چه ساعاتی از روز برای تمرین کردن راحت‌ترید؟ (ساعت‌های خاصی که بدنتون و ذهنتون آمادگی بیشتری برای جنب و جوش داره!)</label>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="preferred_time" value="early_morning" id="time_morning">
+                                                <label class="form-check-label" for="time_morning">
+                                                    الف) صبح زود (انگار انرژی روزم از همینجا تامین میشه!)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="preferred_time" value="midday" id="time_midday">
+                                                <label class="form-check-label" for="time_midday">
+                                                    ب) اواسط روز (همون تایم ناهار یا یه استراحت کوتاه.)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="preferred_time" value="evening" id="time_evening">
+                                                <label class="form-check-label" for="time_evening">
+                                                    ج) عصر (بعد از کار یا دانشگاه، انرژی‌ام رو می‌ذارم برای باشگاه.)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="preferred_time" value="night" id="time_night">
+                                                <label class="form-check-label" for="time_night">
+                                                    د) شب (دنیای خوابالوها رو بیخیال، من زنده‌ام!)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="preferred_time" value="flexible" id="time_flexible">
+                                                <label class="form-check-label" for="time_flexible">
+                                                    ه) هر زمانی که بشه! (برام فرقی نداره، فقط برنامه‌اش رو بگید!)
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Diet Plan Fields -->
+                            <div id="diet_fields" class="plan-specific-fields" style="display: none;">
+                                <!-- Field 1: Diet Goal -->
+                                <div class="mb-4">
+                                    <label class="form-label">هدف اصلی شما از برنامه‌ی غذایی چیه؟ (می‌خواید عضلات رو تغذیه کنید، چربی‌ها رو آب کنید یا فقط سالم‌تر زندگی کنید؟)</label>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="diet_goal" value="protein_lover" id="diet_goal_protein">
+                                                <label class="form-check-label" for="diet_goal_protein">
+                                                    الف) عاشق گوشت و پروتئینم (مرغ، ماهی، گوشت قرمز… هرچی پروتئینه!)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="diet_goal" value="plant_based" id="diet_goal_plant">
+                                                <label class="form-check-label" for="diet_goal_plant">
+                                                    ب) بیشتر گیاه‌خوارم یا به غذاهای گیاهی علاقه دارم (حبوبات، سبزیجات، غلات…)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="diet_goal" value="omnivore" id="diet_goal_omni">
+                                                <label class="form-check-label" for="diet_goal_omni">
+                                                    ج) همه‌چی‌خوارم و با بیشتر غذاها مشکلی ندارم.
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="diet_goal" value="food_dislikes" id="diet_goal_dislikes">
+                                                <label class="form-check-label" for="diet_goal_dislikes">
+                                                    د) از (لطفاً ذکر کنید) متنفرم و نمی‌تونم بخورم. (مثلاً: بادمجان، کلم بروکلی، شیر…)
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3" id="food_dislikes_details_div" style="display: none;">
+                                        <label for="food_dislikes_details" class="form-label">جزئیات غذاهای غیرقابل تحمل:</label>
+                                        <textarea class="form-control" id="food_dislikes_details" name="food_dislikes_details" rows="3"
+                                            placeholder="لطفاً غذاهایی که نمی‌تونید بخورید را ذکر کنید..."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Field 2: Dietary Restrictions -->
+                                <div class="mb-4">
+                                    <label class="form-label">آیا محدودیت غذایی خاصی دارید؟ (مثلاً آلرژی، عدم تحمل یا توصیه‌های پزشک؟)</label>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="dietary_restrictions" value="has_allergy" id="allergy_yes">
+                                                <label class="form-check-label" for="allergy_yes">
+                                                    الف) بله، به (لطفاً ذکر کنید) آلرژی دارم/عدم تحمل دارم. (مثلاً: گلوتن، لاکتوز، آجیل…)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="dietary_restrictions" value="medical_restriction" id="medical_restriction">
+                                                <label class="form-check-label" for="medical_restriction">
+                                                    ب) بله، پزشکم توصیه کرده از (لطفاً ذکر کنید) پرهیز کنم.
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="dietary_restrictions" value="no_restrictions" id="no_dietary_restrictions">
+                                                <label class="form-check-label" for="no_dietary_restrictions">
+                                                    ج) خیر، هیچ محدودیت غذایی خاصی ندارم.
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3" id="allergy_details_div" style="display: none;">
+                                        <label for="allergy_details" class="form-label">جزئیات آلرژی یا محدودیت‌های غذایی:</label>
+                                        <textarea class="form-control" id="allergy_details" name="allergy_details" rows="3"
+                                            placeholder="لطفاً جزئیات آلرژی یا محدودیت‌های غذایی خود را شرح دهید..."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Field 3: Cooking Time -->
+                                <div class="mb-4">
+                                    <label class="form-label">چقدر زمان و حوصله برای آشپزی و آماده‌سازی غذا دارید؟ (می‌خواید هر روز آشپزی کنید یا غذای آماده‌تر ترجیح می‌دید؟)</label>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="cooking_time" value="plenty_time" id="cook_plenty">
+                                                <label class="form-check-label" for="cook_plenty">
+                                                    الف) وقت و حوصله کافی برای آشپزی روزانه دارم. (آشپزی برام تفریحه!)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="cooking_time" value="quick_easy" id="cook_quick">
+                                                <label class="form-check-label" for="cook_quick">
+                                                    ب) ترجیح می‌دهم غذاهای سریع و آسان آماده کنم. (وقت ندارم، باید زود برم سراغ بقیه‌ی کارام!)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="cooking_time" value="moderate_time" id="cook_moderate">
+                                                <label class="form-check-label" for="cook_moderate">
+                                                    ج) حاضرم برای آماده‌سازی غذاهای سالم، کمی وقت بگذارم. (بینابین!)
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Field 4: Meal Frequency -->
+                                <div class="mb-4">
+                                    <label class="form-label">در حال حاضر چند وعده غذایی در طول روز می‌خورید؟ (صبحانه، ناهار، شام و میان‌وعده‌ها رو حساب کنید.)</label>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="meal_frequency" value="3_main_meals" id="meals_3">
+                                                <label class="form-check-label" for="meals_3">
+                                                    الف) 3 وعده‌ی اصلی (صبحانه، ناهار، شام)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="meal_frequency" value="3_plus_1_2_snacks" id="meals_3_plus_1_2">
+                                                <label class="form-check-label" for="meals_3_plus_1_2">
+                                                    ب) 3 وعده‌ی اصلی و 1-2 میان‌وعده
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="meal_frequency" value="3_plus_3_snacks" id="meals_3_plus_3">
+                                                <label class="form-check-label" for="meals_3_plus_3">
+                                                    ج) 3 وعده‌ی اصلی و 3+ میان‌وعده
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="meal_frequency" value="irregular" id="meals_irregular">
+                                                <label class="form-check-label" for="meals_irregular">
+                                                    د) نامنظم (گاهی 2 وعده، گاهی بیشتر…)
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Field 5: Daily Activity -->
+                                <div class="mb-4">
+                                    <label class="form-label">میزان فعالیت بدنی روزانه‌تون چقدره؟ (غیر از باشگاه، کارهای روزمره‌تون چقدر انرژی می‌بره؟)</label>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="daily_activity" value="very_low" id="activity_very_low">
+                                                <label class="form-check-label" for="activity_very_low">
+                                                    الف) بسیار کم (بیشتر پشت میز نشینم یا کارم بی‌حرکته.)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="daily_activity" value="low" id="activity_low">
+                                                <label class="form-check-label" for="activity_low">
+                                                    ب) کم (حرکت معمولی دارم، مثلاً پیاده‌روی کوتاه یا کارهای سبک خونه.)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="daily_activity" value="moderate" id="activity_moderate">
+                                                <label class="form-check-label" for="activity_moderate">
+                                                    ج) متوسط (کارهای روزمره‌ام شامل تحرک نسبی میشه، مثلاً زیاد راه می‌رم.)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="daily_activity" value="high" id="activity_high">
+                                                <label class="form-check-label" for="activity_high">
+                                                    د) زیاد (کارم فیزیکیه یا در طول روز خیلی فعالیت دارم.)
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Field 6: Supplement Use -->
+                                <div class="mb-4">
+                                    <label class="form-label">آیا از مکمل‌های غذایی خاصی استفاده می‌کنید یا قصد دارید استفاده کنید؟ (مثل پروتئین وی، کراتین، مولتی‌ویتامین و…؟)</label>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="supplement_use" value="currently_using" id="supplement_current">
+                                                <label class="form-check-label" for="supplement_current">
+                                                    الف) بله، در حال حاضر از (لطفاً ذکر کنید) استفاده می‌کنم.
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="supplement_use" value="planning_to_use" id="supplement_planning">
+                                                <label class="form-check-label" for="supplement_planning">
+                                                    ب) بله، قصد دارم از (لطفاً ذکر کنید) استفاده کنم.
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="supplement_use" value="not_using" id="supplement_not">
+                                                <label class="form-check-label" for="supplement_not">
+                                                    ج) خیر، در حال حاضر هیچ مکملی مصرف نمی‌کنم و قصد هم ندارم.
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="supplement_use" value="need_guidance" id="supplement_guidance">
+                                                <label class="form-check-label" for="supplement_guidance">
+                                                    د) نیاز به راهنمایی دارم که چه مکمل‌هایی برای اهدافم مناسبند.
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3" id="supplement_details_div" style="display: none;">
+                                        <label for="supplement_details" class="form-label">جزئیات مکمل‌های مصرفی:</label>
+                                        <textarea class="form-control" id="supplement_details" name="supplement_details" rows="3"
+                                            placeholder="لطفاً مکمل‌هایی که استفاده می‌کنید یا قصد استفاده دارید را ذکر کنید..."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Field 7: Water Intake -->
+                                <div class="mb-4">
+                                    <label class="form-label">آب کافی در طول روز می‌نوشید؟ (اهمیت آب رو دست کم نگیرید، رفیقِ سلامتیه!)</label>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="water_intake" value="high" id="water_high">
+                                                <label class="form-check-label" for="water_high">
+                                                    الف) بله، روزانه حداقل 8 لیوان یا بیشتر.
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="water_intake" value="moderate" id="water_moderate">
+                                                <label class="form-check-label" for="water_moderate">
+                                                    ب) متوسط، حدود 4-7 لیوان در روز.
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="water_intake" value="low" id="water_low">
+                                                <label class="form-check-label" for="water_low">
+                                                    ج) کم، کمتر از 4 لیوان در روز.
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="water_intake" value="forget" id="water_forget">
+                                                <label class="form-check-label" for="water_forget">
+                                                    د) فراموش می‌کنم یا اصلاً تشنه نمی‌شم.
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Field 8: Medical Conditions -->
+                                <div class="mb-4">
+                                    <label class="form-label">آیا در حال حاضر بیماری خاصی دارید یا داروی خاصی مصرف می‌کنید که ممکنه روی رژیم غذایی شما تاثیر بگذاره؟</label>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="medical_conditions" value="has_condition_meds" id="medical_condition_yes_meds">
+                                                <label class="form-check-label" for="medical_condition_yes_meds">
+                                                    الف) بله، (لطفاً ذکر کنید) دارم و (لطفاً ذکر کنید) دارو مصرف می‌کنم.
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="medical_conditions" value="has_condition_no_meds" id="medical_condition_yes_no_meds">
+                                                <label class="form-check-label" for="medical_condition_yes_no_meds">
+                                                    ب) بله، بیماری خاصی دارم اما داروی خاصی مصرف نمی‌کنم.
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="medical_conditions" value="no_conditions" id="medical_condition_no">
+                                                <label class="form-check-label" for="medical_condition_no">
+                                                    ج) خیر، هیچ بیماری خاصی ندارم و داروی خاصی هم مصرف نمی‌کنم.
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3" id="medical_condition_details_div" style="display: none;">
+                                        <label for="medical_condition_details" class="form-label">جزئیات بیماری یا داروهای مصرفی:</label>
+                                        <textarea class="form-control" id="medical_condition_details" name="medical_condition_details" rows="3"
+                                            placeholder="لطفاً جزئیات بیماری و داروهای مصرفی خود را شرح دهید..."></textarea>
+                                    </div>
+                                </div>
+
+                                <!-- Field 9: Food Type Preference -->
+                                <div class="mb-4">
+                                    <label class="form-label">ترجیح می‌دهید برنامه‌ی غذایی‌تون شامل چه نوع خوراکی‌هایی باشه؟ (مثلاً بیشتر خانگی، رستورانی یا ترکیبی؟)</label>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="food_type_preference" value="home_cooked" id="food_home">
+                                                <label class="form-check-label" for="food_home">
+                                                    الف) بیشتر غذاهای خانگی و تازه.
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="food_type_preference" value="mixed" id="food_mixed">
+                                                <label class="form-check-label" for="food_mixed">
+                                                    ب) ترکیب غذاهای خانگی و آماده/رستورانی (برای راحتی).
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="food_type_preference" value="ready_made" id="food_ready">
+                                                <label class="form-check-label" for="food_ready">
+                                                    ج) بیشتر غذاهای آماده و رستورانی (به دلیل مشغله کاری یا عدم تمایل به آشپزی).
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Field 10: Chronic Disease History -->
+                                <div class="mb-4">
+                                    <label class="form-label">آیا سابقه بیماری خاصی (مثل دیابت، فشار خون، بیماری‌های قلبی، مشکلات کلیوی، مشکلات گوارشی مزمن مثل IBS یا کرون، اختلالات تیروئیدی و…) دارید که نیاز به رژیم غذایی خاصی داشته باشد؟</label>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="chronic_disease_history" value="has_diet_restriction" id="chronic_disease_restriction">
+                                                <label class="form-check-label" for="chronic_disease_restriction">
+                                                    الف) بله، سابقه بیماری (لطفاً ذکر کنید) را دارم و باید (مثلاً: نمک کم بخورم، قند کنترل کنم، گلوتن نخورم و…)
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="chronic_disease_history" value="has_no_diet_restriction" id="chronic_disease_no_restriction">
+                                                <label class="form-check-label" for="chronic_disease_no_restriction">
+                                                    ب) بله، سابقه بیماری (لطفاً ذکر کنید) را دارم، اما پزشک رژیم غذایی خاصی توصیه نکرده است.
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="chronic_disease_history" value="no_chronic_disease" id="chronic_disease_no">
+                                                <label class="form-check-label" for="chronic_disease_no">
+                                                    ج) خیر، خوشبختانه هیچ سابقه بیماری خاصی ندارم.
+                                                </label>
+                                            </div>
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="radio" name="chronic_disease_history" value="unknown_history" id="chronic_disease_unknown">
+                                                <label class="form-check-label" for="chronic_disease_unknown">
+                                                    د) از سابقه بیماری خاصی اطلاع ندارم و تا به حال آزمایشات مربوطه را انجام نداده‌ام.
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3" id="chronic_disease_details_div" style="display: none;">
+                                        <label for="chronic_disease_details" class="form-label">جزئیات بیماری خاص و محدودیت‌ها:</label>
+                                        <textarea class="form-control" id="chronic_disease_details" name="chronic_disease_details" rows="3"
+                                            placeholder="لطفاً جزئیات بیماری خاص و محدودیت‌های غذایی مربوطه را شرح دهید..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="d-grid gap-2 d-md-flex justify-content-md-between mt-4">
                                 <a href="{% url 'gym:profile' %}" class="btn btn-secondary">
                                     <i class="fas fa-arrow-left me-2"></i>انصراف
@@ -222,6 +795,149 @@
                     small.textContent = 'هرچه توضیحات بیشتری ارائه دهید، برنامه بهتری برای شما تهیه خواهد شد.';
                     small.className = 'text-muted';
                 }
+            });
+        }
+
+        // Handle plan type changes to show/hide appropriate fields
+        const planTypeRadios = document.querySelectorAll('input[name="plan_type"]');
+        const workoutFields = document.getElementById('workout_fields');
+        const dietFields = document.getElementById('diet_fields');
+        
+        planTypeRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.value === 'workout') {
+                    workoutFields.style.display = 'block';
+                    dietFields.style.display = 'none';
+                    // Clear diet field values
+                    clearFieldValues('diet_fields');
+                } else if (this.value === 'diet') {
+                    dietFields.style.display = 'block';
+                    workoutFields.style.display = 'none';
+                    // Clear workout field values
+                    clearFieldValues('workout_fields');
+                }
+            });
+        });
+
+        // Function to clear field values in a section
+        function clearFieldValues(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                const inputs = section.querySelectorAll('input, textarea');
+                inputs.forEach(input => {
+                    if (input.type === 'radio' || input.type === 'checkbox') {
+                        input.checked = false;
+                    } else {
+                        input.value = '';
+                    }
+                });
+                // Hide all detail divs in the section
+                const detailDivs = section.querySelectorAll('[id$="_details_div"]');
+                detailDivs.forEach(div => {
+                    div.style.display = 'none';
+                });
+            }
+        }
+
+        // Handle injury details visibility (Workout fields)
+        const injuryYes = document.getElementById('injury_yes');
+        const injuryNo = document.getElementById('injury_no');
+        const injuryDetailsDiv = document.getElementById('injury_details_div');
+        
+        if (injuryYes && injuryNo && injuryDetailsDiv) {
+            injuryYes.addEventListener('change', function() {
+                if (this.checked) {
+                    injuryDetailsDiv.style.display = 'block';
+                }
+            });
+            
+            injuryNo.addEventListener('change', function() {
+                if (this.checked) {
+                    injuryDetailsDiv.style.display = 'none';
+                    document.getElementById('injury_details').value = '';
+                }
+            });
+        }
+
+        // Handle food dislikes details visibility (Diet fields)
+        const dietGoalDislikes = document.getElementById('diet_goal_dislikes');
+        const foodDislikesDetailsDiv = document.getElementById('food_dislikes_details_div');
+        
+        if (dietGoalDislikes && foodDislikesDetailsDiv) {
+            const dietGoalRadios = document.querySelectorAll('input[name="diet_goal"]');
+            dietGoalRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'food_dislikes') {
+                        foodDislikesDetailsDiv.style.display = 'block';
+                    } else {
+                        foodDislikesDetailsDiv.style.display = 'none';
+                        document.getElementById('food_dislikes_details').value = '';
+                    }
+                });
+            });
+        }
+
+        // Handle allergy details visibility (Diet fields)
+        const allergyDetailsDiv = document.getElementById('allergy_details_div');
+        if (allergyDetailsDiv) {
+            const dietaryRestrictionRadios = document.querySelectorAll('input[name="dietary_restrictions"]');
+            dietaryRestrictionRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'has_allergy' || this.value === 'medical_restriction') {
+                        allergyDetailsDiv.style.display = 'block';
+                    } else {
+                        allergyDetailsDiv.style.display = 'none';
+                        document.getElementById('allergy_details').value = '';
+                    }
+                });
+            });
+        }
+
+        // Handle supplement details visibility (Diet fields)
+        const supplementDetailsDiv = document.getElementById('supplement_details_div');
+        if (supplementDetailsDiv) {
+            const supplementRadios = document.querySelectorAll('input[name="supplement_use"]');
+            supplementRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'currently_using' || this.value === 'planning_to_use') {
+                        supplementDetailsDiv.style.display = 'block';
+                    } else {
+                        supplementDetailsDiv.style.display = 'none';
+                        document.getElementById('supplement_details').value = '';
+                    }
+                });
+            });
+        }
+
+        // Handle medical condition details visibility (Diet fields)
+        const medicalConditionDetailsDiv = document.getElementById('medical_condition_details_div');
+        if (medicalConditionDetailsDiv) {
+            const medicalConditionRadios = document.querySelectorAll('input[name="medical_conditions"]');
+            medicalConditionRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'has_condition_meds' || this.value === 'has_condition_no_meds') {
+                        medicalConditionDetailsDiv.style.display = 'block';
+                    } else {
+                        medicalConditionDetailsDiv.style.display = 'none';
+                        document.getElementById('medical_condition_details').value = '';
+                    }
+                });
+            });
+        }
+
+        // Handle chronic disease details visibility (Diet fields)
+        const chronicDiseaseDetailsDiv = document.getElementById('chronic_disease_details_div');
+        if (chronicDiseaseDetailsDiv) {
+            const chronicDiseaseRadios = document.querySelectorAll('input[name="chronic_disease_history"]');
+            chronicDiseaseRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'has_diet_restriction' || this.value === 'has_no_diet_restriction') {
+                        chronicDiseaseDetailsDiv.style.display = 'block';
+                    } else {
+                        chronicDiseaseDetailsDiv.style.display = 'none';
+                        document.getElementById('chronic_disease_details').value = '';
+                    }
+                });
             });
         }
     });

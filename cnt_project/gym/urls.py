@@ -69,6 +69,7 @@ urlpatterns = [
     # Body Analysis Reports
     path('body-analysis/', views.body_analysis_reports, name='body_analysis_reports'),
     path('body-analysis/<int:report_id>/', views.body_analysis_detail, name='body_analysis_detail'),
+    path('inbody/<int:report_id>/', views.inbody_detail, name='inbody_detail'),
     
     # Monthly Goals
     path('monthly-goals/', views.monthly_goals, name='monthly_goals'),

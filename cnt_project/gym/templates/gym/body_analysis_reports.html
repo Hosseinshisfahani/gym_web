@@ -7,7 +7,8 @@
 {% block content %}
 <div class="container mt-4">
     <div class="row">
-        <div class="col-md-4">
+        <!-- Body Analysis Upload Section -->
+        <div class="col-md-6">
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0">آپلود آنالیز جدید</h5>
@@ -15,18 +16,19 @@
                 <div class="card-body">
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
+                        <input type="hidden" name="form_type" value="analysis">
                         <div class="mb-3">
-                            <label for="id_image" class="form-label">تصویر آزمایش</label>
-                            <input type="file" class="form-control" id="id_image" name="image" required>
+                            <label for="id_analysis_image" class="form-label">تصویر آزمایش</label>
+                            <input type="file" class="form-control" id="id_analysis_image" name="image" required>
                             <small class="text-muted">تصویر آزمایش یا آنالیز بدن خود را آپلود کنید.</small>
                         </div>
                         <div class="mb-3">
-                            <label for="id_report_date" class="form-label">تاریخ آزمایش</label>
-                            {{ form.report_date }}
+                            <label for="id_analysis_report_date" class="form-label">تاریخ آزمایش</label>
+                            {{ analysis_form.report_date }}
                         </div>
                         <div class="mb-3">
-                            <label for="id_description" class="form-label">توضیحات</label>
-                            {{ form.description }}
+                            <label for="id_analysis_description" class="form-label">توضیحات</label>
+                            {{ analysis_form.description }}
                         </div>
                         <button type="submit" class="btn btn-primary w-100">ثبت آنالیز</button>
                     </form>
@@ -34,7 +36,39 @@
             </div>
         </div>
         
-        <div class="col-md-8">
+        <!-- InBody Upload Section -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">آپلود اینبادی جدید</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="inbody">
+                        <div class="mb-3">
+                            <label for="id_inbody_image" class="form-label">تصویر آزمایش اینبادی</label>
+                            <input type="file" class="form-control" id="id_inbody_image" name="image" required>
+                            <small class="text-muted">تصویر آزمایش اینبادی خود را آپلود کنید.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_inbody_report_date" class="form-label">تاریخ آزمایش</label>
+                            {{ inbody_form.report_date }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="id_inbody_description" class="form-label">توضیحات</label>
+                            {{ inbody_form.description }}
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">ثبت اینبادی</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Body Analysis Reports List -->
+        <div class="col-md-6">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">آنالیزهای بدن شما</h5>
@@ -77,7 +111,58 @@
                     </div>
                     {% else %}
                     <div class="alert alert-info">
-                        هنوز هیچ آنالیز بدنی ثبت نکرده‌اید. می‌توانید از فرم سمت راست استفاده کنید تا اولین آنالیز خود را ثبت کنید.
+                        هنوز هیچ آنالیز بدنی ثبت نکرده‌اید.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- InBody Reports List -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">گزارش‌های اینبادی شما</h5>
+                </div>
+                <div class="card-body">
+                    {% if inbody_reports %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>تاریخ آزمایش</th>
+                                    <th>تصویر</th>
+                                    <th>وضعیت</th>
+                                    <th>عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for report in inbody_reports %}
+                                <tr>
+                                    <td>{{ report.report_date|persian_date:"Y/m/d" }}</td>
+                                    <td>
+                                        <a href="{{ report.image.url }}" target="_blank">
+                                            <img src="{{ report.image.url }}" alt="گزارش اینبادی" style="height: 50px; width: auto;">
+                                        </a>
+                                    </td>
+                                    <td>
+                                        {% if report.status == 'pending' %}
+                                            <span class="badge bg-warning text-dark">در انتظار بررسی</span>
+                                        {% else %}
+                                            <span class="badge bg-success">بررسی شده</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'gym:inbody_detail' report.id %}" class="btn btn-sm btn-success">مشاهده</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        هنوز هیچ گزارش اینبادی ثبت نکرده‌اید.
                     </div>
                     {% endif %}
                 </div>

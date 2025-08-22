@@ -7,7 +7,7 @@
 <div class="container mt-3">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="{% url 'gym_shop:home' %}">خانه</a></li>
+            <li class="breadcrumb-item"><a href="https://shirneshansport.ir/">خانه</a></li>
             <li class="breadcrumb-item"><a href="{% url 'gym_shop:cart' %}">سبد خرید</a></li>
             <li class="breadcrumb-item active" aria-current="page">تسویه حساب</li>
         </ol>
@@ -302,13 +302,15 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     .then(data => {
         if (data.success) {
             // Show success message
-            alert(data.message || 'در حال انتقال به درگاه پرداخت...');
+            alert(data.message || 'در حال انتقال به پیش‌فاکتور...');
             
-            // Redirect to payment gateway
-            if (data.payment_url) {
+            // Redirect to invoice preview or payment gateway
+            if (data.redirect_url) {
+                window.location.href = data.redirect_url;
+            } else if (data.payment_url) {
                 window.location.href = data.payment_url;
             } else {
-                // Fallback redirect
+                // Fallback redirect to orders page
                 window.location.href = '/shop/orders/';
             }
         } else {
