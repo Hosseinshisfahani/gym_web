@@ -251,11 +251,24 @@ def checkout(request):
             # Use cart's shipping cost calculation
             shipping_cost = cart.shipping_cost
             
+            # Handle combined full name field
+            full_name = request.POST.get('full_name', '').strip()
+            name_parts = full_name.split()
+            if len(name_parts) >= 2:
+                first_name = name_parts[0]
+                last_name = ' '.join(name_parts[1:])
+            elif len(name_parts) == 1:
+                first_name = name_parts[0]
+                last_name = ''
+            else:
+                first_name = ''
+                last_name = ''
+            
             # Create pending order first
             order = Order.objects.create(
                 user=request.user,
-                first_name=request.POST.get('first_name'),
-                last_name=request.POST.get('last_name'),
+                first_name=first_name,
+                last_name=last_name,
                 email=request.POST.get('email'),
                 phone=request.POST.get('phone'),
                 address=request.POST.get('address'),
@@ -286,8 +299,8 @@ def checkout(request):
                 # Check if this exact address already exists for the user
                 existing_address = UserShippingAddress.objects.filter(
                     user=request.user,
-                    first_name=request.POST.get('first_name'),
-                    last_name=request.POST.get('last_name'),
+                    first_name=first_name,
+                    last_name=last_name,
                     phone=request.POST.get('phone'),
                     address=request.POST.get('address'),
                     city=request.POST.get('city'),
@@ -298,8 +311,8 @@ def checkout(request):
                     # Create new shipping address
                     UserShippingAddress.objects.create(
                         user=request.user,
-                        first_name=request.POST.get('first_name'),
-                        last_name=request.POST.get('last_name'),
+                        first_name=first_name,
+                        last_name=last_name,
                         phone=request.POST.get('phone'),
                         address=request.POST.get('address'),
                         city=request.POST.get('city'),

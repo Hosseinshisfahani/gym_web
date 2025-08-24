@@ -148,17 +148,11 @@
                         </div>
                         <hr>
                         {% endif %}
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="first_name" class="form-label">نام *</label>
-                                <input type="text" class="form-control" id="first_name" name="first_name" 
-                                       value="{% if default_address %}{{ default_address.first_name }}{% else %}{{ user.first_name }}{% endif %}" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="last_name" class="form-label">نام خانوادگی *</label>
-                                <input type="text" class="form-control" id="last_name" name="last_name" 
-                                       value="{% if default_address %}{{ default_address.last_name }}{% else %}{{ user.last_name }}{% endif %}" required>
-                            </div>
+                        <div class="mb-3">
+                            <label for="full_name" class="form-label">نام و نام خانوادگی *</label>
+                            <input type="text" class="form-control" id="full_name" name="full_name" 
+                                   value="{% if default_address %}{{ default_address.first_name }} {{ default_address.last_name }}{% else %}{{ user.first_name }} {{ user.last_name }}{% endif %}" 
+                                   placeholder="نام و نام خانوادگی خود را وارد کنید" required>
                         </div>
                         
                         <div class="row">
