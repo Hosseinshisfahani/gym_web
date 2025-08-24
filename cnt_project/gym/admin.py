@@ -41,10 +41,10 @@ from gym_shop.models import Category, Product, ProductImage, Cart, CartItem, Ord
 class UserProfileAdmin(admin.ModelAdmin):
     verbose_name = 'پروفایل کاربر'
     verbose_name_plural = 'پروفایل‌های کاربران'
-    list_display = ('name', 'phone_number', 'is_vip', 'user')
+    list_display = ('name', 'phone_number', 'birth_date', 'is_vip', 'user')
     search_fields = ('user__username', 'phone_number', 'melli_code', 'name')
     ordering = ('name',)
-    list_filter = ('is_vip', 'agreement_accepted')
+    list_filter = ('is_vip', 'agreement_accepted', 'birth_date')
     list_editable = ('is_vip',)
 
     def __str__(self):
@@ -197,16 +197,20 @@ admin_site.register(ProductImage, ProductImageAdmin)
 class PaymentCardAdmin(admin.ModelAdmin):
     verbose_name = 'کارت پرداخت'
     verbose_name_plural = 'کارت‌های پرداخت'
-    list_display = ['card_holder_name', 'get_formatted_card_number', 'price_workout', 'price_diet', 'price_both', 'is_active', 'created_at']
-    list_filter = ['is_active', 'created_at']
-    search_fields = ['card_holder_name', 'card_number']
+    list_display = ['card_holder_name', 'bank_name', 'get_formatted_card_number', 'price_workout', 'price_diet', 'price_both', 'is_active', 'created_at']
+    list_filter = ['is_active', 'bank_name', 'created_at']
+    search_fields = ['card_holder_name', 'card_number', 'bank_name', 'account_number', 'iban']
     readonly_fields = ['created_at', 'updated_at']
     ordering = ['-created_at']
     
     fieldsets = [
         ('اطلاعات کارت', {
-            'fields': ['card_number', 'card_holder_name', 'is_active'],
+            'fields': ['card_number', 'card_holder_name', 'bank_name', 'is_active'],
             'description': 'شماره کارت باید 16 رقم باشد'
+        }),
+        ('اطلاعات بانکی', {
+            'fields': ['account_number', 'iban'],
+            'description': 'شماره حساب و شبا برای پرداخت دستی'
         }),
         ('قیمت‌گذاری (تومان)', {
             'fields': ['price_workout', 'price_diet', 'price_both'],

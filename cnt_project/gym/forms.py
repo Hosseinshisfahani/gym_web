@@ -236,12 +236,13 @@ class UserProfileForm(forms.ModelForm):
     
     class Meta:
         model = UserProfile
-        fields = ['profile_image', 'name', 'melli_code', 'phone_number', 'post_code', 'home_address']
+        fields = ['profile_image', 'name', 'melli_code', 'phone_number', 'birth_date', 'post_code', 'home_address']
         labels = {
             'profile_image': 'عکس پروفایل',
             'name': 'نام و نام خانوادگی',
             'melli_code': 'کد ملی',
             'phone_number': 'شماره تلفن',
+            'birth_date': 'تاریخ تولد',
             'post_code': 'کد پستی (اختیاری)',
             'home_address': 'آدرس منزل',
         }
@@ -249,6 +250,7 @@ class UserProfileForm(forms.ModelForm):
             'home_address': forms.Textarea(attrs={'rows': 3}),
             'melli_code': forms.TextInput(attrs={'maxlength': '10', 'placeholder': 'مثال: 1234567890'}),
             'post_code': forms.TextInput(attrs={'maxlength': '10', 'placeholder': 'مثال: 1234567890'}),
+            'birth_date': PersianDateWidget(attrs={'class': 'form-control'}),
         }
     
     def __init__(self, *args, **kwargs):
@@ -505,6 +507,30 @@ class BodyInformationUserForm(forms.ModelForm):
             'body_image_left': 'عکس از سمت چپ (اختیاری)',
             'body_image_right': 'عکس از سمت راست (اختیاری)',
         }
+    
+    def validate_image_size(self, image):
+        """Validate that uploaded image is not larger than 5MB"""
+        if image and hasattr(image, 'size'):
+            max_size = 5 * 1024 * 1024  # 5MB in bytes
+            if image.size > max_size:
+                raise forms.ValidationError('حجم عکس نباید بیشتر از ۵ مگابایت باشد.')
+        return image
+    
+    def clean_body_image_front(self):
+        image = self.cleaned_data.get('body_image_front')
+        return self.validate_image_size(image)
+    
+    def clean_body_image_back(self):
+        image = self.cleaned_data.get('body_image_back')
+        return self.validate_image_size(image)
+    
+    def clean_body_image_left(self):
+        image = self.cleaned_data.get('body_image_left')
+        return self.validate_image_size(image)
+    
+    def clean_body_image_right(self):
+        image = self.cleaned_data.get('body_image_right')
+        return self.validate_image_size(image)
     
     def clean(self):
         cleaned_data = super().clean()

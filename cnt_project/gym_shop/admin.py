@@ -59,10 +59,10 @@ class OrderItemInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ['order_number', 'user', 'status', 'total', 'created_at']
-    list_filter = ['status', 'created_at', 'city']
-    search_fields = ['order_number', 'user__username', 'first_name', 'last_name', 'email', 'phone']
-    list_editable = ['status']
+    list_display = ['order_number', 'user', 'status', 'payment_status', 'total', 'created_at']
+    list_filter = ['status', 'payment_status', 'payment_method', 'created_at', 'city']
+    search_fields = ['order_number', 'user__username', 'first_name', 'last_name', 'email', 'phone', 'tracking_number']
+    list_editable = ['status', 'payment_status']
     inlines = [OrderItemInline]
     readonly_fields = ['order_number', 'created_at', 'updated_at']
     
@@ -70,11 +70,17 @@ class OrderAdmin(admin.ModelAdmin):
         ('اطلاعات سفارش', {
             'fields': ('order_number', 'user', 'status', 'notes')
         }),
+        ('اطلاعات پرداخت', {
+            'fields': ('payment_status', 'payment_method')
+        }),
         ('اطلاعات تماس', {
             'fields': ('first_name', 'last_name', 'email', 'phone')
         }),
         ('آدرس', {
             'fields': ('address', 'city', 'postal_code')
+        }),
+        ('ارسال', {
+            'fields': ('tracking_number',)
         }),
         ('مبالغ', {
             'fields': ('subtotal', 'shipping_cost', 'total')

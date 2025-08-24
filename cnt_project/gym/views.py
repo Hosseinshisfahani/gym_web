@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.http import HttpResponse, FileResponse, StreamingHttpResponse, HttpResponseForbidden, JsonResponse
+from django.urls import reverse
 from .forms import (
     UserRegistrationForm, UserProfileForm, WorkoutPlanForm, 
     DietPlanForm, PaymentForm, TicketForm,
@@ -1344,18 +1345,39 @@ def add_payment(request):
 @login_required
 def plan_request_payment(request):
     """Payment view specifically for plan requests"""
-    # Check if there's a pending plan request in session
-    if 'pending_plan_request' not in request.session:
-        messages.error(request, 'درخواست برنامه‌ای در انتظار پرداخت یافت نشد.')
-        return redirect('gym:profile')
-    
-    plan_data = request.session['pending_plan_request']
+    try:
+        # Check if there's a pending plan request in session
+        if 'pending_plan_request' not in request.session:
+            messages.error(request, 'درخواست برنامه‌ای در انتظار پرداخت یافت نشد. لطفاً ابتدا درخواست برنامه خود را ثبت کنید.')
+            return redirect('gym:request_plan')
+        
+        plan_data = request.session['pending_plan_request']
+        
+        # Validate plan_data structure
+        if not isinstance(plan_data, dict) or 'plan_type' not in plan_data:
+            messages.error(request, 'اطلاعات درخواست نامعتبر است. لطفاً مجدداً درخواست خود را ثبت کنید.')
+            # Clear invalid session data
+            if 'pending_plan_request' in request.session:
+                del request.session['pending_plan_request']
+            return redirect('gym:request_plan')
+    except Exception as e:
+        messages.error(request, 'خطایی در بارگذاری اطلاعات درخواست رخ داد. لطفاً مجدداً تلاش کنید.')
+        return redirect('gym:request_plan')
     
     # Get active payment card for manual payments
     payment_card = PaymentCard.objects.filter(is_active=True).first()
     
     # Get price based on plan type
-    plan_price = payment_card.get_price_for_plan_type(plan_data['plan_type']) if payment_card else 500000
+    try:
+        if payment_card:
+            plan_price = payment_card.get_price_for_plan_type(plan_data['plan_type'])
+            # Convert Decimal to int if needed
+            plan_price = int(plan_price) if plan_price else 500000
+        else:
+            plan_price = 500000
+    except Exception as e:
+        # Fallback price if there's an error
+        plan_price = 500000
     
     # Check if user's profile is complete
     try:
@@ -1399,10 +1421,9 @@ def plan_request_payment(request):
             plan_type_display = 'برنامه تمرینی' if plan_data['plan_type'] == 'workout' else 'برنامه غذایی'
             description = f'پرداخت {plan_type_display} - {user_profile.name}'
             
-            # Convert Toman to Rial for payment gateway (multiply by 10)
-            amount_in_rial = int(plan_price * 10)
+            # ZarinPal/Shaparak displays amounts in Rials, so multiply by 10 to convert Tomans to Rials
             success, result = gateway.create_payment_request(
-                amount=amount_in_rial,
+                amount=int(plan_price) * 10,
                 description=description,
                 callback_url=callback_url,
                 mobile=user_profile.phone_number,
@@ -1472,20 +1493,33 @@ def plan_request_payment(request):
             return redirect('gym:plan_request_flow', step='status')
     
     # For GET requests, prepare form for manual payment
-    initial_data = {
-        'payment_type': 'workout_plan' if plan_data['plan_type'] == 'workout' else 'diet_plan',
-        'amount': plan_price
-    }
-    form = PaymentForm(initial=initial_data)
-    
-    context = {
-        'form': form,
-        'plan_data': plan_data,
-        'payment_card': payment_card,
-        'plan_price': plan_price,
-        'plan_type_display': 'برنامه تمرینی' if plan_data['plan_type'] == 'workout' else 'برنامه غذایی'
-    }
-    return render(request, 'gym/plan_request_payment.html', context)
+    try:
+        initial_data = {
+            'payment_type': 'workout_plan' if plan_data['plan_type'] == 'workout' else 'diet_plan',
+            'amount': plan_price
+        }
+        form = PaymentForm(initial=initial_data)
+        
+        context = {
+            'form': form,
+            'plan_data': plan_data,
+            'payment_card': payment_card,
+            'plan_price': plan_price,
+            'plan_type_display': 'برنامه تمرینی' if plan_data['plan_type'] == 'workout' else 'برنامه غذایی'
+        }
+        return render(request, 'gym/plan_request_payment.html', context)
+    except Exception as e:
+        messages.error(request, 'خطایی در نمایش صفحه پرداخت رخ داد. لطفاً مجدداً تلاش کنید.')
+        return redirect('gym:request_plan')
+
+@login_required
+def debug_plan_payment(request):
+    """Debug view to check session data"""
+    session_data = request.session.get('pending_plan_request', 'No data found')
+    return JsonResponse({
+        'session_data': session_data,
+        'session_keys': list(request.session.keys())
+    })
 
 @login_required
 def payment_gateway_callback(request):
@@ -2236,7 +2270,11 @@ def body_information_form(request):
         form = BodyInformationUserForm(instance=body_info)
         is_edit = True
     except BodyInformationUser.DoesNotExist:
-        form = BodyInformationUserForm()
+        # Create a new form, but pre-populate birth_date from user profile if available
+        initial_data = {}
+        if user_profile.birth_date:
+            initial_data['birth_date'] = user_profile.birth_date
+        form = BodyInformationUserForm(initial=initial_data)
         is_edit = False
     
     if request.method == 'POST':
@@ -2249,6 +2287,12 @@ def body_information_form(request):
             body_info = form.save(commit=False)
             body_info.user_profile = user_profile
             body_info.save()
+            
+            # Also save birth_date to user profile for easy access
+            if body_info.birth_date:
+                user_profile.birth_date = body_info.birth_date
+                user_profile.save()
+            
             messages.success(request, 'اطلاعات بدنی شما با موفقیت ذخیره شد.')
             
             # Check if user is in the middle of a plan request process

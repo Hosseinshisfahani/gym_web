@@ -180,10 +180,25 @@ class Order(models.Model):
         ('cancelled', 'لغو شده'),
         ('returned', 'مرجوع شده'),
     ]
+    
+    PAYMENT_STATUS = [
+        ('pending', 'در انتظار پرداخت'),
+        ('paid', 'پرداخت شده'),
+        ('failed', 'پرداخت ناموفق'),
+        ('refunded', 'بازگشت وجه'),
+    ]
+    
+    PAYMENT_METHOD = [
+        ('online', 'پرداخت آنلاین'),
+        ('cod', 'پرداخت در محل'),
+        ('transfer', 'انتقال بانکی'),
+    ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders', verbose_name='کاربر')
     order_number = models.CharField(max_length=20, unique=True, verbose_name='شماره سفارش')
     status = models.CharField(max_length=20, choices=ORDER_STATUS, default='pending', verbose_name='وضعیت')
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS, default='pending', verbose_name='وضعیت پرداخت')
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD, default='online', verbose_name='روش پرداخت')
     
     # Contact Information
     first_name = models.CharField(max_length=50, verbose_name='نام')
@@ -207,6 +222,9 @@ class Order(models.Model):
     
     # Notes
     notes = models.TextField(blank=True, verbose_name='یادداشت')
+    
+    # Shipping
+    tracking_number = models.CharField(max_length=50, blank=True, null=True, verbose_name='کد رهگیری')
 
     class Meta:
         verbose_name = 'سفارش'

@@ -86,6 +86,10 @@
                         <hr class="my-4">
                         <h5 class="mb-3">عکس‌های بدن (اختیاری)</h5>
                         <p class="text-muted small mb-3">این عکس‌ها به مربی کمک می‌کند تا برنامه بهتری برای شما تهیه کند. آپلود این عکس‌ها کاملاً اختیاری است.</p>
+                        <div class="alert alert-info small mb-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>نکته مهم:</strong> حجم عکس بیشتر از ۵ مگابایت نباشد
+                        </div>
                         
                         <div class="row">
                             <div class="col-md-6">
@@ -180,6 +184,54 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Listen for changes
     diseaseHistorySelect.addEventListener('change', toggleDiseaseDescription);
+    
+    // File size validation
+    const maxFileSize = 5 * 1024 * 1024; // 5MB in bytes
+    const imageInputs = [
+        '{{ form.body_image_front.id_for_label }}',
+        '{{ form.body_image_back.id_for_label }}',
+        '{{ form.body_image_left.id_for_label }}',
+        '{{ form.body_image_right.id_for_label }}'
+    ];
+    
+    imageInputs.forEach(function(inputId) {
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file && file.size > maxFileSize) {
+                    // Remove the file
+                    e.target.value = '';
+                    
+                    // Show error message
+                    showFileError(input, 'حجم عکس نباید بیشتر از ۵ مگابایت باشد.');
+                } else {
+                    // Remove any existing error message
+                    removeFileError(input);
+                }
+            });
+        }
+    });
+    
+    function showFileError(input, message) {
+        // Remove existing error message
+        removeFileError(input);
+        
+        // Create new error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'text-danger small mt-1 file-size-error';
+        errorDiv.textContent = message;
+        
+        // Insert after the input
+        input.parentNode.insertBefore(errorDiv, input.nextSibling);
+    }
+    
+    function removeFileError(input) {
+        const errorDiv = input.parentNode.querySelector('.file-size-error');
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+    }
 });
 </script>
 {% endblock %} 

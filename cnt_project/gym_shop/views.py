@@ -265,7 +265,9 @@ def checkout(request):
                 shipping_cost=shipping_cost,
                 total=cart.total_price + shipping_cost,
                 notes=request.POST.get('notes', ''),
-                status='pending'  # Set status to pending until payment is verified
+                status='pending',  # Set status to pending until payment is verified
+                payment_status='pending',  # Payment is pending
+                payment_method='online'  # Default to online payment
             )
             
             # Add order items
@@ -474,8 +476,17 @@ def apply_discount(request):
 
 @login_required
 def order_detail(request, order_number):
-    """جزئیات سفارش"""
+    """جزئیات سفارش با شماره سفارش"""
     order = get_object_or_404(Order, order_number=order_number, user=request.user)
+    context = {
+        'order': order,
+    }
+    return render(request, 'gym_shop/order_detail.html', context)
+
+@login_required
+def order_detail_by_id(request, order_id):
+    """جزئیات سفارش با ID (برای سازگاری با نسخه‌های قبلی)"""
+    order = get_object_or_404(Order, id=order_id, user=request.user)
     context = {
         'order': order,
     }
@@ -529,6 +540,21 @@ def cancel_order(request, order_id):
 def order_list(request):
     """لیست سفارشات کاربر"""
     orders = Order.objects.filter(user=request.user).order_by('-created_at')
+    
+    # Filter by status
+    status = request.GET.get('status')
+    if status:
+        orders = orders.filter(status=status)
+    
+    # Filter by payment status
+    payment_status = request.GET.get('payment_status')
+    if payment_status:
+        orders = orders.filter(payment_status=payment_status)
+    
+    # Search
+    search_query = request.GET.get('search')
+    if search_query:
+        orders = orders.filter(order_number__icontains=search_query)
     
     paginator = Paginator(orders, 10)
     page_number = request.GET.get('page')
@@ -1540,6 +1566,7 @@ def payment_verify(request):
         if success:
             # Update order status to paid
             order.status = 'paid'
+            order.payment_status = 'paid'
             order.save()
             
             # Reduce product stock
@@ -1565,6 +1592,7 @@ def payment_verify(request):
         else:
             # Payment verification failed
             order.status = 'cancelled'
+            order.payment_status = 'failed'
             order.save()
             
             error_message = verification_data.get('error', 'خطا در تایید پرداخت')
@@ -1573,6 +1601,7 @@ def payment_verify(request):
     else:
         # Payment was cancelled or failed
         order.status = 'cancelled'
+        order.payment_status = 'failed'
         order.save()
         
         messages.error(request, 'پرداخت لغو شد یا با خطا مواجه شد.')

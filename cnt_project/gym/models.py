@@ -16,6 +16,7 @@ class UserProfile(models.Model):
     phone_number = models.CharField(max_length=15, blank=True, null=True, verbose_name='شماره تلفن')
     post_code = models.CharField(max_length=10, blank=True, null=True, verbose_name='کد پستی')
     home_address = models.TextField(blank=True, null=True, verbose_name='آدرس منزل')
+    birth_date = models.DateField(blank=True, null=True, verbose_name='تاریخ تولد')
     agreement_accepted = models.BooleanField(default=False, verbose_name='توافقنامه پذیرفته شده')
     is_vip = models.BooleanField(default=False, verbose_name='کاربر VIP')
     
@@ -680,6 +681,9 @@ class PaymentCard(models.Model):
     
     card_number = models.CharField(max_length=16, verbose_name='شماره کارت')
     card_holder_name = models.CharField(max_length=100, verbose_name='نام صاحب کارت')
+    account_number = models.CharField(max_length=20, blank=True, null=True, verbose_name='شماره حساب')
+    iban = models.CharField(max_length=26, blank=True, null=True, verbose_name='شماره شبا')
+    bank_name = models.CharField(max_length=50, blank=True, null=True, verbose_name='نام بانک')
     price_workout = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='قیمت برنامه تمرینی (تومان)')
     price_diet = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='قیمت برنامه غذایی (تومان)')
     price_both = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='قیمت هر دو برنامه (تومان)')

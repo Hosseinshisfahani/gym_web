@@ -34,6 +34,7 @@ urlpatterns = [
     path('payments/', views.payments, name='payments'),
     path('payments/add/', views.add_payment, name='add_payment'),
     path('payments/plan-request/', views.plan_request_payment, name='plan_request_payment'),
+    path('payments/debug-plan-payment/', views.debug_plan_payment, name='debug_plan_payment'),
     path('payments/gateway-callback/', views.payment_gateway_callback, name='payment_gateway_callback'),
     path('payment/success/', views.payment_success, name='payment_success'),
     path('payment/failure/', views.payment_failure, name='payment_failure'),

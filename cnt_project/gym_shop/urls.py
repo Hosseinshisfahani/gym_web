@@ -29,6 +29,7 @@ urlpatterns = [
     path('apply-discount/', views.apply_discount, name='apply_discount'),
     path('orders/', views.order_list, name='order_list'),
     path('order/<str:order_number>/', views.order_detail, name='order_detail'),
+    path('order/<int:order_id>/', views.order_detail_by_id, name='order_detail_by_id'),  # For backward compatibility
     path('order/cancel/<int:order_id>/', views.cancel_order, name='cancel_order'),
     
     # مدیریت مالی فروشگاه (Shop Financial Management)
