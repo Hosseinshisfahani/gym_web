@@ -67,6 +67,20 @@
                                                     <span class="brand-tag">{{ item.product.brand }}</span>
                                                 {% endif %}
                                             </div>
+                                            <div class="product-options">
+                                                {% if item.size %}
+                                                    <div class="option-item">
+                                                        <i class="fas fa-ruler me-1"></i>
+                                                        <small><strong>سایز:</strong> {{ item.size }}</small>
+                                                    </div>
+                                                {% endif %}
+                                                {% if item.color %}
+                                                    <div class="option-item">
+                                                        <i class="fas fa-palette me-1"></i>
+                                                        <small><strong>رنگ:</strong> {{ item.color_display }}</small>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
                                             <div class="stock-info">
                                                 {% if item.product.stock > 0 %}
                                                     <span class="in-stock">

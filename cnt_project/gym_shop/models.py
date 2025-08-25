@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 from django.utils.text import slugify
 from PIL import Image
+from decimal import Decimal
 import os
 
 class Category(models.Model):
@@ -42,6 +43,34 @@ class Product(models.Model):
         ('XXXL', 'XXXL'),
     ]
     
+    COLOR_CHOICES = [
+        ('black', 'مشکی'),
+        ('white', 'سفید'),
+        ('red', 'قرمز'),
+        ('blue', 'آبی'),
+        ('navy', 'سرمه‌ای'),
+        ('green', 'سبز'),
+        ('gray', 'خاکستری'),
+        ('dark_gray', 'خاکستری تیره'),
+        ('light_gray', 'خاکستری روشن'),
+        ('yellow', 'زرد'),
+        ('orange', 'نارنجی'),
+        ('purple', 'بنفش'),
+        ('pink', 'صورتی'),
+        ('brown', 'قهوه‌ای'),
+        ('beige', 'کرم'),
+        ('maroon', 'زرشکی'),
+        ('olive', 'زیتونی'),
+        ('teal', 'سبز دریایی'),
+        ('lime', 'سبز لیمویی'),
+        ('cyan', 'فیروزه‌ای'),
+        ('magenta', 'ارغوانی'),
+        ('gold', 'طلایی'),
+        ('silver', 'نقره‌ای'),
+        ('multicolor', 'رنگارنگ'),
+        ('other', 'سایر'),
+    ]
+    
     name = models.CharField(max_length=200, verbose_name='نام محصول')
     name_en = models.CharField(max_length=200, verbose_name='نام انگلیسی')
     slug = models.SlugField(unique=True, verbose_name='شناسه')
@@ -53,10 +82,11 @@ class Product(models.Model):
     image = models.ImageField(upload_to='shop/products/', verbose_name='تصویر اصلی')
     stock = models.PositiveIntegerField(verbose_name='موجودی')
     available_sizes = models.CharField(max_length=100, blank=True, verbose_name='سایزهای موجود')
+    available_colors = models.CharField(max_length=200, blank=True, verbose_name='رنگ‌های موجود')
     weight = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True, verbose_name='وزن (کیلوگرم)')
     brand = models.CharField(max_length=100, blank=True, verbose_name='برند')
     material = models.CharField(max_length=100, blank=True, verbose_name='جنس')
-    color = models.CharField(max_length=50, blank=True, verbose_name='رنگ')
+    color = models.CharField(max_length=50, choices=COLOR_CHOICES, blank=True, verbose_name='رنگ (قدیمی - استفاده نشود)')
     is_featured = models.BooleanField(default=False, verbose_name='محصول ویژه')
     is_active = models.BooleanField(default=True, verbose_name='فعال')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
@@ -95,6 +125,24 @@ class Product(models.Model):
     @property
     def final_price(self):
         return self.discount_price if self.discount_price else self.price
+    
+    @property
+    def color_display(self):
+        """Return the Persian display name for the color"""
+        return dict(self.COLOR_CHOICES).get(self.color, self.color)
+    
+    @property
+    def available_colors_list(self):
+        """Return available colors as a list"""
+        if self.available_colors:
+            return [color.strip() for color in self.available_colors.split(',') if color.strip()]
+        return []
+    
+    @property
+    def available_colors_display(self):
+        """Return available colors with Persian display names"""
+        color_dict = dict(self.COLOR_CHOICES)
+        return [(color, color_dict.get(color, color)) for color in self.available_colors_list]
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='additional_images', verbose_name='محصول')
@@ -152,12 +200,13 @@ class CartItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='محصول')
     quantity = models.PositiveIntegerField(default=1, verbose_name='تعداد')
     size = models.CharField(max_length=10, blank=True, verbose_name='سایز')
+    color = models.CharField(max_length=50, blank=True, verbose_name='رنگ انتخابی')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ اضافه')
 
     class Meta:
         verbose_name = 'آیتم سبد خرید'
         verbose_name_plural = 'آیتم‌های سبد خرید'
-        unique_together = ['cart', 'product', 'size']
+        unique_together = ['cart', 'product', 'size', 'color']
 
     def __str__(self):
         return f'{self.product.name} - {self.quantity}'
@@ -169,6 +218,14 @@ class CartItem(models.Model):
     @property
     def original_total_price(self):
         return self.quantity * self.product.price
+    
+    @property
+    def color_display(self):
+        """Return the Persian display name for the selected color"""
+        if self.color:
+            color_dict = dict(Product.COLOR_CHOICES)
+            return color_dict.get(self.color, self.color)
+        return ''
 
 class Order(models.Model):
     ORDER_STATUS = [
@@ -214,6 +271,7 @@ class Order(models.Model):
     # Order Details
     subtotal = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='جمع اولیه')
     shipping_cost = models.DecimalField(max_digits=10, decimal_places=0, default=0, verbose_name='هزینه ارسال')
+    tax_amount = models.DecimalField(max_digits=10, decimal_places=0, default=0, verbose_name='مالیات (12%)')
     total = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='مجموع')
     
     # Timestamps
@@ -240,12 +298,24 @@ class Order(models.Model):
             import string
             self.order_number = ''.join(random.choices(string.ascii_uppercase + string.digits, k=10))
         super().save(*args, **kwargs)
+    
+    @property
+    def calculate_tax_amount(self):
+        """Calculate 12% tax on subtotal + shipping cost"""
+        taxable_amount = self.subtotal + self.shipping_cost
+        return int(taxable_amount * Decimal('0.12'))
+    
+    @property
+    def final_total_with_tax(self):
+        """Calculate final total including tax"""
+        return self.subtotal + self.shipping_cost + self.calculate_tax_amount
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items', verbose_name='سفارش')
     product = models.ForeignKey(Product, on_delete=models.CASCADE, verbose_name='محصول')
     quantity = models.PositiveIntegerField(verbose_name='تعداد')
     size = models.CharField(max_length=10, blank=True, verbose_name='سایز')
+    color = models.CharField(max_length=50, blank=True, verbose_name='رنگ انتخابی')
     price = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='قیمت واحد')
     total = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='قیمت کل')
 
@@ -259,6 +329,14 @@ class OrderItem(models.Model):
     def save(self, *args, **kwargs):
         self.total = self.quantity * self.price
         super().save(*args, **kwargs)
+    
+    @property
+    def color_display(self):
+        """Return the Persian display name for the selected color"""
+        if self.color:
+            color_dict = dict(Product.COLOR_CHOICES)
+            return color_dict.get(self.color, self.color)
+        return ''
 
 
 # User Shipping Address Model
@@ -424,3 +502,18 @@ class ShopSalesReport(models.Model):
         if self.total_orders > 0:
             return self.total_revenue / self.total_orders
         return 0
+
+class Wishlist(models.Model):
+    """مدل لیست علاقه‌مندی‌ها"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlists', verbose_name='کاربر')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='wishlisted_by', verbose_name='محصول')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ اضافه')
+    
+    class Meta:
+        verbose_name = 'علاقه‌مندی'
+        verbose_name_plural = 'علاقه‌مندی‌ها'
+        unique_together = ['user', 'product']  # هر کاربر فقط یکبار می‌تواند محصول را به علاقه‌مندی‌ها اضافه کند
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f'{self.user.username} - {self.product.name}'

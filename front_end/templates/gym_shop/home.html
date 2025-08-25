@@ -1,5 +1,6 @@
 {% extends 'gym_shop/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}صفحه اصلی فروشگاه - فروشگاه تجهیزات ورزشی{% endblock %}
 
@@ -136,10 +137,10 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div class="price-info">
                                 {% if product.discount_price %}
-                                <span class="text-muted text-decoration-line-through small">{{ product.price|floatformat:0 }}</span>
-                                <div class="current-price fw-bold" style="color: #dc2626; font-size: 1rem;">{{ product.discount_price|floatformat:0 }} تومان</div>
+                                <span class="text-muted text-decoration-line-through small">{{ product.price|format_price }}</span>
+                                <div class="current-price fw-bold" style="color: #dc2626; font-size: 1rem;">{{ product.discount_price|format_price }} تومان</div>
                                 {% else %}
-                                <div class="current-price fw-bold" style="color: var(--text-primary); font-size: 1rem;">{{ product.price|floatformat:0 }} تومان</div>
+                                <div class="current-price fw-bold" style="color: var(--text-primary); font-size: 1rem;">{{ product.price|format_price }} تومان</div>
                                 {% endif %}
                             </div>
                             <a href="{% url 'gym_shop:product_detail' product.slug %}" class="btn btn-sm" style="background: var(--primary-gradient); color: white; border-radius: 15px; padding: 6px 12px;">
@@ -191,10 +192,10 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div class="price-info">
                                 {% if product.discount_price %}
-                                <span class="text-muted text-decoration-line-through small">{{ product.price|floatformat:0 }} تومان</span>
-                                <div class="current-price fw-bold" style="color: #dc2626; font-size: 1.1rem;">{{ product.discount_price|floatformat:0 }} تومان</div>
+                                <span class="text-muted text-decoration-line-through small">{{ product.price|format_price }} تومان</span>
+                                <div class="current-price fw-bold" style="color: #dc2626; font-size: 1.1rem;">{{ product.discount_price|format_price }} تومان</div>
                                 {% else %}
-                                <div class="current-price fw-bold" style="color: var(--text-primary); font-size: 1.1rem;">{{ product.price|floatformat:0 }} تومان</div>
+                                <div class="current-price fw-bold" style="color: var(--text-primary); font-size: 1.1rem;">{{ product.price|format_price }} تومان</div>
                                 {% endif %}
                             </div>
                             <a href="{% url 'gym_shop:product_detail' product.slug %}" class="btn btn-sm" style="background: var(--primary-gradient); color: white; border-radius: 15px; padding: 8px 16px;">

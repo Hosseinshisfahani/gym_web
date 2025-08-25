@@ -384,23 +384,6 @@
             -webkit-text-fill-color: white;
         }
         
-        /* Cart Badge */
-        .cart-badge {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: var(--secondary-gradient);
-            color: white;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            font-size: 0.8rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            box-shadow: 0 2px 8px rgba(245, 87, 108, 0.4);
-        }
         
         /* Form Controls */
         .form-control, .form-select {
@@ -878,9 +861,8 @@
                     
                     {% if user.is_authenticated %}
                         <!-- Cart -->
-                        <a href="{% url 'gym_shop:cart' %}" class="btn btn-outline-light position-relative me-2 cart-btn">
+                        <a href="{% url 'gym_shop:cart' %}" class="btn btn-outline-light me-2 cart-btn">
                             <i class="fas fa-shopping-cart"></i>
-                            <span class="cart-badge" id="cart-count">0</span>
                         </a>
                         
                         <!-- User Menu -->
@@ -1028,22 +1010,6 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     
     <script>
-        // Update cart count
-        function updateCartCount() {
-            {% if user.is_authenticated %}
-                fetch("{% url 'gym_shop:cart_count' %}")
-                    .then(response => response.json())
-                    .then(data => {
-                        document.getElementById('cart-count').textContent = data.count;
-                    });
-            {% endif %}
-        }
-        
-        // Update cart count on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            updateCartCount();
-        });
-        
         // Format numbers with Persian separators
         function formatPrice(price) {
             return new Intl.NumberFormat('fa-IR').format(price);

@@ -492,7 +492,7 @@ def download_workout_plan(request, plan_id):
     p.setFont('Helvetica', 14)
     
     # Draw the title (no RTL support, but will still be readable)
-    title = f"Workout Plan: {plan.title}"
+    title = f"Workout Plan: {plan.get_plan_type_display()}"
     p.drawCentredString(300, 750, title)
     
     # Add creation date
@@ -561,7 +561,7 @@ def download_workout_plan(request, plan_id):
     buffer.seek(0)
     
     # Create the response with PDF mime type
-    filename = f"workout_plan_{plan.title}.pdf"
+    filename = f"workout_plan_{plan.get_plan_type_display()}_{plan.id}.pdf"
     response = HttpResponse(buffer, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     
@@ -771,7 +771,7 @@ def download_diet_plan(request, plan_id):
     p.setFont('Helvetica', 14)
     
     # Draw the title (no RTL support, but will still be readable)
-    title = f"Diet Plan: {plan.title}"
+    title = f"Diet Plan: {plan.get_plan_type_display()}"
     p.drawCentredString(300, 750, title)
     
     # Add creation date
@@ -840,7 +840,7 @@ def download_diet_plan(request, plan_id):
     buffer.seek(0)
     
     # Create the response with PDF mime type
-    filename = f"diet_plan_{plan.title}.pdf"
+    filename = f"diet_plan_{plan.get_plan_type_display()}_{plan.id}.pdf"
     response = HttpResponse(buffer, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     

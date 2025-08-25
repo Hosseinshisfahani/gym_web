@@ -21,6 +21,13 @@ urlpatterns = [
     path('cart/remove/<int:item_id>/', views.remove_from_cart, name='remove_from_cart'),
     path('cart/count/', views.get_cart_count, name='cart_count'),
     
+    # لیست علاقه‌مندی‌ها
+    path('toggle-wishlist/', views.toggle_wishlist, name='toggle_wishlist'),
+    path('wishlist/', views.wishlist_view, name='wishlist'),
+    
+    # API endpoints
+    path('api/product/<int:product_id>/quick-view/', views.product_quick_view, name='product_quick_view'),
+    
     # تسویه حساب و سفارش
     path('checkout/', views.checkout, name='checkout'),
     path('invoice/<int:order_id>/', views.invoice_preview, name='invoice_preview'),

@@ -1,5 +1,6 @@
 from django.contrib import admin
 from .models import Category, Product, ProductImage, Cart, CartItem, Order, OrderItem, UserShippingAddress
+from .forms import ProductForm
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
@@ -15,7 +16,9 @@ class ProductImageInline(admin.TabularInline):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['name', 'category', 'price', 'discount_price', 'stock', 'is_featured', 'is_active', 'created_at']
+    form = ProductForm
+    exclude = ['color']  # Exclude the old color field
+    list_display = ['name', 'category', 'price', 'discount_price', 'stock', 'available_colors', 'is_featured', 'is_active', 'created_at']
     list_filter = ['category', 'is_featured', 'is_active', 'created_at', 'brand']
     search_fields = ['name', 'name_en', 'description', 'brand']
     prepopulated_fields = {'slug': ('name_en',)}
@@ -29,7 +32,7 @@ class ProductAdmin(admin.ModelAdmin):
             'fields': ('price', 'discount_price', 'stock')
         }),
         ('مشخصات محصول', {
-            'fields': ('available_sizes', 'weight', 'brand', 'material', 'color')
+            'fields': ('available_sizes', 'available_colors', 'weight', 'brand', 'material')
         }),
         ('تصویر', {
             'fields': ('image',)
@@ -83,7 +86,7 @@ class OrderAdmin(admin.ModelAdmin):
             'fields': ('tracking_number',)
         }),
         ('مبالغ', {
-            'fields': ('subtotal', 'shipping_cost', 'total')
+            'fields': ('subtotal', 'shipping_cost', 'tax_amount', 'total')
         }),
         ('تاریخ', {
             'fields': ('created_at', 'updated_at')

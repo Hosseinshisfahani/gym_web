@@ -1,5 +1,6 @@
 {% extends 'gym_shop/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}مدیریت محصولات - فروشگاه ورزشی{% endblock %}
 
@@ -253,10 +254,10 @@
                         <td>{{ product.category.name }}</td>
                         <td>
                             {% if product.discount_price %}
-                                <div class="text-success fw-bold">{{ product.discount_price|floatformat:0 }} تومان</div>
-                                <small class="text-muted text-decoration-line-through">{{ product.price|floatformat:0 }}</small>
+                                <div class="text-success fw-bold">{{ product.discount_price|format_price }} تومان</div>
+                                <small class="text-muted text-decoration-line-through">{{ product.price|format_price }}</small>
                             {% else %}
-                                <div class="fw-bold">{{ product.price|floatformat:0 }} تومان</div>
+                                <div class="fw-bold">{{ product.price|format_price }} تومان</div>
                             {% endif %}
                         </td>
                         <td>

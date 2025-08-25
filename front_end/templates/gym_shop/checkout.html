@@ -79,10 +79,14 @@
                                 <span>-{{ discount_amount|floatformat:0 }} تومان</span>
                             </div>
                         {% endif %}
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>مالیات (12%):</span>
+                            <span>{{ tax_amount|floatformat:0 }} تومان</span>
+                        </div>
                         <hr>
                         <div class="d-flex justify-content-between fs-5 fw-bold">
                             <span>مبلغ نهایی:</span>
-                            <span class="text-success">{{ total|floatformat:0 }} تومان</span>
+                            <span class="text-success">{{ total_with_tax|floatformat:0 }} تومان</span>
                         </div>
                     </div>
                 </div>

@@ -73,6 +73,7 @@
                                     <tr>
                                         <th>محصول</th>
                                         <th>سایز</th>
+                                        <th>رنگ</th>
                                         <th>تعداد</th>
                                         <th>قیمت واحد</th>
                                         <th>جمع</th>
@@ -98,6 +99,7 @@
                                             </div>
                                         </td>
                                         <td>{{ item.size|default:"عمومی" }}</td>
+                                        <td>{{ item.color_display|default:"ندارد" }}</td>
                                         <td>
                                             <span class="badge bg-primary">{{ item.quantity }}</span>
                                         </td>
@@ -139,6 +141,17 @@
                                         <span>-{{ order.discount_amount|floatformat:0|intcomma }} تومان</span>
                                     </div>
                                     {% endif %}
+                                    
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>مالیات (12%):</span>
+                                        <span>
+                                            {% if order.tax_amount %}
+                                                {{ order.tax_amount|floatformat:0|intcomma }} تومان
+                                            {% else %}
+                                                {{ order.calculate_tax_amount|floatformat:0|intcomma }} تومان
+                                            {% endif %}
+                                        </span>
+                                    </div>
                                     
                                     <hr class="my-3">
                                     

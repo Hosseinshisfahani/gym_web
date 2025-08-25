@@ -61,10 +61,10 @@
                     {% if product.discount_price %}
                         <div class="d-flex align-items-center">
                             <span class="price fs-3 fw-bold text-success me-3">
-                                {{ product.discount_price|floatformat:0 }} تومان
+                                {{ product.discount_price|format_price }} تومان
                             </span>
                             <span class="original-price fs-5 text-muted text-decoration-line-through">
-                                {{ product.price|floatformat:0 }} تومان
+                                {{ product.price|format_price }} تومان
                             </span>
                             <span class="badge bg-danger ms-2">
                                 {{ product.discount_percentage }}% تخفیف
@@ -72,7 +72,7 @@
                         </div>
                     {% else %}
                         <span class="price fs-3 fw-bold text-success">
-                            {{ product.price|floatformat:0 }} تومان
+                            {{ product.price|format_price }} تومان
                         </span>
                     {% endif %}
                 </div>
@@ -102,8 +102,12 @@
                         {% if product.material %}
                             <li><strong>جنس:</strong> {{ product.material }}</li>
                         {% endif %}
-                        {% if product.color %}
-                            <li><strong>رنگ:</strong> {{ product.color }}</li>
+                        {% if product.available_colors %}
+                            <li><strong>رنگ‌های موجود:</strong> 
+                                {% for color_code, color_name in product.available_colors_display %}
+                                    {{ color_name }}{% if not forloop.last %}، {% endif %}
+                                {% endfor %}
+                            </li>
                         {% endif %}
                         {% if product.weight %}
                             <li><strong>وزن:</strong> {{ product.weight }} کیلوگرم</li>
@@ -129,6 +133,19 @@
                                         <option value="">انتخاب کنید...</option>
                                         {% for size in product.available_sizes|split:',' %}
                                             <option value="{{ size.strip }}">{{ size.strip }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Color Selection -->
+                            {% if product.available_colors %}
+                                <div class="mb-3">
+                                    <label class="form-label">انتخاب رنگ:</label>
+                                    <select name="color" class="form-select" required>
+                                        <option value="">انتخاب کنید...</option>
+                                        {% for color_code, color_name in product.available_colors_display %}
+                                            <option value="{{ color_code }}">{{ color_name }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -213,11 +230,11 @@
                                 
                                 {% if related_product.discount_price %}
                                     <div>
-                                        <span class="price">{{ related_product.discount_price|floatformat:0 }} تومان</span>
-                                        <small class="original-price ms-2">{{ related_product.price|floatformat:0 }}</small>
+                                        <span class="price">{{ related_product.discount_price|format_price }} تومان</span>
+                                        <small class="original-price ms-2">{{ related_product.price|format_price }}</small>
                                     </div>
                                 {% else %}
-                                    <span class="price">{{ related_product.price|floatformat:0 }} تومان</span>
+                                    <span class="price">{{ related_product.price|format_price }} تومان</span>
                                 {% endif %}
                             </div>
                         </div>

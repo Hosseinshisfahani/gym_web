@@ -8,12 +8,13 @@ from django.db.models import Q, Sum, Count
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+from decimal import Decimal
 from datetime import datetime, timedelta
 import json
-from decimal import Decimal
 from django.contrib.auth.models import User
 
-from .models import Category, Product, Cart, CartItem, Order, OrderItem, ProductImage, UserShippingAddress
+from .models import Category, Product, Cart, CartItem, Order, OrderItem, Wishlist, ProductImage, UserShippingAddress
+from gym.templatetags.custom_filters import format_price
 from .forms import ProductForm, CategoryForm, ProductImageForm, ProductSearchForm
 
 class DecimalEncoder(json.JSONEncoder):
@@ -74,10 +75,18 @@ def product_list(request):
     if max_price:
         products = products.filter(price__lte=max_price)
     
+    # فیلتر رنگ
+    color = request.GET.get('color')
+    if color:
+        products = products.filter(color=color)
+    
     # صفحه‌بندی
     paginator = Paginator(products, 12)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
+    
+    # Get color choices for filter
+    color_choices = Product.COLOR_CHOICES
     
     context = {
         'page_obj': page_obj,
@@ -87,6 +96,8 @@ def product_list(request):
         'sort_by': sort_by,
         'min_price': min_price,
         'max_price': max_price,
+        'color': color,
+        'color_choices': color_choices,
     }
     return render(request, 'gym_shop/product_list.html', context)
 
@@ -156,6 +167,7 @@ def add_to_cart(request):
     product_id = request.POST.get('product_id')
     quantity = int(request.POST.get('quantity', 1))
     size = request.POST.get('size', '')
+    color = request.POST.get('color', '')
     
     product = get_object_or_404(Product, id=product_id, is_active=True)
     cart, created = Cart.objects.get_or_create(user=request.user)
@@ -175,6 +187,7 @@ def add_to_cart(request):
         cart=cart,
         product=product,
         size=size,
+        color=color,
         defaults={'quantity': quantity}
     )
     
@@ -233,6 +246,132 @@ def remove_from_cart(request, item_id):
     return redirect('gym_shop:cart')
 
 @login_required
+@require_POST
+def toggle_wishlist(request):
+    """اضافه/حذف محصول از لیست علاقه‌مندی‌ها"""
+    product_id = request.POST.get('product_id')
+    product = get_object_or_404(Product, id=product_id, is_active=True)
+    
+    # بررسی وجود محصول در لیست علاقه‌مندی‌ها
+    wishlist_item, created = Wishlist.objects.get_or_create(
+        user=request.user,
+        product=product
+    )
+    
+    if created:
+        # محصول به لیست علاقه‌مندی‌ها اضافه شد
+        is_favorited = True
+        message = f'{product.name} به لیست علاقه‌مندی‌ها اضافه شد!'
+    else:
+        # محصول از لیست علاقه‌مندی‌ها حذف شد
+        wishlist_item.delete()
+        is_favorited = False
+        message = f'{product.name} از لیست علاقه‌مندی‌ها حذف شد!'
+    
+    # Handle AJAX requests
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({
+            'success': True,
+            'is_favorited': is_favorited,
+            'message': message
+        })
+    
+    messages.success(request, message)
+    return redirect(request.META.get('HTTP_REFERER', 'gym_shop:product_list'))
+
+@login_required
+def wishlist_view(request):
+    """نمایش لیست علاقه‌مندی‌های کاربر"""
+    wishlist_items = Wishlist.objects.filter(user=request.user).select_related('product')
+    
+    context = {
+        'wishlist_items': wishlist_items,
+        'total_items': wishlist_items.count()
+    }
+    
+    return render(request, 'gym_shop/wishlist.html', context)
+
+def product_quick_view(request, product_id):
+    """API endpoint for quick view modal"""
+    try:
+        product = get_object_or_404(Product, id=product_id, is_active=True)
+        
+        # Generate the HTML content for the modal
+        html_content = f"""
+        <div class="row">
+            <div class="col-md-6">
+                <div class="text-center">
+                    {f'<img src="{product.image.url}" class="img-fluid rounded" alt="{product.name}" style="max-height: 300px;">' if product.image else '<div class="bg-light rounded d-flex align-items-center justify-content-center" style="height: 300px;"><i class="fas fa-image fa-3x text-muted"></i></div>'}
+                </div>
+            </div>
+            <div class="col-md-6">
+                <h4 class="mb-3">{product.name}</h4>
+                <p class="text-muted mb-3">{product.short_description}</p>
+                
+                <div class="mb-3">
+                    <span class="badge bg-primary">{product.category.name}</span>
+                    {f'<span class="badge bg-secondary ms-2">{product.brand}</span>' if product.brand else ''}
+                </div>
+                
+                <div class="price-section mb-3">
+                    {f'''
+                    <div class="d-flex align-items-center">
+                        <span class="h4 text-success me-3">{format_price(product.discount_price)} تومان</span>
+                        <span class="text-muted text-decoration-line-through">{format_price(product.price)} تومان</span>
+                        <span class="badge bg-danger ms-2">{((product.price - product.discount_price) / product.price * 100):.0f}% تخفیف</span>
+                    </div>
+                    ''' if hasattr(product, 'discount_price') and product.discount_price else f'<span class="h4 text-success">{format_price(product.price)} تومان</span>'}
+                </div>
+                
+                <div class="stock-info mb-3">
+                    {f'<span class="text-success"><i class="fas fa-check-circle me-1"></i> موجود ({product.stock} عدد)</span>' if product.stock > 0 else '<span class="text-danger"><i class="fas fa-times-circle me-1"></i> ناموجود</span>'}
+                </div>
+                
+                {f'''
+                <div class="mb-3">
+                    <small class="text-muted">رنگ‌های موجود:</small><br>
+                    {product.available_colors}
+                </div>
+                ''' if product.available_colors else ''}
+                
+                {f'''
+                <div class="mb-3">
+                    <small class="text-muted">سایزهای موجود:</small><br>
+                    {product.available_sizes}
+                </div>
+                ''' if product.available_sizes else ''}
+                
+                {f'''
+                <div class="mb-3">
+                    <small class="text-muted">وزن:</small> {product.weight} کیلوگرم
+                </div>
+                ''' if product.weight else ''}
+            </div>
+        </div>
+        
+        {f'''
+        <div class="row mt-4">
+            <div class="col-12">
+                <h6>توضیحات:</h6>
+                <p class="text-muted">{product.description[:200]}{'...' if len(product.description) > 200 else ''}</p>
+            </div>
+        </div>
+        ''' if product.description else ''}
+        """
+        
+        return JsonResponse({
+            'success': True,
+            'html': html_content,
+            'product_url': request.build_absolute_uri(product.get_absolute_url())
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': 'خطا در بارگیری اطلاعات محصول'
+        })
+
+@login_required
 def checkout(request):
     """صفحه تسویه حساب"""
     cart = get_object_or_404(Cart, user=request.user)
@@ -264,6 +403,11 @@ def checkout(request):
                 first_name = ''
                 last_name = ''
             
+            # Calculate tax (12% on subtotal + shipping)
+            taxable_amount = cart.total_price + shipping_cost
+            tax_amount = int(taxable_amount * Decimal('0.12'))
+            final_total = cart.total_price + shipping_cost + tax_amount
+            
             # Create pending order first
             order = Order.objects.create(
                 user=request.user,
@@ -276,7 +420,8 @@ def checkout(request):
                 postal_code=request.POST.get('postal_code'),
                 subtotal=cart.total_price,
                 shipping_cost=shipping_cost,
-                total=cart.total_price + shipping_cost,
+                tax_amount=tax_amount,
+                total=final_total,
                 notes=request.POST.get('notes', ''),
                 status='pending',  # Set status to pending until payment is verified
                 payment_status='pending',  # Payment is pending
@@ -290,6 +435,7 @@ def checkout(request):
                     product=cart_item.product,
                     quantity=cart_item.quantity,
                     size=cart_item.size,
+                    color=cart_item.color,
                     price=cart_item.product.final_price,
                     total=cart_item.total_price
                 )
@@ -360,11 +506,18 @@ def checkout(request):
     user_addresses = UserShippingAddress.objects.filter(user=request.user).order_by('-is_default', '-created_at')
     default_address = user_addresses.filter(is_default=True).first()
     
+    # Calculate tax for display
+    taxable_amount = cart.total_price + cart.shipping_cost
+    tax_amount = int(taxable_amount * Decimal('0.12'))
+    total_with_tax = cart.total_price + cart.shipping_cost + tax_amount
+    
     context = {
         'cart': cart,
         'cart_items': cart.items.all(),
         'subtotal': cart.total_price,
         'shipping_cost': cart.shipping_cost,
+        'tax_amount': tax_amount,
+        'total_with_tax': total_with_tax,
         'total': cart.final_total,
         'user_addresses': user_addresses,
         'default_address': default_address,
@@ -1061,6 +1214,7 @@ def product_management(request):
         category = search_form.cleaned_data.get('category')
         is_active = search_form.cleaned_data.get('is_active')
         is_featured = search_form.cleaned_data.get('is_featured')
+        color = search_form.cleaned_data.get('color')
         
         if search_query:
             products = products.filter(
@@ -1081,6 +1235,9 @@ def product_management(request):
             products = products.filter(is_featured=True)
         elif is_featured == 'false':
             products = products.filter(is_featured=False)
+        
+        if color:
+            products = products.filter(color=color)
     
     # صفحه‌بندی
     paginator = Paginator(products, 15)

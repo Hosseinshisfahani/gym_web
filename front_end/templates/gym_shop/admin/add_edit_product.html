@@ -342,10 +342,11 @@
                     </div>
                     <div class="col-md-4">
                         <div class="mb-3">
-                            <label class="form-label">رنگ</label>
-                            {{ form.color }}
-                            {% if form.color.errors %}
-                                <div class="error-message">{{ form.color.errors.0 }}</div>
+                            <label class="form-label">رنگ‌های موجود</label>
+                            {{ form.available_colors }}
+                            <div class="help-text">رنگ‌ها را با کاما جدا کنید (مثال: black,white,red,blue)</div>
+                            {% if form.available_colors.errors %}
+                                <div class="error-message">{{ form.available_colors.errors.0 }}</div>
                             {% endif %}
                         </div>
                     </div>

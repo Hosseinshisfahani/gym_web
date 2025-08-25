@@ -1,5 +1,6 @@
 {% extends 'gym_shop/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}{{ category.name }} - فروشگاه تجهیزات ورزشی{% endblock %}
 
@@ -156,11 +157,11 @@
                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                             {% if product.discount_price %}
                                                 <div>
-                                                    <span class="price">{{ product.discount_price|floatformat:0 }} تومان</span>
-                                                    <small class="original-price ms-2">{{ product.price|floatformat:0 }}</small>
+                                                    <span class="price">{{ product.discount_price|format_price }} تومان</span>
+                                                    <small class="original-price ms-2">{{ product.price|format_price }}</small>
                                                 </div>
                                             {% else %}
-                                                <span class="price">{{ product.price|floatformat:0 }} تومان</span>
+                                                <span class="price">{{ product.price|format_price }} تومان</span>
                                             {% endif %}
                                             
                                             {% if product.stock > 0 %}

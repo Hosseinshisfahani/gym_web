@@ -1,5 +1,6 @@
 {% extends 'gym_shop/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}محصولات - فروشگاه تجهیزات ورزشی{% endblock %}
 
@@ -68,6 +69,21 @@
                                                placeholder="تا" value="{{ max_price }}">
                                 </div>
                                 </div>
+                            </div>
+                            
+                            <!-- Color Filter -->
+                            <div class="filter-group mb-4">
+                                <label class="form-label fw-bold">
+                                    <i class="fas fa-palette me-2 text-danger"></i>رنگ
+                                </label>
+                                <select name="color" class="form-select modern-select">
+                                    <option value="">همه رنگ‌ها</option>
+                                    {% for color_code, color_name in color_choices %}
+                                        <option value="{{ color_code }}" {% if color == color_code %}selected{% endif %}>
+                                            {{ color_name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
                             </div>
                             
                             <!-- Sort Filter -->
@@ -179,10 +195,10 @@
                                         <!-- Quick Actions Overlay -->
                                         <div class="product-overlay">
                                             <div class="quick-actions">
-                                                <button class="action-btn" title="مشاهده سریع">
+                                                <button class="action-btn quick-view-btn" title="مشاهده سریع" data-product-id="{{ product.id }}" onclick="openQuickView(this)">
                                                     <i class="fas fa-eye"></i>
                                                 </button>
-                                                <button class="action-btn" title="افزودن به علاقه‌مندی‌ها">
+                                                <button class="action-btn wishlist-btn" title="افزودن به علاقه‌مندی‌ها" data-product-id="{{ product.id }}" onclick="toggleWishlist(this)">
                                                     <i class="fas fa-heart"></i>
                                                 </button>
                                             </div>
@@ -203,6 +219,18 @@
                                         <p class="product-description">
                                             {{ product.short_description|truncatewords:12 }}
                                         </p>
+                                        
+                                        {% if product.available_colors %}
+                                        <div class="product-colors mb-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-palette me-1"></i>
+                                                <strong>رنگ‌ها:</strong> 
+                                                {% for color_code, color_name in product.available_colors_display %}
+                                                    {{ color_name }}{% if not forloop.last %}، {% endif %}
+                                                {% endfor %}
+                                            </small>
+                                        </div>
+                                        {% endif %}
                                     
                                         <div class="product-rating mb-2">
                                             <div class="stars">
@@ -219,13 +247,13 @@
                                             <div class="price-section">
                                             {% if product.discount_price %}
                                                     <div class="price-group">
-                                                        <span class="current-price">{{ product.discount_price|floatformat:0 }}</span>
+                                                        <span class="current-price">{{ product.discount_price|format_price }}</span>
                                                         <span class="currency">تومان</span>
                                                 </div>
-                                                    <div class="original-price">{{ product.price|floatformat:0 }} تومان</div>
+                                                    <div class="original-price">{{ product.price|format_price }} تومان</div>
                                             {% else %}
                                                     <div class="price-group">
-                                                        <span class="current-price">{{ product.price|floatformat:0 }}</span>
+                                                        <span class="current-price">{{ product.price|format_price }}</span>
                                                         <span class="currency">تومان</span>
                                                     </div>
                                             {% endif %}
@@ -738,5 +766,172 @@ function toggleView(viewType) {
         container.classList.remove('list-view');
     }
 }
+
+function toggleWishlist(button) {
+    // Check if user is authenticated
+    {% if not user.is_authenticated %}
+    alert('برای افزودن به علاقه‌مندی‌ها ابتدا وارد شوید.');
+    window.location.href = "{% url 'gym:login_view' %}";
+    return;
+    {% endif %}
+    
+    const productId = button.getAttribute('data-product-id');
+    const heartIcon = button.querySelector('i');
+    const originalColor = heartIcon.style.color;
+    
+    // Show loading state
+    button.disabled = true;
+    heartIcon.className = 'fas fa-spinner fa-spin';
+    
+    // Send AJAX request
+    fetch("{% url 'gym_shop:toggle_wishlist' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: `product_id=${productId}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update heart icon based on favorite status
+            if (data.is_favorited) {
+                heartIcon.style.color = '#dc2626'; // Red color for favorited
+                button.title = 'حذف از علاقه‌مندی‌ها';
+            } else {
+                heartIcon.style.color = originalColor || '#6c757d'; // Original color for not favorited
+                button.title = 'افزودن به علاقه‌مندی‌ها';
+            }
+            
+            // Show success message
+            showMessage(data.message, 'success');
+        } else {
+            showMessage(data.message || 'خطا در انجام عملیات', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('خطا در ارتباط با سرور', 'error');
+    })
+    .finally(() => {
+        // Restore button state
+        button.disabled = false;
+        heartIcon.className = 'fas fa-heart';
+    });
+}
+
+function showMessage(message, type) {
+    // Create and show a temporary alert message
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
+    alertDiv.style.position = 'fixed';
+    alertDiv.style.top = '20px';
+    alertDiv.style.right = '20px';
+    alertDiv.style.zIndex = '9999';
+    alertDiv.style.minWidth = '300px';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+    `;
+    
+    document.body.appendChild(alertDiv);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        if (alertDiv.parentElement) {
+            alertDiv.remove();
+        }
+    }, 3000);
+}
+
+// Add CSRF token if not already present
+document.addEventListener('DOMContentLoaded', function() {
+    if (!document.querySelector('[name=csrfmiddlewaretoken]')) {
+        const csrfTokenInput = document.createElement('input');
+        csrfTokenInput.type = 'hidden';
+        csrfTokenInput.name = 'csrfmiddlewaretoken';
+        csrfTokenInput.value = '{{ csrf_token }}';
+        document.body.appendChild(csrfTokenInput);
+    }
+});
+
+function openQuickView(button) {
+    const productId = button.getAttribute('data-product-id');
+    const modal = new bootstrap.Modal(document.getElementById('quickViewModal'));
+    
+    // Reset modal content
+    document.getElementById('quickViewContent').innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">در حال بارگیری...</span>
+            </div>
+            <p class="mt-2">در حال بارگیری اطلاعات محصول...</p>
+        </div>
+    `;
+    
+    // Show modal
+    modal.show();
+    
+    // Fetch product details
+    fetch(`/shop/api/product/${productId}/quick-view/`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update modal content with product details
+            document.getElementById('quickViewContent').innerHTML = data.html;
+            document.getElementById('quickViewFullLink').href = data.product_url;
+            console.log('Product URL set to:', data.product_url);
+        } else {
+            document.getElementById('quickViewContent').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    خطا در بارگیری اطلاعات محصول
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('quickViewContent').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                خطا در ارتباط با سرور
+            </div>
+        `;
+    });
+}
 </script>
+
+<!-- Quick View Modal -->
+<div class="modal fade" id="quickViewModal" tabindex="-1" aria-labelledby="quickViewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="quickViewModalLabel">مشاهده سریع محصول</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="quickViewContent">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">در حال بارگیری...</span>
+                    </div>
+                    <p class="mt-2">در حال بارگیری اطلاعات محصول...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">بستن</button>
+                <a href="#" id="quickViewFullLink" class="btn btn-primary">
+                    <i class="fas fa-external-link-alt me-2"></i>مشاهده کامل محصول
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %} 

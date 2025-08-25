@@ -6,8 +6,8 @@ class ProductForm(forms.ModelForm):
         model = Product
         fields = [
             'name', 'name_en', 'slug', 'category', 'description', 'short_description',
-            'price', 'discount_price', 'image', 'stock', 'available_sizes',
-            'weight', 'brand', 'material', 'color', 'is_featured', 'is_active'
+            'price', 'discount_price', 'image', 'stock', 'available_sizes', 'available_colors',
+            'weight', 'brand', 'material', 'is_featured', 'is_active'
         ]
         widgets = {
             'name': forms.TextInput(attrs={
@@ -54,6 +54,10 @@ class ProductForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'S,M,L,XL (با کاما جدا کنید)'
             }),
+            'available_colors': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'black,white,red,blue (با کاما جدا کنید)'
+            }),
             'weight': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
@@ -66,10 +70,6 @@ class ProductForm(forms.ModelForm):
             'material': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'جنس محصول'
-            }),
-            'color': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'رنگ محصول'
             }),
             'is_featured': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
@@ -151,6 +151,13 @@ class ProductSearchForm(forms.Form):
     )
     is_featured = forms.ChoiceField(
         choices=[('', 'همه محصولات'), ('true', 'محصولات ویژه'), ('false', 'محصولات معمولی')],
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'form-control'
+        })
+    )
+    color = forms.ChoiceField(
+        choices=[('', 'همه رنگ‌ها')] + Product.COLOR_CHOICES,
         required=False,
         widget=forms.Select(attrs={
             'class': 'form-control'
