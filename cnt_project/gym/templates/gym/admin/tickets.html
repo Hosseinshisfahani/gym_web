@@ -17,10 +17,9 @@
                     <label for="status" class="form-label">وضعیت</label>
                     <select class="form-select" id="status" name="status">
                         <option value="">همه</option>
-                        <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>در انتظار بررسی</option>
+                        <option value="open" {% if status_filter == 'open' %}selected{% endif %}>باز</option>
                         <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>در حال بررسی</option>
-                        <option value="resolved" {% if status_filter == 'resolved' %}selected{% endif %}>حل شده</option>
-                        <option value="closed" {% if status_filter == 'closed' %}selected{% endif %}>بسته شده</option>
+                        <option value="closed" {% if status_filter == 'closed' %}selected{% endif %}>بسته</option>
                     </select>
                 </div>
                 <div class="col-md-4 d-flex align-items-end">
@@ -49,12 +48,12 @@
                 <tr>
                     <td>#{{ ticket.id }}</td>
                     <td>{{ ticket.user.get_full_name|default:ticket.user.username }}</td>
-                    <td>{{ ticket.title }}</td>
+                    <td>{{ ticket.subject }}</td>
                     <td>
-                        <span class="badge {% if ticket.status == 'pending' %}bg-warning
+                        <span class="badge {% if ticket.status == 'open' %}bg-warning
                                          {% elif ticket.status == 'in_progress' %}bg-info
-                                         {% elif ticket.status == 'resolved' %}bg-success
-                                         {% else %}bg-secondary{% endif %}">
+                                         {% elif ticket.status == 'closed' %}bg-secondary
+                                         {% else %}bg-primary{% endif %}">
                             {{ ticket.get_status_display }}
                         </span>
                     </td>
@@ -88,10 +87,9 @@
                     <div class="mb-3">
                         <label for="ticketStatus" class="form-label">وضعیت جدید</label>
                         <select class="form-select" id="ticketStatus" name="status">
-                            <option value="pending">در انتظار بررسی</option>
+                            <option value="open">باز</option>
                             <option value="in_progress">در حال بررسی</option>
-                            <option value="resolved">حل شده</option>
-                            <option value="closed">بسته شده</option>
+                            <option value="closed">بسته</option>
                         </select>
                     </div>
                 </div>

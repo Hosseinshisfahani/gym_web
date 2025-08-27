@@ -10,7 +10,7 @@
             <!-- Ticket Details -->
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">{{ ticket.title }}</h5>
+                    <h5 class="mb-0">{{ ticket.subject }}</h5>
                     {% if is_admin %}
                     <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#statusModal" onclick="updateTicketStatus({{ ticket.id }})">
                         تغییر وضعیت
@@ -24,15 +24,15 @@
                         <small class="text-muted">تاریخ ایجاد: {{ ticket.created_at|date:"Y/m/d H:i" }}</small>
                         <br>
                         <small class="text-muted">وضعیت: 
-                            <span class="badge {% if ticket.status == 'pending' %}bg-warning
+                            <span class="badge {% if ticket.status == 'open' %}bg-warning
                                              {% elif ticket.status == 'in_progress' %}bg-info
-                                             {% elif ticket.status == 'resolved' %}bg-success
-                                             {% else %}bg-secondary{% endif %}">
+                                             {% elif ticket.status == 'closed' %}bg-secondary
+                                             {% else %}bg-primary{% endif %}">
                                 {{ ticket.get_status_display }}
                             </span>
                         </small>
                     </div>
-                    <p class="card-text">{{ ticket.description }}</p>
+                    <p class="card-text">{{ ticket.message }}</p>
                 </div>
             </div>
 
@@ -117,7 +117,6 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <button class="btn btn-success" onclick="updateStatus('resolved')">علامت‌گذاری به عنوان حل شده</button>
                         <button class="btn btn-secondary" onclick="updateStatus('closed')">بستن گفتگو</button>
                         <a href="{% url 'gym:tickets' %}" class="btn btn-outline-primary">بازگشت به پیام‌ها</a>
                     </div>
@@ -142,10 +141,9 @@
                     <div class="mb-3">
                         <label for="ticketStatus" class="form-label">وضعیت جدید</label>
                         <select class="form-select" id="ticketStatus" name="status">
-                            <option value="pending">در انتظار بررسی</option>
+                            <option value="open">باز</option>
                             <option value="in_progress">در حال بررسی</option>
-                            <option value="resolved">حل شده</option>
-                            <option value="closed">بسته شده</option>
+                            <option value="closed">بسته</option>
                         </select>
                     </div>
                 </div>

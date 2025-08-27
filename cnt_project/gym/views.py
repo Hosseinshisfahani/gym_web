@@ -913,7 +913,8 @@ def ticket_detail(request, ticket_id):
             response = TicketResponse(
                 ticket=ticket,
                 user=request.user,
-                message=form.cleaned_data['message']
+                message=form.cleaned_data['message'],
+                is_staff=request.user.is_staff
             )
             response.save()
             
