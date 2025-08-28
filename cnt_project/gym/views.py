@@ -478,7 +478,7 @@ def download_workout_plan(request, plan_id):
     plan = get_object_or_404(WorkoutPlan, id=plan_id)
     
     # Check if user has access to this plan
-    if plan.user != request.user and not plan.user.is_staff:
+    if plan.user != request.user and not request.user.is_staff:
         messages.error(request, "شما دسترسی لازم برای دانلود این برنامه تمرینی را ندارید.")
         return redirect('gym:workout_plans')
     
@@ -757,7 +757,7 @@ def download_diet_plan(request, plan_id):
     plan = get_object_or_404(DietPlan, id=plan_id)
     
     # Check if user has access to this plan
-    if plan.user != request.user and not plan.user.is_staff:
+    if plan.user != request.user and not request.user.is_staff:
         messages.error(request, "شما دسترسی لازم برای دانلود این برنامه غذایی را ندارید.")
         return redirect('gym:diet_plans')
     
