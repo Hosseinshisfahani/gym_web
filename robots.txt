@@ -1,0 +1,29 @@
+User-agent: *
+Allow: /
+
+# Allow crawling of main content
+Allow: /shop/
+Allow: /shop/products/
+Allow: /shop/category/
+Allow: /shop/product/
+
+# Disallow private/admin areas
+Disallow: /admin/
+Disallow: /accounts/
+Disallow: /shop/cart/
+Disallow: /shop/checkout/
+Disallow: /shop/orders/
+Disallow: /shop/api/
+Disallow: /*?*utm_*
+Disallow: /*?*fbclid*
+Disallow: /*?*gclid*
+
+# Allow CSS and JS files
+Allow: /static/
+
+# Sitemap location
+Sitemap: https://shirneshansport.ir/sitemap.xml
+
+# Crawl-delay for being polite to search engines
+Crawl-delay: 1
+

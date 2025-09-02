@@ -2,7 +2,50 @@
 {% load static %}
 {% load custom_filters %}
 
-{% block title %}{{ category.name }} - فروشگاه تجهیزات ورزشی{% endblock %}
+{% block title %}{{ category.name }} - خرید آنلاین {{ category.name }} با بهترین قیمت | فروشگاه شیرنشان{% endblock %}
+
+{% block meta_description %}خرید آنلاین {{ category.name }} از فروشگاه شیرنشان. {% if category.description %}{{ category.description|truncatewords:20|striptags }}{% else %}بهترین محصولات {{ category.name }} با کیفیت عالی و قیمت مناسب.{% endif %} {{ page_obj.paginator.count }} محصول در دسترس.{% endblock %}
+
+{% block meta_keywords %}{{ category.name }}, خرید {{ category.name }}, فروشگاه {{ category.name }}, تجهیزات ورزشی، شیرنشان{% endblock %}
+
+{% block canonical_url %}https://shirneshansport.ir{% url 'gym_shop:category_detail' category.slug %}{% endblock %}
+
+{% block og_title %}{{ category.name }} - فروشگاه آنلاین شیرنشان{% endblock %}
+{% block og_description %}{% if category.description %}{{ category.description|truncatewords:25|striptags }}{% else %}خرید بهترین محصولات {{ category.name }} از فروشگاه شیرنشان{% endif %}{% endblock %}
+{% block og_url %}https://shirneshansport.ir{% url 'gym_shop:category_detail' category.slug %}{% endblock %}
+{% block og_image %}{% if category.image %}https://shirneshansport.ir{{ category.image.url }}{% else %}https://shirneshansport.ir{% static 'images/category-default.jpg' %}{% endif %}{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "{{ category.name }}",
+    "description": "{% if category.description %}{{ category.description|striptags }}{% else %}دسته‌بندی {{ category.name }} در فروشگاه ورزشی شیرنشان{% endif %}",
+    "url": "https://shirneshansport.ir{% url 'gym_shop:category_detail' category.slug %}",
+    "mainEntity": {
+        "@type": "ItemList",
+        "numberOfItems": "{{ page_obj.paginator.count }}",
+        "itemListElement": [
+            {% for product in page_obj %}
+            {
+                "@type": "Product",
+                "position": "{{ forloop.counter }}",
+                "name": "{{ product.name }}",
+                "url": "https://shirneshansport.ir{% url 'gym_shop:product_detail' product.slug %}",
+                "image": "{% if product.image %}https://shirneshansport.ir{{ product.image.url }}{% endif %}",
+                "offers": {
+                    "@type": "Offer",
+                    "price": "{{ product.price }}",
+                    "priceCurrency": "IRR"
+                }
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ]
+    }
+}
+</script>
+{% endblock %}
 
 {% block breadcrumb %}
 <div class="container mt-3">

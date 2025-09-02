@@ -2,12 +2,13 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.core.paginator import Paginator
 from django.db.models import Q, Sum, Count
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+from django.urls import reverse
 from decimal import Decimal
 from datetime import datetime, timedelta
 import json
@@ -1776,3 +1777,61 @@ def payment_verify(request):
         
         messages.error(request, 'پرداخت لغو شد یا با خطا مواجه شد.')
         return redirect('gym_shop:order_list')
+
+
+def sitemap_xml(request):
+    """Generate dynamic sitemap.xml"""
+    base_url = "https://shirneshansport.ir"
+    
+    # Static URLs
+    static_urls = [
+        {'url': base_url + '/', 'priority': '1.0', 'changefreq': 'daily'},
+        {'url': base_url + reverse('gym_shop:home'), 'priority': '0.9', 'changefreq': 'daily'},
+        {'url': base_url + reverse('gym_shop:product_list'), 'priority': '0.8', 'changefreq': 'daily'},
+    ]
+    
+    # Category URLs
+    category_urls = []
+    categories = Category.objects.filter(is_active=True)
+    for category in categories:
+        category_urls.append({
+            'url': base_url + reverse('gym_shop:category_detail', args=[category.slug]),
+            'priority': '0.7',
+            'changefreq': 'weekly',
+            'lastmod': category.updated_at.strftime('%Y-%m-%d') if hasattr(category, 'updated_at') else timezone.now().strftime('%Y-%m-%d')
+        })
+    
+    # Product URLs
+    product_urls = []
+    products = Product.objects.filter(is_active=True)
+    for product in products:
+        product_urls.append({
+            'url': base_url + reverse('gym_shop:product_detail', args=[product.slug]),
+            'priority': '0.6',
+            'changefreq': 'weekly',
+            'lastmod': product.updated_at.strftime('%Y-%m-%d') if hasattr(product, 'updated_at') else timezone.now().strftime('%Y-%m-%d')
+        })
+    
+    # Combine all URLs
+    all_urls = static_urls + category_urls + product_urls
+    
+    # Generate XML
+    xml_content = '''<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'''
+    
+    for url_data in all_urls:
+        xml_content += f'''
+    <url>
+        <loc>{url_data['url']}</loc>
+        <priority>{url_data['priority']}</priority>
+        <changefreq>{url_data['changefreq']}</changefreq>'''
+        if 'lastmod' in url_data:
+            xml_content += f'''
+        <lastmod>{url_data['lastmod']}</lastmod>'''
+        xml_content += '''
+    </url>'''
+    
+    xml_content += '''
+</urlset>'''
+    
+    return HttpResponse(xml_content, content_type='application/xml')

@@ -18,7 +18,9 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.http import HttpResponse
 from gym.admin import admin_site
+from gym_shop.views import sitemap_xml
 
 urlpatterns = [
     # path('admin/', admin.site.urls),  # Original Django admin - commented out
@@ -26,4 +28,8 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),  # Allauth URLs for authentication
     path('', include('gym.urls', namespace='gym')),
     path('shop/', include('gym_shop.urls', namespace='gym_shop')),  # فروشگاه
+    
+    # SEO URLs
+    path('sitemap.xml', sitemap_xml, name='sitemap'),
+    path('robots.txt', lambda request: HttpResponse(open('/home/gym_web/robots.txt').read(), content_type='text/plain')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

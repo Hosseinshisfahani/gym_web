@@ -2,7 +2,53 @@
 {% load static %}
 {% load custom_filters %}
 
-{% block title %}{{ product.name }} - فروشگاه تجهیزات ورزشی{% endblock %}
+{% block title %}{{ product.name }} - خرید آنلاین {{ product.category.name }} | فروشگاه شیرنشان{% endblock %}
+
+{% block meta_description %}خرید {{ product.name }} با بهترین قیمت از فروشگاه آنلاین شیرنشان. {{ product.description|truncatewords:20|striptags }} ارسال سریع و ضمانت کیفیت.{% endblock %}
+
+{% block meta_keywords %}{{ product.name }}, {{ product.category.name }}, خرید {{ product.name }}, قیمت {{ product.name }}, فروشگاه ورزشی{% endblock %}
+
+{% block canonical_url %}https://shirneshansport.ir{% url 'gym_shop:product_detail' product.slug %}{% endblock %}
+
+{% block og_type %}product{% endblock %}
+{% block og_title %}{{ product.name }} - خرید آنلاین از فروشگاه شیرنشان{% endblock %}
+{% block og_description %}{{ product.description|truncatewords:25|striptags }}{% endblock %}
+{% block og_url %}https://shirneshansport.ir{% url 'gym_shop:product_detail' product.slug %}{% endblock %}
+{% block og_image %}{% if product.image %}https://shirneshansport.ir{{ product.image.url }}{% else %}https://shirneshansport.ir{% static 'images/default-product.jpg' %}{% endif %}{% endblock %}
+
+{% block structured_data %}
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "{{ product.name }}",
+    "description": "{{ product.description|striptags }}",
+    "image": "{% if product.image %}https://shirneshansport.ir{{ product.image.url }}{% else %}https://shirneshansport.ir{% static 'images/default-product.jpg' %}{% endif %}",
+    "sku": "{{ product.id }}",
+    "brand": {
+        "@type": "Brand",
+        "name": "{% if product.brand %}{{ product.brand }}{% else %}شیرنشان{% endif %}"
+    },
+    "category": "{{ product.category.name }}",
+    "offers": {
+        "@type": "Offer",
+        "price": "{{ product.price }}",
+        "priceCurrency": "IRR",
+        "availability": "{% if product.stock > 0 %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
+        "seller": {
+            "@type": "Organization",
+            "name": "فروشگاه ورزشی شیرنشان",
+            "url": "https://shirneshansport.ir"
+        }
+    }{% if product.rating_average %},
+    "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "{{ product.rating_average }}",
+        "reviewCount": "{{ product.review_count }}"
+    }{% endif %}
+}
+</script>
+{% endblock %}
 
 {% block breadcrumb %}
 <div class="container mt-3">
@@ -15,6 +61,39 @@
         </ol>
     </nav>
 </div>
+
+<!-- Breadcrumb Structured Data -->
+<script type="application/ld+json">
+{
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+        {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "خانه",
+            "item": "https://shirneshansport.ir/"
+        },
+        {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "محصولات",
+            "item": "https://shirneshansport.ir{% url 'gym_shop:product_list' %}"
+        },
+        {
+            "@type": "ListItem",
+            "position": 3,
+            "name": "{{ product.category.name }}",
+            "item": "https://shirneshansport.ir{% url 'gym_shop:category_detail' product.category.slug %}"
+        },
+        {
+            "@type": "ListItem",
+            "position": 4,
+            "name": "{{ product.name }}"
+        }
+    ]
+}
+</script>
 {% endblock %}
 
 {% block content %}

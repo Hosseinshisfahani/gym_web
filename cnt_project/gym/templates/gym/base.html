@@ -5,7 +5,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="enamad" content="51941848" />
+    <meta name="google-site-verification" content="T9Ql8CDp7mC66kcMkQTuihwjbLVWbsud5qorcSjcnlw" />
     <title>{% block title %}پلتفرم جامع ورزشی{% endblock %}</title>
+    
+    <!-- SEO Tags -->
+    <link rel="canonical" href="{% block canonical_url %}https://shirneshansport.ir{% endblock %}">
+    
+    <!-- Hreflang Tags -->
+    <link rel="alternate" hreflang="fa-IR" href="{% block hreflang_fa %}https://shirneshansport.ir{% endblock %}">
+    <link rel="alternate" hreflang="x-default" href="{% block hreflang_default %}https://shirneshansport.ir{% endblock %}">
+
+    <!-- Google Analytics -->
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Z4Z1JE4LF"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-7Z4Z1JE4LF');
+    </script>
 
     <!-- Bootstrap RTL CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
