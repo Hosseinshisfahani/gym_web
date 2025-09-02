@@ -1,0 +1,242 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}آپلود رسید شهریه - پلتفرم جامع ورزشی{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-upload text-primary me-2"></i>
+                        آپلود رسید شهریه
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <!-- Category Selection -->
+                        <div class="mb-3">
+                            <label for="{{ form.category.id_for_label }}" class="form-label">
+                                <i class="fas fa-list me-2"></i>
+                                {{ form.category.label }}
+                            </label>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.category.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">نوع شهریه مورد نظر خود را انتخاب کنید.</div>
+                        </div>
+
+                        <!-- Receipt Image -->
+                        <div class="mb-3">
+                            <label for="{{ form.receipt_image.id_for_label }}" class="form-label">
+                                <i class="fas fa-image me-2"></i>
+                                {{ form.receipt_image.label }}
+                            </label>
+                            {{ form.receipt_image }}
+                            {% if form.receipt_image.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.receipt_image.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">تصویر رسید پرداخت را آپلود کنید. فرمت‌های JPG، PNG و PDF قابل قبول است.</div>
+                        </div>
+
+                        <!-- Amount Paid -->
+                        <div class="mb-3">
+                            <label for="{{ form.amount_paid.id_for_label }}" class="form-label">
+                                <i class="fas fa-money-bill me-2"></i>
+                                {{ form.amount_paid.label }}
+                            </label>
+                            {{ form.amount_paid }}
+                            {% if form.amount_paid.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.amount_paid.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">مبلغ پرداخت شده را به تومان وارد کنید.</div>
+                        </div>
+
+                        <!-- Payment Date -->
+                        <div class="mb-3">
+                            <label for="{{ form.payment_date.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar me-2"></i>
+                                {{ form.payment_date.label }}
+                            </label>
+                            {{ form.payment_date }}
+                            {% if form.payment_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.payment_date.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">تاریخ پرداخت را وارد کنید.</div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="mb-3">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                <i class="fas fa-sticky-note me-2"></i>
+                                {{ form.notes.label }}
+                            </label>
+                            {{ form.notes }}
+                            {% if form.notes.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.notes.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">یادداشت‌های اضافی (اختیاری)</div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-upload me-2"></i>
+                                آپلود رسید
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Active Categories Info -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle text-info me-2"></i>
+                        اطلاعات انواع شهریه
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for category in active_categories %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-info">
+                                <div class="card-body">
+                                    <h6 class="card-title text-info">{{ category.name }}</h6>
+                                    <p class="card-text small">{{ category.description|default:"بدون توضیح" }}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-primary">{{ category.amount|floatformat:0 }} تومان</span>
+                                        <small class="text-muted">{{ category.duration_months }} ماه</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12">
+                            <p class="text-muted text-center">هیچ نوع شهریه‌ای تعریف نشده است.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instructions -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-question-circle text-warning me-2"></i>
+                        راهنمای آپلود
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            تصویر رسید باید واضح و خوانا باشد
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            مبلغ وارد شده باید دقیقاً با مبلغ رسید مطابقت داشته باشد
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            تاریخ پرداخت باید صحیح باشد
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success me-2"></i>
+                            پس از آپلود، رسید در انتظار بررسی ادمین خواهد بود
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        border: 1px solid var(--section-border-color);
+        background-color: var(--secondary-color);
+        color: var(--light-gray);
+    }
+    
+    .card-header {
+        background-color: var(--section-border-color);
+        border-bottom: 1px solid var(--section-border-color);
+    }
+    
+    .form-control, .form-select {
+        background-color: var(--secondary-color);
+        border: 1px solid var(--section-border-color);
+        color: var(--light-gray);
+    }
+    
+    .form-control:focus, .form-select:focus {
+        background-color: var(--secondary-color);
+        border-color: var(--primary-color);
+        color: var(--light-gray);
+        box-shadow: 0 0 0 0.2rem rgba(255, 0, 0, 0.25);
+    }
+    
+    .form-control::placeholder {
+        color: #6c757d;
+    }
+    
+    .form-text {
+        color: #6c757d;
+    }
+    
+    .invalid-feedback {
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-fill amount when category is selected
+    document.getElementById('{{ form.category.id_for_label }}').addEventListener('change', function() {
+        const categorySelect = this;
+        const amountInput = document.getElementById('{{ form.amount_paid.id_for_label }}');
+        const selectedOption = categorySelect.options[categorySelect.selectedIndex];
+        
+        if (selectedOption.value) {
+            // Get amount from data attribute or parse from text
+            const amountText = selectedOption.textContent;
+            const amountMatch = amountText.match(/(\d+(?:,\d+)*)\s*تومان/);
+            if (amountMatch) {
+                const amount = amountMatch[1].replace(/,/g, '');
+                amountInput.value = amount;
+            }
+        }
+    });
+</script>
+{% endblock %}

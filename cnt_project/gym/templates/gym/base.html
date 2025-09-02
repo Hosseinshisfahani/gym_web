@@ -422,11 +422,25 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'gym:diet_plans' %}">برنامه‌های غذایی</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'gym:tuition_dashboard' %}">
+                                <i class="fas fa-graduation-cap me-1"></i>
+                                شهریه
+                            </a>
+                        </li>
                         {% if user.is_superuser %}
                             <li class="nav-item">
                                 <a class="nav-link admin-link" href="{% url 'admin:index' %}">
                                     <i class="fas fa-cog"></i>
                                     ورود به صفحه مدیریت سایت
+                                </a>
+                            </li>
+                        {% endif %}
+                        {% if user.is_staff %}
+                            <li class="nav-item">
+                                <a class="nav-link admin-link" href="{% url 'gym:admin_tuition_dashboard' %}">
+                                    <i class="fas fa-graduation-cap me-1"></i>
+                                    مدیریت شهریه
                                 </a>
                             </li>
                         {% endif %}

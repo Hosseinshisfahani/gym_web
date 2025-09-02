@@ -5,6 +5,7 @@ from django.contrib.admin import ModelAdmin
 from django.contrib import messages
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.admin import UserAdmin, GroupAdmin
+from django.utils import timezone
 
 # The User and Group models are already registered with the default admin site by Django
 # so we don't need to register them explicitly
@@ -32,7 +33,7 @@ admin_site = CustomAdminSite(name='admin')
 from .models import (
     UserProfile, WorkoutPlan, DietPlan, 
     Payment, Ticket, TicketResponse, Document, PlanRequest,
-    BodyAnalysisReport, InBodyReport, MonthlyGoal, ProgressAnalysis, BodyInformationUser, PaymentCard, EmailNotificationSettings
+    BodyAnalysisReport, InBodyReport, MonthlyGoal, ProgressAnalysis, BodyInformationUser, PaymentCard, EmailNotificationSettings, TuitionCategory, TuitionReceipt
 )
 
 # Import shop models
@@ -265,3 +266,66 @@ class EmailAddressAdmin(admin.ModelAdmin):
     search_fields = ('user__email', 'user__username', 'email')
 
 admin_site.register(EmailAddress, EmailAddressAdmin)
+
+# Tuition System Admin Classes
+class TuitionCategoryAdmin(admin.ModelAdmin):
+    verbose_name = 'دسته‌بندی شهریه'
+    verbose_name_plural = 'دسته‌بندی‌های شهریه'
+    list_display = ('name', 'amount', 'duration_months', 'is_active', 'created_at')
+    list_filter = ('is_active', 'duration_months')
+    search_fields = ('name', 'description')
+    ordering = ('amount',)
+    list_editable = ('is_active', 'amount', 'duration_months')
+    
+    fieldsets = [
+        ('اطلاعات پایه', {
+            'fields': ['name', 'description', 'is_active']
+        }),
+        ('مشخصات مالی', {
+            'fields': ['amount', 'duration_months']
+        }),
+        ('تاریخ‌ها', {
+            'fields': ['created_at'],
+            'classes': ['collapse']
+        }),
+    ]
+    readonly_fields = ('created_at',)
+
+class TuitionReceiptAdmin(admin.ModelAdmin):
+    verbose_name = 'رسید شهریه'
+    verbose_name_plural = 'رسیدهای شهریه'
+    list_display = ('athlete', 'category', 'amount_paid', 'payment_date', 'status', 'expiry_date', 'created_at')
+    list_filter = ('status', 'category', 'payment_date', 'created_at')
+    search_fields = ('athlete__username', 'athlete__userprofile__name', 'notes', 'admin_notes')
+    ordering = ('-created_at',)
+    list_editable = ('status',)
+    readonly_fields = ('athlete', 'category', 'receipt_image', 'amount_paid', 'payment_date', 'notes', 'created_at', 'updated_at')
+    
+    fieldsets = [
+        ('اطلاعات ورزشکار', {
+            'fields': ['athlete', 'category']
+        }),
+        ('جزئیات پرداخت', {
+            'fields': ['receipt_image', 'amount_paid', 'payment_date', 'expiry_date']
+        }),
+        ('وضعیت و بررسی', {
+            'fields': ['status', 'notes', 'admin_notes', 'reviewed_by', 'reviewed_at']
+        }),
+        ('تاریخ‌ها', {
+            'fields': ['created_at', 'updated_at'],
+            'classes': ['collapse']
+        }),
+    ]
+    
+    def save_model(self, request, obj, form, change):
+        if change and 'status' in form.changed_data:
+            obj.reviewed_by = request.user
+            obj.reviewed_at = timezone.now()
+        super().save_model(request, obj, form, change)
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('athlete', 'category', 'reviewed_by')
+
+# Register tuition models
+admin_site.register(TuitionCategory, TuitionCategoryAdmin)
+admin_site.register(TuitionReceipt, TuitionReceiptAdmin)

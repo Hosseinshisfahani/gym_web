@@ -1,0 +1,231 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}داشبورد شهریه - پلتفرم جامع ورزشی{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">
+                    <i class="fas fa-graduation-cap text-primary me-2"></i>
+                    داشبورد شهریه
+                </h2>
+                <a href="{% url 'gym:upload_tuition_receipt' %}" class="btn btn-primary">
+                    <i class="fas fa-upload me-2"></i>
+                    آپلود رسید جدید
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-receipt fa-2x mb-2"></i>
+                    <h5 class="card-title">کل رسیدها</h5>
+                    <h3 class="mb-0">{{ total_receipts }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                    <h5 class="card-title">تایید شده</h5>
+                    <h3 class="mb-0">{{ approved_receipts }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-2x mb-2"></i>
+                    <h5 class="card-title">در انتظار</h5>
+                    <h3 class="mb-0">{{ pending_receipts }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body text-center">
+                    <i class="fas fa-times-circle fa-2x mb-2"></i>
+                    <h5 class="card-title">منقضی شده</h5>
+                    <h3 class="mb-0">{{ expired_receipts }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Tuition Status -->
+    {% if active_tuition %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-check-circle me-2"></i>
+                        وضعیت شهریه فعال
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>نوع شهریه:</strong> {{ active_tuition.category.name }}</p>
+                            <p><strong>مبلغ:</strong> {{ active_tuition.amount_paid|floatformat:0 }} تومان</p>
+                            <p><strong>تاریخ پرداخت:</strong> {{ active_tuition.payment_date|date:"Y/m/d" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>تاریخ انقضا:</strong> {{ active_tuition.expiry_date|date:"Y/m/d" }}</p>
+                            <p><strong>روزهای باقی‌مانده:</strong> 
+                                <span class="badge bg-success">{{ active_tuition.days_until_expiry }} روز</span>
+                            </p>
+                            <p><strong>وضعیت:</strong> 
+                                <span class="badge bg-success">{{ active_tuition.get_status_display }}</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Tuition Categories -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        انواع شهریه موجود
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for category in active_categories %}
+                        <div class="col-md-4 mb-3">
+                            <div class="card border-primary">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">{{ category.name }}</h6>
+                                    <p class="card-text text-muted">{{ category.description|default:"بدون توضیح" }}</p>
+                                    <h4 class="text-primary mb-2">{{ category.amount|floatformat:0 }} تومان</h4>
+                                    <small class="text-muted">مدت: {{ category.duration_months }} ماه</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12">
+                            <p class="text-muted text-center">هیچ نوع شهریه‌ای تعریف نشده است.</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receipts List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        تاریخچه رسیدها
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if user_receipts %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>نوع شهریه</th>
+                                    <th>مبلغ</th>
+                                    <th>تاریخ پرداخت</th>
+                                    <th>وضعیت</th>
+                                    <th>تاریخ انقضا</th>
+                                    <th>عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for receipt in user_receipts %}
+                                <tr>
+                                    <td>{{ receipt.category.name }}</td>
+                                    <td>{{ receipt.amount_paid|floatformat:0 }} تومان</td>
+                                    <td>{{ receipt.payment_date|date:"Y/m/d" }}</td>
+                                    <td>
+                                        {% if receipt.status == 'approved' %}
+                                            <span class="badge bg-success">{{ receipt.get_status_display }}</span>
+                                        {% elif receipt.status == 'pending' %}
+                                            <span class="badge bg-warning">{{ receipt.get_status_display }}</span>
+                                        {% elif receipt.status == 'rejected' %}
+                                            <span class="badge bg-danger">{{ receipt.get_status_display }}</span>
+                                        {% elif receipt.status == 'expired' %}
+                                            <span class="badge bg-secondary">{{ receipt.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if receipt.is_expired %}
+                                            <span class="text-danger">{{ receipt.expiry_date|date:"Y/m/d" }}</span>
+                                        {% else %}
+                                            {{ receipt.expiry_date|date:"Y/m/d" }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'gym:tuition_receipt_detail' receipt.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">هنوز هیچ رسید شهریه‌ای آپلود نکرده‌اید.</p>
+                        <a href="{% url 'gym:upload_tuition_receipt' %}" class="btn btn-primary">
+                            <i class="fas fa-upload me-2"></i>
+                            آپلود اولین رسید
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        border: 1px solid var(--section-border-color);
+        background-color: var(--secondary-color);
+        color: var(--light-gray);
+    }
+    
+    .card-header {
+        background-color: var(--section-border-color);
+        border-bottom: 1px solid var(--section-border-color);
+    }
+    
+    .table {
+        color: var(--light-gray);
+    }
+    
+    .table-dark {
+        background-color: var(--section-border-color);
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+</style>
+{% endblock %}

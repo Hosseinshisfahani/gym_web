@@ -12,12 +12,14 @@ from .forms import (
     BodyAnalysisReportForm, BodyAnalysisResponseForm,
     InBodyReportForm, InBodyResponseForm,
     MonthlyGoalForm, MonthlyGoalUpdateForm, MonthlyGoalCoachForm,
-    ProgressAnalysisForm, BodyInformationUserForm
+    ProgressAnalysisForm, BodyInformationUserForm,
+    TuitionReceiptForm, TuitionReceiptAdminForm, TuitionCategoryForm
 )
 from .models import (
     UserProfile, WorkoutPlan, DietPlan, 
     Payment, Ticket, TicketResponse, Document, PlanRequest,
-    BodyAnalysisReport, InBodyReport, MonthlyGoal, ProgressAnalysis, BodyInformationUser, PaymentCard
+    BodyAnalysisReport, InBodyReport, MonthlyGoal, ProgressAnalysis, BodyInformationUser, PaymentCard,
+    TuitionReceipt, TuitionCategory
 )
 from django.db.models import Q, Avg, Sum, Count
 import datetime
@@ -37,6 +39,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from datetime import timedelta
+
 
 # Home view
 def home(request):
@@ -2947,3 +2950,217 @@ def payment_gateway_status(request):
     }
     
     return render(request, 'gym/payment_gateway_status.html', context)
+
+# Tuition System Views
+@login_required
+def tuition_dashboard(request):
+    """Dashboard for athletes to view their tuition receipts and upload new ones"""
+    user_receipts = TuitionReceipt.objects.filter(athlete=request.user).order_by('-created_at')
+    active_categories = TuitionCategory.objects.filter(is_active=True)
+    
+    # Get statistics
+    total_receipts = user_receipts.count()
+    approved_receipts = user_receipts.filter(status='approved').count()
+    pending_receipts = user_receipts.filter(status='pending').count()
+    expired_receipts = user_receipts.filter(status='expired').count()
+    
+    # Check for active tuition
+    active_tuition = user_receipts.filter(
+        status='approved',
+        expiry_date__gte=timezone.now().date()
+    ).first()
+    
+    context = {
+        'user_receipts': user_receipts,
+        'active_categories': active_categories,
+        'total_receipts': total_receipts,
+        'approved_receipts': approved_receipts,
+        'pending_receipts': pending_receipts,
+        'expired_receipts': expired_receipts,
+        'active_tuition': active_tuition,
+    }
+    
+    return render(request, 'gym/tuition_dashboard.html', context)
+
+@login_required
+def upload_tuition_receipt(request):
+    """View for athletes to upload tuition receipts"""
+    if request.method == 'POST':
+        form = TuitionReceiptForm(request.POST, request.FILES)
+        if form.is_valid():
+            receipt = form.save(commit=False)
+            receipt.athlete = request.user
+            
+            # Calculate expiry date based on category duration
+            if receipt.category:
+                receipt.expiry_date = receipt.payment_date + datetime.timedelta(days=30 * receipt.category.duration_months)
+            
+            receipt.save()
+            
+            messages.success(request, 'رسید شهریه با موفقیت آپلود شد و در انتظار بررسی است.')
+            return redirect('gym:tuition_dashboard')
+    else:
+        form = TuitionReceiptForm()
+    
+    context = {
+        'form': form,
+        'active_categories': TuitionCategory.objects.filter(is_active=True)
+    }
+    
+    return render(request, 'gym/upload_tuition_receipt.html', context)
+
+@login_required
+def tuition_receipt_detail(request, receipt_id):
+    """View for athletes to see details of their tuition receipt"""
+    receipt = get_object_or_404(TuitionReceipt, id=receipt_id, athlete=request.user)
+    
+    context = {
+        'receipt': receipt,
+    }
+    
+    return render(request, 'gym/tuition_receipt_detail.html', context)
+
+@staff_member_required
+def admin_tuition_dashboard(request):
+    """Admin dashboard for managing all tuition receipts"""
+    # Get filter parameters
+    status_filter = request.GET.get('status', '')
+    category_filter = request.GET.get('category', '')
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+    
+    receipts = TuitionReceipt.objects.all().select_related('athlete', 'category', 'reviewed_by')
+    
+    # Apply filters
+    if status_filter:
+        receipts = receipts.filter(status=status_filter)
+    if category_filter:
+        receipts = receipts.filter(category_id=category_filter)
+    if date_from:
+        try:
+            from_date = persian_to_gregorian_date(date_from)
+            if from_date:
+                receipts = receipts.filter(payment_date__gte=from_date)
+        except:
+            pass
+    if date_to:
+        try:
+            to_date = persian_to_gregorian_date(date_to)
+            if to_date:
+                receipts = receipts.filter(payment_date__lte=to_date)
+        except:
+            pass
+    
+    # Get statistics
+    total_receipts = TuitionReceipt.objects.count()
+    pending_receipts = TuitionReceipt.objects.filter(status='pending').count()
+    approved_receipts = TuitionReceipt.objects.filter(status='approved').count()
+    rejected_receipts = TuitionReceipt.objects.filter(status='rejected').count()
+    expired_receipts = TuitionReceipt.objects.filter(status='expired').count()
+    
+    # Get categories for filter
+    categories = TuitionCategory.objects.filter(is_active=True)
+    
+    context = {
+        'receipts': receipts,
+        'categories': categories,
+        'status_filter': status_filter,
+        'category_filter': category_filter,
+        'date_from': date_from,
+        'date_to': date_to,
+        'total_receipts': total_receipts,
+        'pending_receipts': pending_receipts,
+        'approved_receipts': approved_receipts,
+        'rejected_receipts': rejected_receipts,
+        'expired_receipts': expired_receipts,
+    }
+    
+    return render(request, 'gym/admin_tuition_dashboard.html', context)
+
+@staff_member_required
+def review_tuition_receipt(request, receipt_id):
+    """Admin view to review and update tuition receipt status"""
+    receipt = get_object_or_404(TuitionReceipt, id=receipt_id)
+    
+    if request.method == 'POST':
+        form = TuitionReceiptAdminForm(request.POST, instance=receipt)
+        if form.is_valid():
+            receipt = form.save(commit=False)
+            receipt.reviewed_by = request.user
+            receipt.reviewed_at = timezone.now()
+            receipt.save()
+            
+            messages.success(request, f'وضعیت رسید {receipt.athlete.username} با موفقیت به‌روزرسانی شد.')
+            return redirect('gym:admin_tuition_dashboard')
+    else:
+        form = TuitionReceiptAdminForm(instance=receipt)
+    
+    context = {
+        'receipt': receipt,
+        'form': form,
+    }
+    
+    return render(request, 'gym/review_tuition_receipt.html', context)
+
+@staff_member_required
+def manage_tuition_categories(request):
+    """Admin view to manage tuition categories"""
+    categories = TuitionCategory.objects.all().order_by('amount')
+    
+    if request.method == 'POST':
+        form = TuitionCategoryForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'دسته‌بندی شهریه با موفقیت ایجاد شد.')
+            return redirect('gym:manage_tuition_categories')
+    else:
+        form = TuitionCategoryForm()
+    
+    context = {
+        'categories': categories,
+        'form': form,
+    }
+    
+    return render(request, 'gym/manage_tuition_categories.html', context)
+
+@staff_member_required
+def edit_tuition_category(request, category_id):
+    """Admin view to edit tuition category"""
+    category = get_object_or_404(TuitionCategory, id=category_id)
+    
+    if request.method == 'POST':
+        form = TuitionCategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'دسته‌بندی شهریه با موفقیت به‌روزرسانی شد.')
+            return redirect('gym:manage_tuition_categories')
+    else:
+        form = TuitionCategoryForm(instance=category)
+    
+    context = {
+        'category': category,
+        'form': form,
+    }
+    
+    return render(request, 'gym/edit_tuition_category.html', context)
+
+@staff_member_required
+def delete_tuition_category(request, category_id):
+    """Admin view to delete tuition category"""
+    category = get_object_or_404(TuitionCategory, id=category_id)
+    
+    # Check if category has any receipts
+    if category.tuitionreceipt_set.exists():
+        messages.error(request, 'این دسته‌بندی دارای رسید است و قابل حذف نیست.')
+        return redirect('gym:manage_tuition_categories')
+    
+    if request.method == 'POST':
+        category.delete()
+        messages.success(request, 'دسته‌بندی شهریه با موفقیت حذف شد.')
+        return redirect('gym:manage_tuition_categories')
+    
+    context = {
+        'category': category,
+    }
+    
+    return render(request, 'gym/delete_tuition_category.html', context)

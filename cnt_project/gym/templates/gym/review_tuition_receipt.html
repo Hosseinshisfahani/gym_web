@@ -1,0 +1,289 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}بررسی رسید شهریه - پنل ادمین{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-eye text-primary me-2"></i>
+                            بررسی رسید شهریه
+                        </h4>
+                        <a href="{% url 'gym:admin_tuition_dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-right me-2"></i>
+                            بازگشت به داشبورد
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Receipt Information -->
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">اطلاعات رسید</h6>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold">ورزشکار:</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if receipt.athlete.userprofile.profile_image %}
+                                                <img src="{{ receipt.athlete.userprofile.profile_image.url }}" 
+                                                     alt="Profile" class="rounded-circle me-2" width="30" height="30">
+                                            {% else %}
+                                                <div class="bg-secondary rounded-circle me-2 d-flex align-items-center justify-content-center" 
+                                                     style="width: 30px; height: 30px;">
+                                                    <i class="fas fa-user text-white fa-sm"></i>
+                                                </div>
+                                            {% endif %}
+                                            <div>
+                                                <div class="fw-bold">{{ receipt.athlete.userprofile.name|default:receipt.athlete.username }}</div>
+                                                <small class="text-muted">{{ receipt.athlete.username }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">نوع شهریه:</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ receipt.category.name }}</span>
+                                        <br>
+                                        <small class="text-muted">{{ receipt.category.duration_months }} ماه</small>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">مبلغ:</td>
+                                    <td class="text-primary fw-bold">{{ receipt.amount_paid|floatformat:0 }} تومان</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">تاریخ پرداخت:</td>
+                                    <td>{{ receipt.payment_date|date:"Y/m/d" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">تاریخ انقضا:</td>
+                                    <td>
+                                        {% if receipt.is_expired %}
+                                            <span class="text-danger">{{ receipt.expiry_date|date:"Y/m/d" }}</span>
+                                        {% else %}
+                                            {{ receipt.expiry_date|date:"Y/m/d" }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">وضعیت فعلی:</td>
+                                    <td>
+                                        {% if receipt.status == 'approved' %}
+                                            <span class="badge bg-success fs-6">{{ receipt.get_status_display }}</span>
+                                        {% elif receipt.status == 'pending' %}
+                                            <span class="badge bg-warning fs-6">{{ receipt.get_status_display }}</span>
+                                        {% elif receipt.status == 'rejected' %}
+                                            <span class="badge bg-danger fs-6">{{ receipt.get_status_display }}</span>
+                                        {% elif receipt.status == 'expired' %}
+                                            <span class="badge bg-secondary fs-6">{{ receipt.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">تاریخ آپلود:</td>
+                                    <td>{{ receipt.created_at|date:"Y/m/d H:i" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- Receipt Image -->
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">تصویر رسید</h6>
+                            {% if receipt.receipt_image %}
+                            <div class="text-center">
+                                <img src="{{ receipt.receipt_image.url }}" alt="Receipt Image" 
+                                     class="img-fluid rounded" style="max-height: 300px;">
+                                <div class="mt-2">
+                                    <a href="{{ receipt.receipt_image.url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-external-link-alt me-2"></i>
+                                        مشاهده در اندازه کامل
+                                    </a>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="text-center text-muted">
+                                <i class="fas fa-image fa-3x mb-3"></i>
+                                <p>تصویر رسید موجود نیست</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Notes Section -->
+                    {% if receipt.notes %}
+                    <hr class="my-4">
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">یادداشت‌های ورزشکار</h6>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <p class="mb-0">{{ receipt.notes|linebreaks }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Review Form -->
+                    <hr class="my-4">
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">بررسی و تصمیم‌گیری</h6>
+                            <form method="post">
+                                {% csrf_token %}
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="{{ form.status.id_for_label }}" class="form-label">
+                                                <i class="fas fa-check-circle me-2"></i>
+                                                {{ form.status.label }}
+                                            </label>
+                                            {{ form.status }}
+                                            {% if form.status.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {% for error in form.status.errors %}
+                                                        <small class="text-danger">{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="{{ form.expiry_date.id_for_label }}" class="form-label">
+                                                <i class="fas fa-calendar me-2"></i>
+                                                {{ form.expiry_date.label }}
+                                            </label>
+                                            {{ form.expiry_date }}
+                                            {% if form.expiry_date.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {% for error in form.expiry_date.errors %}
+                                                        <small class="text-danger">{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="{{ form.admin_notes.id_for_label }}" class="form-label">
+                                                <i class="fas fa-sticky-note me-2"></i>
+                                                {{ form.admin_notes.label }}
+                                            </label>
+                                            {{ form.admin_notes }}
+                                            {% if form.admin_notes.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {% for error in form.admin_notes.errors %}
+                                                        <small class="text-danger">{{ error }}</small>
+                                                    {% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Submit Buttons -->
+                                <div class="row mt-4">
+                                    <div class="col-12 text-center">
+                                        <button type="submit" class="btn btn-primary btn-lg me-3">
+                                            <i class="fas fa-save me-2"></i>
+                                            ذخیره تغییرات
+                                        </button>
+                                        <a href="{% url 'gym:admin_tuition_dashboard' %}" class="btn btn-outline-secondary btn-lg">
+                                            <i class="fas fa-times me-2"></i>
+                                            انصراف
+                                        </a>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Review History -->
+                    {% if receipt.reviewed_by %}
+                    <hr class="my-4">
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">تاریخچه بررسی</h6>
+                            <div class="card bg-dark">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p><strong>بررسی شده توسط:</strong> {{ receipt.reviewed_by.get_full_name|default:receipt.reviewed_by.username }}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p><strong>تاریخ بررسی:</strong> {{ receipt.reviewed_at|date:"Y/m/d H:i" }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        border: 1px solid var(--section-border-color);
+        background-color: var(--secondary-color);
+        color: var(--light-gray);
+    }
+    
+    .card-header {
+        background-color: var(--section-border-color);
+        border-bottom: 1px solid var(--section-border-color);
+    }
+    
+    .table-borderless td {
+        border: none;
+        padding: 0.5rem 0;
+    }
+    
+    .table-borderless td:first-child {
+        width: 40%;
+    }
+    
+    .bg-light {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        color: var(--light-gray);
+    }
+    
+    .bg-dark {
+        background-color: var(--section-border-color) !important;
+    }
+    
+    .img-fluid {
+        border: 2px solid var(--section-border-color);
+    }
+    
+    .form-control, .form-select, .form-textarea {
+        background-color: var(--secondary-color);
+        border: 1px solid var(--section-border-color);
+        color: var(--light-gray);
+    }
+    
+    .form-control:focus, .form-select:focus, .form-textarea:focus {
+        background-color: var(--secondary-color);
+        border-color: var(--primary-color);
+        color: var(--light-gray);
+        box-shadow: 0 0 0 0.2rem rgba(255, 0, 0, 0.25);
+    }
+    
+    .invalid-feedback {
+        color: #dc3545;
+    }
+</style>
+{% endblock %}

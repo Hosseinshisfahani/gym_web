@@ -1,0 +1,297 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}مدیریت دسته‌بندی‌های شهریه - پنل ادمین{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">
+                    <i class="fas fa-cog text-primary me-2"></i>
+                    مدیریت دسته‌بندی‌های شهریه
+                </h2>
+                <a href="{% url 'gym:admin_tuition_dashboard' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-right me-2"></i>
+                    بازگشت به داشبورد
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Add New Category Form -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-plus text-success me-2"></i>
+                        افزودن دسته‌بندی جدید
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">
+                                <i class="fas fa-tag me-2"></i>
+                                {{ form.name.label }}
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.name.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                <i class="fas fa-align-left me-2"></i>
+                                {{ form.description.label }}
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.description.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.amount.id_for_label }}" class="form-label">
+                                <i class="fas fa-money-bill me-2"></i>
+                                {{ form.amount.label }}
+                            </label>
+                            {{ form.amount }}
+                            {% if form.amount.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.amount.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">مبلغ به تومان وارد شود</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.duration_months.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar me-2"></i>
+                                {{ form.duration_months.label }}
+                            </label>
+                            {{ form.amount }}
+                            {% if form.duration_months.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.duration_months.errors %}
+                                        <small class="text-danger">{{ error }}</small>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">مدت به ماه وارد شود</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    {{ form.is_active.label }}
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save me-2"></i>
+                                افزودن دسته‌بندی
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories List -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list text-info me-2"></i>
+                        لیست دسته‌بندی‌ها
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if categories %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>نام</th>
+                                    <th>توضیحات</th>
+                                    <th>مبلغ</th>
+                                    <th>مدت</th>
+                                    <th>وضعیت</th>
+                                    <th>تاریخ ایجاد</th>
+                                    <th>عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for category in categories %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ category.name }}</strong>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {{ category.description|default:"بدون توضیح"|truncatechars:50 }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ category.amount|floatformat:0 }} تومان</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ category.duration_months }} ماه</span>
+                                    </td>
+                                    <td>
+                                        {% if category.is_active %}
+                                            <span class="badge bg-success">فعال</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">غیرفعال</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ category.created_at|date:"Y/m/d" }}</small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'gym:edit_tuition_category' category.id %}" 
+                                               class="btn btn-sm btn-outline-primary" title="ویرایش">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% if not category.tuitionreceipt_set.exists %}
+                                            <a href="{% url 'gym:delete_tuition_category' category.id %}" 
+                                               class="btn btn-sm btn-outline-danger" title="حذف">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                            {% else %}
+                                            <button class="btn btn-sm btn-outline-secondary" disabled title="قابل حذف نیست">
+                                                <i class="fas fa-lock"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-cog fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">هیچ دسته‌بندی شهریه‌ای تعریف نشده است.</p>
+                        <p class="text-muted">برای شروع، اولین دسته‌بندی را اضافه کنید.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar text-warning me-2"></i>
+                        آمار دسته‌بندی‌ها
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <div class="border-end">
+                                <h4 class="text-primary">{{ categories.count }}</h4>
+                                <small class="text-muted">کل دسته‌بندی‌ها</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border-end">
+                                <h4 class="text-success">{{ categories.filter.is_active=True.count }}</h4>
+                                <small class="text-muted">دسته‌بندی‌های فعال</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h4 class="text-info">{{ categories.filter.is_active=False.count }}</h4>
+                            <small class="text-muted">دسته‌بندی‌های غیرفعال</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        border: 1px solid var(--section-border-color);
+        background-color: var(--secondary-color);
+        color: var(--light-gray);
+    }
+    
+    .card-header {
+        background-color: var(--section-border-color);
+        border-bottom: 1px solid var(--section-border-color);
+    }
+    
+    .form-control, .form-select, .form-textarea {
+        background-color: var(--secondary-color);
+        border: 1px solid var(--section-border-color);
+        color: var(--light-gray);
+    }
+    
+    .form-control:focus, .form-select:focus, .form-textarea:focus {
+        background-color: var(--secondary-color);
+        border-color: var(--primary-color);
+        color: var(--light-gray);
+        box-shadow: 0 0 0 0.2rem rgba(255, 0, 0, 0.25);
+    }
+    
+    .form-check-input {
+        background-color: var(--secondary-color);
+        border-color: var(--section-border-color);
+    }
+    
+    .form-check-input:checked {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    
+    .table {
+        color: var(--light-gray);
+    }
+    
+    .table-dark {
+        background-color: var(--section-border-color);
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    .border-end {
+        border-right: 1px solid var(--section-border-color) !important;
+    }
+    
+    .invalid-feedback {
+        color: #dc3545;
+    }
+    
+    .form-text {
+        color: #6c757d;
+    }
+</style>
+{% endblock %}

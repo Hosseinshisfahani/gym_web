@@ -1,0 +1,225 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}جزئیات رسید شهریه - پلتفرم جامع ورزشی{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">
+                            <i class="fas fa-receipt text-primary me-2"></i>
+                            جزئیات رسید شهریه
+                        </h4>
+                        <a href="{% url 'gym:tuition_dashboard' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-right me-2"></i>
+                            بازگشت به داشبورد
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">اطلاعات پایه</h6>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold">نوع شهریه:</td>
+                                    <td>{{ receipt.category.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">مبلغ:</td>
+                                    <td class="text-primary fw-bold">{{ receipt.amount_paid|floatformat:0 }} تومان</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">تاریخ پرداخت:</td>
+                                    <td>{{ receipt.payment_date|date:"Y/m/d" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">تاریخ انقضا:</td>
+                                    <td>
+                                        {% if receipt.is_expired %}
+                                            <span class="text-danger">{{ receipt.expiry_date|date:"Y/m/d" }}</span>
+                                        {% else %}
+                                            {{ receipt.expiry_date|date:"Y/m/d" }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">وضعیت:</td>
+                                    <td>
+                                        {% if receipt.status == 'approved' %}
+                                            <span class="badge bg-success fs-6">{{ receipt.get_status_display }}</span>
+                                        {% elif receipt.status == 'pending' %}
+                                            <span class="badge bg-warning fs-6">{{ receipt.get_status_display }}</span>
+                                        {% elif receipt.status == 'rejected' %}
+                                            <span class="badge bg-danger fs-6">{{ receipt.get_status_display }}</span>
+                                        {% elif receipt.status == 'expired' %}
+                                            <span class="badge bg-secondary fs-6">{{ receipt.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">جزئیات اضافی</h6>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td class="fw-bold">تاریخ آپلود:</td>
+                                    <td>{{ receipt.created_at|date:"Y/m/d H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">آخرین به‌روزرسانی:</td>
+                                    <td>{{ receipt.updated_at|date:"Y/m/d H:i" }}</td>
+                                </tr>
+                                {% if receipt.reviewed_by %}
+                                <tr>
+                                    <td class="fw-bold">بررسی شده توسط:</td>
+                                    <td>{{ receipt.reviewed_by.get_full_name|default:receipt.reviewed_by.username }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">تاریخ بررسی:</td>
+                                    <td>{{ receipt.reviewed_at|date:"Y/m/d H:i" }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if receipt.days_until_expiry is not None %}
+                                <tr>
+                                    <td class="fw-bold">روزهای باقی‌مانده:</td>
+                                    <td>
+                                        {% if receipt.days_until_expiry > 0 %}
+                                            <span class="badge bg-success fs-6">{{ receipt.days_until_expiry }} روز</span>
+                                        {% elif receipt.days_until_expiry == 0 %}
+                                            <span class="badge bg-warning fs-6">امروز</span>
+                                        {% else %}
+                                            <span class="badge bg-danger fs-6">{{ receipt.days_until_expiry|abs }} روز گذشته</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Notes Section -->
+                    {% if receipt.notes or receipt.admin_notes %}
+                    <hr class="my-4">
+                    <div class="row">
+                        {% if receipt.notes %}
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">یادداشت‌های شما</h6>
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <p class="mb-0">{{ receipt.notes|linebreaks }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if receipt.admin_notes %}
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-3">یادداشت‌های ادمین</h6>
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <p class="mb-0">{{ receipt.admin_notes|linebreaks }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Receipt Image -->
+                    {% if receipt.receipt_image %}
+                    <hr class="my-4">
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="text-muted mb-3">تصویر رسید</h6>
+                            <div class="text-center">
+                                <img src="{{ receipt.receipt_image.url }}" alt="Receipt Image" 
+                                     class="img-fluid rounded" style="max-height: 400px;">
+                                <div class="mt-2">
+                                    <a href="{{ receipt.receipt_image.url }}" target="_blank" class="btn btn-outline-primary">
+                                        <i class="fas fa-external-link-alt me-2"></i>
+                                        مشاهده در اندازه کامل
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Actions -->
+                    <hr class="my-4">
+                    <div class="row">
+                        <div class="col-12 text-center">
+                            <a href="{% url 'gym:tuition_dashboard' %}" class="btn btn-secondary me-2">
+                                <i class="fas fa-arrow-right me-2"></i>
+                                بازگشت به داشبورد
+                            </a>
+                            {% if receipt.status == 'pending' %}
+                            <span class="badge bg-warning fs-6 px-3 py-2">
+                                <i class="fas fa-clock me-2"></i>
+                                در انتظار بررسی ادمین
+                            </span>
+                            {% elif receipt.status == 'approved' and not receipt.is_expired %}
+                            <span class="badge bg-success fs-6 px-3 py-2">
+                                <i class="fas fa-check-circle me-2"></i>
+                                شهریه فعال
+                            </span>
+                            {% elif receipt.status == 'rejected' %}
+                            <span class="badge bg-danger fs-6 px-3 py-2">
+                                <i class="fas fa-times-circle me-2"></i>
+                                رد شده
+                            </span>
+                            {% elif receipt.status == 'expired' or receipt.is_expired %}
+                            <span class="badge bg-secondary fs-6 px-3 py-2">
+                                <i class="fas fa-calendar-times me-2"></i>
+                                منقضی شده
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card {
+        border: 1px solid var(--section-border-color);
+        background-color: var(--secondary-color);
+        color: var(--light-gray);
+    }
+    
+    .card-header {
+        background-color: var(--section-border-color);
+        border-bottom: 1px solid var(--section-border-color);
+    }
+    
+    .table-borderless td {
+        border: none;
+        padding: 0.5rem 0;
+    }
+    
+    .table-borderless td:first-child {
+        width: 40%;
+    }
+    
+    .bg-light {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+        color: var(--light-gray);
+    }
+    
+    .img-fluid {
+        border: 2px solid var(--section-border-color);
+    }
+    
+    .badge {
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}

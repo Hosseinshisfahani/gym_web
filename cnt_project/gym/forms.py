@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from .models import (
     UserProfile, WorkoutPlan, DietPlan, Payment, 
     Ticket, Document, PlanRequest, BodyAnalysisReport, InBodyReport,
-    MonthlyGoal, ProgressAnalysis, BodyInformationUser
+    MonthlyGoal, ProgressAnalysis, BodyInformationUser, TuitionCategory, TuitionReceipt
 )
 import jdatetime
 from datetime import datetime, date
@@ -543,3 +543,74 @@ class BodyInformationUserForm(forms.ModelForm):
             })
         
         return cleaned_data 
+
+class TuitionCategoryForm(forms.ModelForm):
+    """Form for creating and editing tuition categories"""
+    class Meta:
+        model = TuitionCategory
+        fields = ['name', 'description', 'amount', 'duration_months', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'مثال: ماهانه، فصلی، سالانه'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'توضیحات دسته‌بندی'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'مبلغ به تومان'}),
+            'duration_months': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'مدت به ماه'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        labels = {
+            'name': 'نام دسته‌بندی',
+            'description': 'توضیحات',
+            'amount': 'مبلغ (تومان)',
+            'duration_months': 'مدت (ماه)',
+            'is_active': 'فعال',
+        }
+
+class TuitionReceiptForm(forms.ModelForm):
+    """Form for athletes to upload tuition receipts"""
+    class Meta:
+        model = TuitionReceipt
+        fields = ['category', 'receipt_image', 'amount_paid', 'payment_date', 'notes']
+        widgets = {
+            'category': forms.Select(attrs={'class': 'form-control'}),
+            'receipt_image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'amount_paid': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'مبلغ پرداخت شده به تومان'}),
+            'payment_date': PersianDateWidget(),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'یادداشت‌های اضافی (اختیاری)'}),
+        }
+        labels = {
+            'category': 'نوع شهریه',
+            'receipt_image': 'تصویر رسید',
+            'amount_paid': 'مبلغ پرداخت شده (تومان)',
+            'payment_date': 'تاریخ پرداخت',
+            'notes': 'یادداشت‌ها',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Only show active categories
+        self.fields['category'].queryset = TuitionCategory.objects.filter(is_active=True)
+    
+    def clean_amount_paid(self):
+        amount = self.cleaned_data.get('amount_paid')
+        category = self.cleaned_data.get('category')
+        
+        if amount and category:
+            if amount != category.amount:
+                raise forms.ValidationError(f'مبلغ باید دقیقاً {category.amount:,} تومان باشد.')
+        
+        return amount
+
+class TuitionReceiptAdminForm(forms.ModelForm):
+    """Form for admins to review and update tuition receipts"""
+    class Meta:
+        model = TuitionReceipt
+        fields = ['status', 'admin_notes', 'expiry_date']
+        widgets = {
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'admin_notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'یادداشت‌های ادمین'}),
+            'expiry_date': PersianDateWidget(),
+        }
+        labels = {
+            'status': 'وضعیت',
+            'admin_notes': 'یادداشت‌های ادمین',
+            'expiry_date': 'تاریخ انقضا',
+        } 

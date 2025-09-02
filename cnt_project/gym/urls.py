@@ -89,4 +89,16 @@ urlpatterns = [
     path('attendance/', lambda request: render(request, 'gym/attendance.html'), name='attendance'),
     path('certificates/', lambda request: render(request, 'gym/certificates.html'), name='certificates'),
     path('booklets/', lambda request: render(request, 'gym/booklets.html'), name='booklets'),
+    
+    # Tuition System URLs
+    path('tuition/', views.tuition_dashboard, name='tuition_dashboard'),
+    path('tuition/upload/', views.upload_tuition_receipt, name='upload_tuition_receipt'),
+    path('tuition/receipt/<int:receipt_id>/', views.tuition_receipt_detail, name='tuition_receipt_detail'),
+    
+    # Admin Tuition URLs
+    path('staff/tuition/', views.admin_tuition_dashboard, name='admin_tuition_dashboard'),
+    path('staff/tuition/receipt/<int:receipt_id>/review/', views.review_tuition_receipt, name='review_tuition_receipt'),
+    path('staff/tuition/categories/', views.manage_tuition_categories, name='manage_tuition_categories'),
+    path('staff/tuition/categories/<int:category_id>/edit/', views.edit_tuition_category, name='edit_tuition_category'),
+    path('staff/tuition/categories/<int:category_id>/delete/', views.delete_tuition_category, name='delete_tuition_category'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 

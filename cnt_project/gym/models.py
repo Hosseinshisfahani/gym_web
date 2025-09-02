@@ -840,3 +840,68 @@ class EmailNotificationSettings(models.Model):
         if not self.notification_email and self.admin_user.email:
             self.notification_email = self.admin_user.email
         super().save(*args, **kwargs)
+
+class TuitionCategory(models.Model):
+    """Category for tuition payments (e.g., Monthly, Quarterly, Annual)"""
+    name = models.CharField(max_length=100, verbose_name='نام دسته‌بندی')
+    description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
+    amount = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='مبلغ (تومان)')
+    duration_months = models.PositiveIntegerField(default=1, verbose_name='مدت (ماه)')
+    is_active = models.BooleanField(default=True, verbose_name='فعال')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    
+    class Meta:
+        verbose_name = 'دسته‌بندی شهریه'
+        verbose_name_plural = 'دسته‌بندی‌های شهریه'
+        ordering = ['amount']
+    
+    def __str__(self):
+        return f"{self.name} - {self.amount:,} تومان ({self.duration_months} ماه)"
+
+class TuitionReceipt(models.Model):
+    """Model for storing tuition receipts uploaded by athletes"""
+    STATUS_CHOICES = [
+        ('pending', 'در انتظار بررسی'),
+        ('approved', 'تایید شده'),
+        ('rejected', 'رد شده'),
+        ('expired', 'منقضی شده'),
+    ]
+    
+    athlete = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tuition_receipts', verbose_name='ورزشکار')
+    category = models.ForeignKey(TuitionCategory, on_delete=models.CASCADE, verbose_name='دسته‌بندی شهریه')
+    receipt_image = models.ImageField(upload_to='tuition_receipts/', verbose_name='تصویر رسید')
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='مبلغ پرداخت شده (تومان)')
+    payment_date = models.DateField(verbose_name='تاریخ پرداخت')
+    expiry_date = models.DateField(verbose_name='تاریخ انقضا')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='وضعیت')
+    notes = models.TextField(blank=True, null=True, verbose_name='یادداشت‌ها')
+    admin_notes = models.TextField(blank=True, null=True, verbose_name='یادداشت‌های ادمین')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ آپلود')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
+    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_tuitions', verbose_name='بررسی شده توسط')
+    reviewed_at = models.DateTimeField(null=True, blank=True, verbose_name='تاریخ بررسی')
+    
+    class Meta:
+        verbose_name = 'رسید شهریه'
+        verbose_name_plural = 'رسیدهای شهریه'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.athlete.username} - {self.category.name} - {self.get_status_display()}"
+    
+    def save(self, *args, **kwargs):
+        # Calculate expiry date based on category duration if not set
+        if not self.expiry_date and self.category:
+            self.expiry_date = self.payment_date + datetime.timedelta(days=30 * self.category.duration_months)
+        super().save(*args, **kwargs)
+    
+    @property
+    def is_expired(self):
+        """Check if the tuition receipt is expired"""
+        return self.expiry_date < timezone.now().date()
+    
+    @property
+    def days_until_expiry(self):
+        """Calculate days until expiry"""
+        delta = self.expiry_date - timezone.now().date()
+        return delta.days
