@@ -1,5 +1,6 @@
 {% extends 'gym/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}مدیریت درخواست‌های برنامه{% endblock %}
 
@@ -72,7 +73,7 @@
                                     {{ request.get_status_display }}
                                 </span>
                             </td>
-                            <td>{{ request.created_at|date:"Y/m/d" }}</td>
+                            <td>{{ request.created_at|persian_date:"Y/m/d" }}</td>
                             <td>
                                 <div class="btn-group">
                                     {% if request.status == 'pending' %}

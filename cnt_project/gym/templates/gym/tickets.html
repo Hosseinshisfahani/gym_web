@@ -1,5 +1,6 @@
 {% extends 'gym/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}ارتباط با مربی{% endblock %}
 
@@ -30,8 +31,8 @@
                         {% for ticket in tickets %}
                         <tr>
                             <td>{{ ticket.subject }}</td>
-                            <td>{{ ticket.created_at|date:"Y/m/d H:i" }}</td>
-                            <td>{{ ticket.updated_at|date:"Y/m/d H:i" }}</td>
+                            <td>{{ ticket.created_at|persian_date:"Y/m/d H:i" }}</td>
+                            <td>{{ ticket.updated_at|persian_date:"Y/m/d H:i" }}</td>
                             <td>
                                 <span class="badge {% if ticket.status == 'closed' %}bg-secondary
                                     {% elif ticket.status == 'in_progress' %}bg-info

@@ -1,5 +1,6 @@
 {% extends 'gym/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}مدیریت دسته‌بندی‌های شهریه - پنل ادمین{% endblock %}
 
@@ -165,7 +166,7 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <small class="text-muted">{{ category.created_at|date:"Y/m/d" }}</small>
+                                        <small class="text-muted">{{ category.created_at|persian_date:"Y/m/d" }}</small>
                                     </td>
                                     <td>
                                         <div class="btn-group" role="group">

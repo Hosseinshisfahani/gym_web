@@ -18,22 +18,6 @@
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
                         
-                        <!-- Category Selection -->
-                        <div class="mb-3">
-                            <label for="{{ form.category.id_for_label }}" class="form-label">
-                                <i class="fas fa-list me-2"></i>
-                                {{ form.category.label }}
-                            </label>
-                            {{ form.category }}
-                            {% if form.category.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.category.errors %}
-                                        <small class="text-danger">{{ error }}</small>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                            <div class="form-text">نوع شهریه مورد نظر خود را انتخاب کنید.</div>
-                        </div>
 
                         <!-- Receipt Image -->
                         <div class="mb-3">
@@ -114,37 +98,6 @@
                 </div>
             </div>
 
-            <!-- Active Categories Info -->
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="fas fa-info-circle text-info me-2"></i>
-                        اطلاعات انواع شهریه
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        {% for category in active_categories %}
-                        <div class="col-md-6 mb-3">
-                            <div class="card border-info">
-                                <div class="card-body">
-                                    <h6 class="card-title text-info">{{ category.name }}</h6>
-                                    <p class="card-text small">{{ category.description|default:"بدون توضیح" }}</p>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="badge bg-primary">{{ category.amount|floatformat:0 }} تومان</span>
-                                        <small class="text-muted">{{ category.duration_months }} ماه</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% empty %}
-                        <div class="col-12">
-                            <p class="text-muted text-center">هیچ نوع شهریه‌ای تعریف نشده است.</p>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
 
             <!-- Instructions -->
             <div class="card mt-4">
@@ -221,22 +174,4 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    // Auto-fill amount when category is selected
-    document.getElementById('{{ form.category.id_for_label }}').addEventListener('change', function() {
-        const categorySelect = this;
-        const amountInput = document.getElementById('{{ form.amount_paid.id_for_label }}');
-        const selectedOption = categorySelect.options[categorySelect.selectedIndex];
-        
-        if (selectedOption.value) {
-            // Get amount from data attribute or parse from text
-            const amountText = selectedOption.textContent;
-            const amountMatch = amountText.match(/(\d+(?:,\d+)*)\s*تومان/);
-            if (amountMatch) {
-                const amount = amountMatch[1].replace(/,/g, '');
-                amountInput.value = amount;
-            }
-        }
-    });
-</script>
 {% endblock %}

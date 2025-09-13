@@ -1,5 +1,6 @@
 {% extends 'gym/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}حذف دسته‌بندی شهریه - پنل ادمین{% endblock %}
 
@@ -113,7 +114,7 @@
                                         <tr>
                                             <td>{{ receipt.athlete.userprofile.name|default:receipt.athlete.username }}</td>
                                             <td>{{ receipt.amount_paid|floatformat:0 }} تومان</td>
-                                            <td>{{ receipt.payment_date|date:"Y/m/d" }}</td>
+                                            <td>{{ receipt.payment_date|persian_date:"Y/m/d" }}</td>
                                             <td>
                                                 {% if receipt.status == 'approved' %}
                                                     <span class="badge bg-success">{{ receipt.get_status_display }}</span>

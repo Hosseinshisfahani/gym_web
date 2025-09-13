@@ -2988,17 +2988,24 @@ def upload_tuition_receipt(request):
     if request.method == 'POST':
         form = TuitionReceiptForm(request.POST, request.FILES)
         if form.is_valid():
-            receipt = form.save(commit=False)
-            receipt.athlete = request.user
-            
-            # Calculate expiry date based on category duration
-            if receipt.category:
-                receipt.expiry_date = receipt.payment_date + datetime.timedelta(days=30 * receipt.category.duration_months)
-            
-            receipt.save()
-            
-            messages.success(request, 'رسید شهریه با موفقیت آپلود شد و در انتظار بررسی است.')
-            return redirect('gym:tuition_dashboard')
+            try:
+                receipt = form.save(commit=False)
+                receipt.athlete = request.user
+                
+                # Set default expiry date (1 month from payment date)
+                receipt.expiry_date = receipt.payment_date + datetime.timedelta(days=30)
+                
+                receipt.save()
+                
+                messages.success(request, 'رسید شهریه با موفقیت آپلود شد و در انتظار بررسی است.')
+                return redirect('gym:tuition_dashboard')
+            except Exception as e:
+                messages.error(request, f'خطا در آپلود رسید: {str(e)}')
+        else:
+            # Show form validation errors
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{form.fields[field].label}: {error}')
     else:
         form = TuitionReceiptForm()
     

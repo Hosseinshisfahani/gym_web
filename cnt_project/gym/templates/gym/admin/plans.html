@@ -1,4 +1,5 @@
 {% extends 'gym/base.html' %}
+{% load custom_filters %}
 
 {% block title %}مدیریت برنامه‌ها - ادمین{% endblock %}
 
@@ -27,7 +28,7 @@
                                 <tr>
                                     <td>{{ plan.user.username }}</td>
                                     <td>{{ plan.title }}</td>
-                                    <td>{{ plan.created_at|date:"Y/m/d" }}</td>
+                                    <td>{{ plan.created_at|persian_date:"Y/m/d" }}</td>
                                     <td>
                                         <a href="{% url 'workout_plan_detail' plan.id %}" class="btn btn-sm btn-primary">مشاهده</a>
                                         <a href="{% url 'edit_workout_plan' plan.id %}" class="btn btn-sm btn-warning">ویرایش</a>
@@ -63,7 +64,7 @@
                                 <tr>
                                     <td>{{ plan.user.username }}</td>
                                     <td>{{ plan.title }}</td>
-                                    <td>{{ plan.created_at|date:"Y/m/d" }}</td>
+                                    <td>{{ plan.created_at|persian_date:"Y/m/d" }}</td>
                                     <td>
                                         <a href="{% url 'diet_plan_detail' plan.id %}" class="btn btn-sm btn-primary">مشاهده</a>
                                         <a href="{% url 'edit_diet_plan' plan.id %}" class="btn btn-sm btn-warning">ویرایش</a>

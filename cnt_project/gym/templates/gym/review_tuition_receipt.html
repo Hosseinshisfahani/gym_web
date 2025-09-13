@@ -1,5 +1,6 @@
 {% extends 'gym/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}بررسی رسید شهریه - پنل ادمین{% endblock %}
 
@@ -60,15 +61,15 @@
                                 </tr>
                                 <tr>
                                     <td class="fw-bold">تاریخ پرداخت:</td>
-                                    <td>{{ receipt.payment_date|date:"Y/m/d" }}</td>
+                                    <td>{{ receipt.payment_date|persian_date:"Y/m/d" }}</td>
                                 </tr>
                                 <tr>
                                     <td class="fw-bold">تاریخ انقضا:</td>
                                     <td>
                                         {% if receipt.is_expired %}
-                                            <span class="text-danger">{{ receipt.expiry_date|date:"Y/m/d" }}</span>
+                                            <span class="text-danger">{{ receipt.expiry_date|persian_date:"Y/m/d" }}</span>
                                         {% else %}
-                                            {{ receipt.expiry_date|date:"Y/m/d" }}
+                                            {{ receipt.expiry_date|persian_date:"Y/m/d" }}
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -88,7 +89,7 @@
                                 </tr>
                                 <tr>
                                     <td class="fw-bold">تاریخ آپلود:</td>
-                                    <td>{{ receipt.created_at|date:"Y/m/d H:i" }}</td>
+                                    <td>{{ receipt.created_at|persian_date:"Y/m/d H:i" }}</td>
                                 </tr>
                             </table>
                         </div>
@@ -219,7 +220,7 @@
                                             <p><strong>بررسی شده توسط:</strong> {{ receipt.reviewed_by.get_full_name|default:receipt.reviewed_by.username }}</p>
                                         </div>
                                         <div class="col-md-6">
-                                            <p><strong>تاریخ بررسی:</strong> {{ receipt.reviewed_at|date:"Y/m/d H:i" }}</p>
+                                            <p><strong>تاریخ بررسی:</strong> {{ receipt.reviewed_at|persian_date:"Y/m/d H:i" }}</p>
                                         </div>
                                     </div>
                                 </div>

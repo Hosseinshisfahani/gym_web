@@ -75,6 +75,14 @@ def format_price(value):
         return value 
 
 @register.filter
+def abs(value):
+    """Return the absolute value of a number"""
+    try:
+        return abs(float(value))
+    except (ValueError, TypeError):
+        return value
+
+@register.filter
 def persian_date(value, format_string='Y/m/d'):
     """Convert Gregorian date to Persian (Jalali) date"""
     if not value:
@@ -92,6 +100,12 @@ def persian_date(value, format_string='Y/m/d'):
         # Map format codes to Persian equivalents
         if format_string == 'Y/m/d':
             return f"{persian_dt.year}/{persian_dt.month:02d}/{persian_dt.day:02d}"
+        elif format_string == 'Y/m/d H:i':
+            # Handle datetime with time
+            if isinstance(persian_dt, jdatetime.datetime):
+                return f"{persian_dt.year}/{persian_dt.month:02d}/{persian_dt.day:02d} {persian_dt.hour:02d}:{persian_dt.minute:02d}"
+            else:
+                return f"{persian_dt.year}/{persian_dt.month:02d}/{persian_dt.day:02d}"
         elif format_string == 'j F Y':
             # Persian month names
             persian_months = [

@@ -1,5 +1,6 @@
 {% extends 'gym/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}جزئیات رسید شهریه - پلتفرم جامع ورزشی{% endblock %}
 
@@ -35,15 +36,15 @@
                                 </tr>
                                 <tr>
                                     <td class="fw-bold">تاریخ پرداخت:</td>
-                                    <td>{{ receipt.payment_date|date:"Y/m/d" }}</td>
+                                    <td>{{ receipt.payment_date|persian_date:"Y/m/d" }}</td>
                                 </tr>
                                 <tr>
                                     <td class="fw-bold">تاریخ انقضا:</td>
                                     <td>
                                         {% if receipt.is_expired %}
-                                            <span class="text-danger">{{ receipt.expiry_date|date:"Y/m/d" }}</span>
+                                            <span class="text-danger">{{ receipt.expiry_date|persian_date:"Y/m/d" }}</span>
                                         {% else %}
-                                            {{ receipt.expiry_date|date:"Y/m/d" }}
+                                            {{ receipt.expiry_date|persian_date:"Y/m/d" }}
                                         {% endif %}
                                     </td>
                                 </tr>
@@ -68,11 +69,11 @@
                             <table class="table table-borderless">
                                 <tr>
                                     <td class="fw-bold">تاریخ آپلود:</td>
-                                    <td>{{ receipt.created_at|date:"Y/m/d H:i" }}</td>
+                                    <td>{{ receipt.created_at|persian_date:"Y/m/d H:i" }}</td>
                                 </tr>
                                 <tr>
                                     <td class="fw-bold">آخرین به‌روزرسانی:</td>
-                                    <td>{{ receipt.updated_at|date:"Y/m/d H:i" }}</td>
+                                    <td>{{ receipt.updated_at|persian_date:"Y/m/d H:i" }}</td>
                                 </tr>
                                 {% if receipt.reviewed_by %}
                                 <tr>
@@ -81,7 +82,7 @@
                                 </tr>
                                 <tr>
                                     <td class="fw-bold">تاریخ بررسی:</td>
-                                    <td>{{ receipt.reviewed_at|date:"Y/m/d H:i" }}</td>
+                                    <td>{{ receipt.reviewed_at|persian_date:"Y/m/d H:i" }}</td>
                                 </tr>
                                 {% endif %}
                                 {% if receipt.days_until_expiry is not None %}

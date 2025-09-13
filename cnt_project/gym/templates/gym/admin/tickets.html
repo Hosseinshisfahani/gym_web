@@ -1,5 +1,6 @@
 {% extends 'gym/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block content %}
 <div class="container mt-4">
@@ -57,8 +58,8 @@
                             {{ ticket.get_status_display }}
                         </span>
                     </td>
-                    <td>{{ ticket.created_at|date:"Y/m/d H:i" }}</td>
-                    <td>{{ ticket.updated_at|date:"Y/m/d H:i" }}</td>
+                    <td>{{ ticket.created_at|persian_date:"Y/m/d H:i" }}</td>
+                    <td>{{ ticket.updated_at|persian_date:"Y/m/d H:i" }}</td>
                     <td>
                         <a href="{% url 'gym:ticket_detail' ticket.id %}" class="btn btn-sm btn-primary">مشاهده و پاسخ</a>
                     </td>

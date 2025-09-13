@@ -1,3 +1,4 @@
+{% load custom_filters %}
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -201,7 +202,7 @@
             </div>
             <div class="info-row">
                 <span class="info-label">تاریخ سفارش:</span>
-                <span class="info-value">{{ order.created_at|date:"Y/m/d H:i" }}</span>
+                <span class="info-value">{{ order.created_at|persian_date:"Y/m/d H:i" }}</span>
             </div>
             <div class="info-row">
                 <span class="info-label">وضعیت:</span>

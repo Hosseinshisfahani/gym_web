@@ -1,5 +1,6 @@
 {% extends 'gym/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}داشبورد شهریه - پلتفرم جامع ورزشی{% endblock %}
 
@@ -76,10 +77,10 @@
                         <div class="col-md-6">
                             <p><strong>نوع شهریه:</strong> {{ active_tuition.category.name }}</p>
                             <p><strong>مبلغ:</strong> {{ active_tuition.amount_paid|floatformat:0 }} تومان</p>
-                            <p><strong>تاریخ پرداخت:</strong> {{ active_tuition.payment_date|date:"Y/m/d" }}</p>
+                            <p><strong>تاریخ پرداخت:</strong> {{ active_tuition.payment_date|persian_date:"Y/m/d" }}</p>
                         </div>
                         <div class="col-md-6">
-                            <p><strong>تاریخ انقضا:</strong> {{ active_tuition.expiry_date|date:"Y/m/d" }}</p>
+                            <p><strong>تاریخ انقضا:</strong> {{ active_tuition.expiry_date|persian_date:"Y/m/d" }}</p>
                             <p><strong>روزهای باقی‌مانده:</strong> 
                                 <span class="badge bg-success">{{ active_tuition.days_until_expiry }} روز</span>
                             </p>
@@ -94,39 +95,70 @@
     </div>
     {% endif %}
 
-    <!-- Tuition Categories -->
+    <!-- Payment Information Section -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card">
-                <div class="card-header">
+            <div class="card payment-info-card">
+                <div class="card-header bg-warning text-dark">
                     <h5 class="mb-0">
-                        <i class="fas fa-list me-2"></i>
-                        انواع شهریه موجود
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        دستورالعمل پرداخت دستی
                     </h5>
                 </div>
                 <div class="card-body">
+                    <h6 class="text-warning mb-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        اطلاعات پرداخت
+                    </h6>
+                    
                     <div class="row">
-                        {% for category in active_categories %}
-                        <div class="col-md-4 mb-3">
-                            <div class="card border-primary">
-                                <div class="card-body text-center">
-                                    <h6 class="card-title">{{ category.name }}</h6>
-                                    <p class="card-text text-muted">{{ category.description|default:"بدون توضیح" }}</p>
-                                    <h4 class="text-primary mb-2">{{ category.amount|floatformat:0 }} تومان</h4>
-                                    <small class="text-muted">مدت: {{ category.duration_months }} ماه</small>
+                        <div class="col-md-8">
+                            <div class="payment-details">
+                                
+                                <div class="payment-item mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <span class="payment-label">شماره کارت:</span>
+                                            <span class="payment-value" id="cardNumber">5041721067855313</span>
+                                        </div>
+                                        <button class="btn btn-outline-light btn-sm copy-btn" onclick="copyToClipboard('cardNumber')">
+                                            <i class="fas fa-copy me-1"></i>
+                                            کپی
+                                        </button>
+                                    </div>
                                 </div>
+                                
                             </div>
                         </div>
-                        {% empty %}
-                        <div class="col-12">
-                            <p class="text-muted text-center">هیچ نوع شهریه‌ای تعریف نشده است.</p>
-                        </div>
-                        {% endfor %}
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="payment-instructions">
+                        <h6 class="text-warning mb-3">
+                            <i class="fas fa-list-ol me-2"></i>
+                            دستورالعمل پرداخت
+                        </h6>
+                        <ul class="list-unstyled">
+                            <li class="mb-2">
+                                <i class="fas fa-arrow-left text-warning me-2"></i>
+                                رسید پرداخت خود را عکس بگیرید
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-arrow-left text-warning me-2"></i>
+                                تصویر رسید را در فرم زیر آپلود کنید
+                            </li>
+                            <li class="mb-2">
+                                <i class="fas fa-arrow-left text-warning me-2"></i>
+                                پس از تایید پرداخت درخواست شما بررسی خواهد شد
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
 
     <!-- Receipts List -->
     <div class="row">
@@ -157,7 +189,7 @@
                                 <tr>
                                     <td>{{ receipt.category.name }}</td>
                                     <td>{{ receipt.amount_paid|floatformat:0 }} تومان</td>
-                                    <td>{{ receipt.payment_date|date:"Y/m/d" }}</td>
+                                    <td>{{ receipt.payment_date|persian_date:"Y/m/d" }}</td>
                                     <td>
                                         {% if receipt.status == 'approved' %}
                                             <span class="badge bg-success">{{ receipt.get_status_display }}</span>
@@ -171,9 +203,9 @@
                                     </td>
                                     <td>
                                         {% if receipt.is_expired %}
-                                            <span class="text-danger">{{ receipt.expiry_date|date:"Y/m/d" }}</span>
+                                            <span class="text-danger">{{ receipt.expiry_date|persian_date:"Y/m/d" }}</span>
                                         {% else %}
-                                            {{ receipt.expiry_date|date:"Y/m/d" }}
+                                            {{ receipt.expiry_date|persian_date:"Y/m/d" }}
                                         {% endif %}
                                     </td>
                                     <td>
@@ -227,5 +259,207 @@
     .table-hover tbody tr:hover {
         background-color: rgba(255, 255, 255, 0.05);
     }
+    
+    /* Payment Information Section Styles */
+    .payment-info-card {
+        background: linear-gradient(135deg, #2c1810 0%, #3a1c1c 100%);
+        border: 2px solid #ffc107;
+        box-shadow: 0 8px 25px rgba(255, 193, 7, 0.2);
+    }
+    
+    .payment-info-card .card-header {
+        background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
+        border-bottom: 2px solid #ffc107;
+    }
+    
+    .payment-details {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 20px;
+        border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+    
+    .payment-item {
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .payment-item:last-child {
+        border-bottom: none;
+    }
+    
+    .payment-label {
+        color: #ffc107;
+        font-weight: 600;
+        margin-left: 10px;
+    }
+    
+    .payment-value {
+        color: white;
+        font-weight: 700;
+        font-family: 'Courier New', monospace;
+        background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
+        color: #000;
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 2px solid #ffc107;
+        box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+        font-size: 1.1rem;
+        letter-spacing: 1px;
+    }
+    
+    .copy-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        transition: all 0.3s ease;
+        min-width: 80px;
+    }
+    
+    .copy-btn:hover {
+        background: #ffc107;
+        border-color: #ffc107;
+        color: #000;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(255, 193, 7, 0.3);
+    }
+    
+    .copy-btn:active {
+        transform: translateY(0);
+    }
+    
+    .payment-instructions {
+        background: rgba(255, 193, 7, 0.1);
+        border-radius: 10px;
+        padding: 20px;
+        border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+    
+    .payment-instructions ul li {
+        color: white;
+        font-size: 1.1rem;
+        line-height: 1.8;
+        padding: 8px 0;
+    }
+    
+    .payment-instructions ul li i {
+        color: #ffc107;
+        font-size: 1.2rem;
+    }
+    
+    /* Toast notification styles */
+    .toast-container {
+        position: fixed;
+        top: 80px;
+        left: 20px;
+        z-index: 1055;
+    }
+    
+    .toast {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        color: white;
+        box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    }
+    
+    .toast-header {
+        background: transparent;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+    }
+    
+    .toast-body {
+        color: white;
+        font-weight: 500;
+    }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Copy to clipboard functionality
+    function copyToClipboard(elementId) {
+        const element = document.getElementById(elementId);
+        const text = element.textContent;
+        
+        // Create a temporary textarea element
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        
+        // Select and copy the text
+        textarea.select();
+        textarea.setSelectionRange(0, 99999); // For mobile devices
+        
+        try {
+            document.execCommand('copy');
+            showToast('متن کپی شد!', 'success');
+        } catch (err) {
+            // Fallback for modern browsers
+            navigator.clipboard.writeText(text).then(function() {
+                showToast('متن کپی شد!', 'success');
+            }).catch(function(err) {
+                showToast('خطا در کپی کردن متن', 'error');
+            });
+        }
+        
+        // Clean up
+        document.body.removeChild(textarea);
+    }
+    
+    // Show toast notification
+    function showToast(message, type = 'success') {
+        // Remove existing toasts
+        const existingToasts = document.querySelectorAll('.toast');
+        existingToasts.forEach(toast => toast.remove());
+        
+        // Create toast container if it doesn't exist
+        let toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container';
+            document.body.appendChild(toastContainer);
+        }
+        
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = 'toast show';
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+        
+        const iconClass = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+        const bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+        
+        toast.innerHTML = `
+            <div class="toast-header ${bgClass}">
+                <i class="${iconClass} me-2"></i>
+                <strong class="me-auto">اطلاع</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                ${message}
+            </div>
+        `;
+        
+        toastContainer.appendChild(toast);
+        
+        // Auto remove after 3 seconds
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.remove();
+            }
+        }, 3000);
+    }
+    
+    // Initialize tooltips for copy buttons
+    document.addEventListener('DOMContentLoaded', function() {
+        const copyButtons = document.querySelectorAll('.copy-btn');
+        copyButtons.forEach(button => {
+            button.setAttribute('title', 'کپی کردن');
+        });
+    });
+</script>
 {% endblock %}

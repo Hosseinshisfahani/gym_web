@@ -568,34 +568,25 @@ class TuitionReceiptForm(forms.ModelForm):
     """Form for athletes to upload tuition receipts"""
     class Meta:
         model = TuitionReceipt
-        fields = ['category', 'receipt_image', 'amount_paid', 'payment_date', 'notes']
+        fields = ['receipt_image', 'amount_paid', 'payment_date', 'notes']
         widgets = {
-            'category': forms.Select(attrs={'class': 'form-control'}),
             'receipt_image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
             'amount_paid': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'مبلغ پرداخت شده به تومان'}),
             'payment_date': PersianDateWidget(),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'یادداشت‌های اضافی (اختیاری)'}),
         }
         labels = {
-            'category': 'نوع شهریه',
             'receipt_image': 'تصویر رسید',
             'amount_paid': 'مبلغ پرداخت شده (تومان)',
             'payment_date': 'تاریخ پرداخت',
             'notes': 'یادداشت‌ها',
         }
     
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Only show active categories
-        self.fields['category'].queryset = TuitionCategory.objects.filter(is_active=True)
-    
     def clean_amount_paid(self):
         amount = self.cleaned_data.get('amount_paid')
-        category = self.cleaned_data.get('category')
         
-        if amount and category:
-            if amount != category.amount:
-                raise forms.ValidationError(f'مبلغ باید دقیقاً {category.amount:,} تومان باشد.')
+        if amount and amount <= 0:
+            raise forms.ValidationError('مبلغ باید بیشتر از صفر باشد.')
         
         return amount
 

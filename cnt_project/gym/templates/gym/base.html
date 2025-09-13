@@ -108,6 +108,20 @@
             color: var(--primary-color) !important;
         }
         
+        /* Navbar icon spacing */
+        .navbar-nav .nav-link i {
+            margin-left: 6px;
+            margin-right: 0;
+            font-size: 0.9em;
+            vertical-align: middle;
+        }
+        
+        .navbar-nav .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+        }
+        
         .btn {
             font-weight: 500;
         }
@@ -240,7 +254,10 @@
         }
         
         .nav-link.admin-link i {
-            margin-left: 8px;
+            margin-left: 6px;
+            margin-right: 0;
+            font-size: 0.9em;
+            vertical-align: middle;
         }
         
         /* Alert styling */
@@ -416,16 +433,10 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'gym:profile' %}">پروفایل</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'gym:workout_plans' %}">برنامه‌های تمرینی</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'gym:diet_plans' %}">برنامه‌های غذایی</a>
-                        </li>
 
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'gym:tuition_dashboard' %}">
-                                <i class="fas fa-graduation-cap me-1"></i>
+                                <i class="fas fa-graduation-cap"></i>
                                 شهریه
                             </a>
                         </li>
@@ -440,7 +451,7 @@
                         {% if user.is_staff %}
                             <li class="nav-item">
                                 <a class="nav-link admin-link" href="{% url 'gym:admin_tuition_dashboard' %}">
-                                    <i class="fas fa-graduation-cap me-1"></i>
+                                    <i class="fas fa-graduation-cap"></i>
                                     مدیریت شهریه
                                 </a>
                             </li>

@@ -1,5 +1,6 @@
 {% extends 'gym/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block content %}
 <div class="container mt-4">
@@ -76,7 +77,7 @@
                         <tr>
                             <td>{{ plan.title }}</td>
                             <td>{{ plan.user.get_full_name|default:plan.user.username }}</td>
-                            <td>{{ plan.created_at|date:"Y/m/d" }}</td>
+                            <td>{{ plan.created_at|persian_date:"Y/m/d" }}</td>
                             <td>
                                 <span class="badge {% if plan.is_active %}bg-success{% else %}bg-secondary{% endif %}">
                                     {% if plan.is_active %}فعال{% else %}غیرفعال{% endif %}
@@ -133,7 +134,7 @@
                         {% for request in plan_requests %}
                         <tr>
                             <td>{{ request.user.get_full_name|default:request.user.username }}</td>
-                            <td>{{ request.created_at|date:"Y/m/d" }}</td>
+                            <td>{{ request.created_at|persian_date:"Y/m/d" }}</td>
                             <td>
                                 <span class="badge {% if request.status == 'pending' %}bg-warning
                                                  {% elif request.status == 'approved' %}bg-success

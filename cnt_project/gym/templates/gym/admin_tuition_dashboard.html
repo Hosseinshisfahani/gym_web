@@ -1,5 +1,6 @@
 {% extends 'gym/base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}مدیریت شهریه - پنل ادمین{% endblock %}
 
@@ -205,7 +206,7 @@
                                         <small class="text-muted">{{ receipt.category.duration_months }} ماه</small>
                                     </td>
                                     <td>{{ receipt.amount_paid|floatformat:0 }} تومان</td>
-                                    <td>{{ receipt.payment_date|date:"Y/m/d" }}</td>
+                                    <td>{{ receipt.payment_date|persian_date:"Y/m/d" }}</td>
                                     <td>
                                         {% if receipt.status == 'approved' %}
                                             <span class="badge bg-success">{{ receipt.get_status_display }}</span>
@@ -219,12 +220,12 @@
                                     </td>
                                     <td>
                                         {% if receipt.is_expired %}
-                                            <span class="text-danger">{{ receipt.expiry_date|date:"Y/m/d" }}</span>
+                                            <span class="text-danger">{{ receipt.expiry_date|persian_date:"Y/m/d" }}</span>
                                         {% else %}
-                                            {{ receipt.expiry_date|date:"Y/m/d" }}
+                                            {{ receipt.expiry_date|persian_date:"Y/m/d" }}
                                         {% endif %}
                                     </td>
-                                    <td>{{ receipt.created_at|date:"Y/m/d H:i" }}</td>
+                                    <td>{{ receipt.created_at|persian_date:"Y/m/d H:i" }}</td>
                                     <td>
                                         <div class="btn-group" role="group">
                                             <a href="{% url 'gym:review_tuition_receipt' receipt.id %}" 

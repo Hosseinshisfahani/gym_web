@@ -868,7 +868,7 @@ class TuitionReceipt(models.Model):
     ]
     
     athlete = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tuition_receipts', verbose_name='ورزشکار')
-    category = models.ForeignKey(TuitionCategory, on_delete=models.CASCADE, verbose_name='دسته‌بندی شهریه')
+    category = models.ForeignKey(TuitionCategory, on_delete=models.CASCADE, null=True, blank=True, verbose_name='دسته‌بندی شهریه')
     receipt_image = models.ImageField(upload_to='tuition_receipts/', verbose_name='تصویر رسید')
     amount_paid = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='مبلغ پرداخت شده (تومان)')
     payment_date = models.DateField(verbose_name='تاریخ پرداخت')
