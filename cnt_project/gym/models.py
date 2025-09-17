@@ -887,7 +887,8 @@ class TuitionReceipt(models.Model):
         ordering = ['-created_at']
     
     def __str__(self):
-        return f"{self.athlete.username} - {self.category.name} - {self.get_status_display()}"
+        category_name = self.category.name if self.category else "بدون دسته‌بندی"
+        return f"{self.athlete.username} - {category_name} - {self.get_status_display()}"
     
     def save(self, *args, **kwargs):
         # Calculate expiry date based on category duration if not set

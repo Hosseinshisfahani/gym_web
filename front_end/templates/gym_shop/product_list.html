@@ -771,7 +771,7 @@ function toggleWishlist(button) {
     // Check if user is authenticated
     {% if not user.is_authenticated %}
     alert('برای افزودن به علاقه‌مندی‌ها ابتدا وارد شوید.');
-    window.location.href = "{% url 'gym:login_view' %}";
+    window.location.href = "{% url 'gym:login' %}";
     return;
     {% endif %}
     

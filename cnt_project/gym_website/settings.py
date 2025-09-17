@@ -10,27 +10,29 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+# ============================
+# OAuth + Security (Production)
+# ============================
+import os
 from pathlib import Path
+from dotenv import load_dotenv
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-FRONT_END_DIR = BASE_DIR / 'front_end'
+# Load environment variables from .env file
 
+# --- Core ---
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / ".env", override=True)
+FRONT_END_DIR = BASE_DIR.parent / 'front_end'
+DEBUG = os.getenv("DJ_DEBUG", "0") == "1"
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "change-me")
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-m-52tqw9a!f9!y5)655u#%q32dto$2=ns7ostis+y2jq6movv%'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
+DOMAIN = os.getenv("DOMAIN", "shirneshansport.ir")
 ALLOWED_HOSTS = [
-    '130.185.74.24',
-    'shirneshansport.ir',
-    'www.shirneshansport.ir',
-    '*',  # Temporarily allow all hosts while troubleshooting
+    DOMAIN,
+    f"www.{DOMAIN}",
+    "127.0.0.1" if DEBUG else "",  # allow local only in DEBUG
+    "testserver",  # for testing
+    "localhost",  # for local development
 ]
 
 
@@ -47,14 +49,16 @@ INSTALLED_APPS = [
     'django.contrib.sites',  # Required for allauth
     'widget_tweaks',
     
-    # Allauth apps
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
-    
     'gym',
     'gym_shop',
+]
+
+# --- allauth Apps / Backends ---
+INSTALLED_APPS += [
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
 ]
 
 MIDDLEWARE = [
@@ -76,13 +80,14 @@ TEMPLATES = [
         'DIRS': [FRONT_END_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
-                    'context_processors': [
-            'django.template.context_processors.debug',
-            'django.template.context_processors.request',
-            'django.contrib.auth.context_processors.auth',
-            'django.contrib.messages.context_processors.messages',
-            'gym_shop.context_processors.categories_processor',
-        ],
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.i18n',
+                'gym_shop.context_processors.categories_processor',
+            ],
         },
     },
 ]
@@ -186,10 +191,13 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Security settings for production
-SECURE_SSL_REDIRECT = False  # Temporarily disable SSL for debugging
-SESSION_COOKIE_SECURE = False
-CSRF_COOKIE_SECURE = False
+# --- Security (HTTPS) ---
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = "https"
+SECURE_SSL_REDIRECT = not DEBUG
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")  # if behind Nginx
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SAMESITE = "Lax"
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
@@ -197,51 +205,71 @@ SECURE_HSTS_SECONDS = 31536000  # 1 year
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
-# Logging configuration
+# Logging configuration - Production optimized
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {message}',
+        'simple': {
+            'format': '{levelname} {asctime} {name}: {message}',
+            'style': '{',
+        },
+        'detailed': {
+            'format': '{levelname} {asctime} {module} {funcName} {lineno}: {message}',
             'style': '{',
         },
     },
     'handlers': {
         'file': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'cnt_project' / 'debug.log',
-            'formatter': 'verbose',
+            'level': 'WARNING',  # Only log warnings and errors to file
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': BASE_DIR / 'debug.log',
+            'maxBytes': 10 * 1024 * 1024,  # 10MB max file size
+            'backupCount': 3,  # Keep 3 backup files
+            'formatter': 'detailed',
         },
         'console': {
-            'level': 'DEBUG',
+            'level': 'INFO',  # Show info and above in console
             'class': 'logging.StreamHandler',
-            'formatter': 'verbose',
+            'formatter': 'simple',
         },
     },
     'loggers': {
         'django': {
             'handlers': ['file', 'console'],
-            'level': 'DEBUG',
-            'propagate': True,
+            'level': 'WARNING',  # Only warnings and errors
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': ['file'],
+            'level': 'ERROR',  # Only database errors
+            'propagate': False,
         },
         'gym': {
             'handlers': ['file', 'console'],
-            'level': 'DEBUG',
-            'propagate': True,
+            'level': 'INFO',  # Info level for your app
+            'propagate': False,
         },
         'django.utils.autoreload': {
             'handlers': ['console'],
-            'level': 'WARNING',  # Only show warnings and errors for autoreload
+            'level': 'WARNING',
             'propagate': False,
         },
+        'allauth': {
+            'handlers': ['file', 'console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+    },
+    'root': {
+        'handlers': ['file', 'console'],
+        'level': 'WARNING',
     },
 }
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://shirneshansport.ir',
-    'http://shirneshansport.ir',
+    f"https://{DOMAIN}",
+    f"https://www.{DOMAIN}",
 ]
 
 # Payment Gateway Configuration
@@ -257,41 +285,43 @@ PAYMENT_SUCCESS_URL = '/payment/success/'
 PAYMENT_FAILURE_URL = '/payment/failure/'
 PAYMENT_CANCEL_URL = '/payment/cancel/'
 
-# Allauth Configuration
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.ModelBackend',
-    'allauth.account.auth_backends.AuthenticationBackend',
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
-SITE_ID = 1
+# Custom allauth adapter to fix MultipleObjectsReturned bug
+SOCIALACCOUNT_ADAPTER = 'gym.adapters.CustomSocialAccountAdapter'
 
-# Allauth Account Settings
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+SITE_ID = int(os.getenv("SITE_ID", "1"))
+
+# --- allauth behavior ---
+# Updated settings for allauth 65.x
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+ACCOUNT_EMAIL_VERIFICATION = "none"
 ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = "none"
 
-# Allauth Social Account Settings
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/"
+
+# --- Google OAuth provider ---
+# Keep params minimal and standard for server-side code flow.
 SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': [
-            'profile',
-            'email',
-        ],
-        'AUTH_PARAMS': {
-            'access_type': 'online',
+    "google": {
+        "SCOPE": ["openid", "email", "profile"],
+        "AUTH_PARAMS": {
+            "access_type": "online",
+            # optional but sometimes helpful:
+            # "prompt": "consent",
         },
-        'OAUTH_PKCE_ENABLED': True,
+        "OAUTH_PKCE_ENABLED": False,  # classic server-side flow
+        "APP": {
+            "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+            "secret": os.getenv("GOOGLE_CLIENT_SECRET"),
+            "key": "",
+        }
     }
 }
-
-# Login/Logout URLs
-LOGIN_URL = '/accounts/login/'
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
-
-# Google OAuth Settings (Add these to your .env file in production)
-GOOGLE_OAUTH_CLIENT_ID = 'your-google-client-id'
-GOOGLE_OAUTH_CLIENT_SECRET = 'your-google-client-secret'

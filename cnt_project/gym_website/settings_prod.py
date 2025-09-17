@@ -19,6 +19,10 @@ X_FRAME_OPTIONS = 'DENY'
 STATIC_ROOT = '/www/wwwroot/shirneshansport.ir/static'
 MEDIA_ROOT = '/www/wwwroot/shirneshansport.ir/media'
 
+# Template directory fix
+FRONT_END_DIR = Path(__file__).resolve().parent.parent.parent / 'front_end'
+TEMPLATES[0]['DIRS'] = [FRONT_END_DIR / 'templates']
+
 # Database settings 
 # Update these with your actual database credentials from aaPanel
 DATABASES = {

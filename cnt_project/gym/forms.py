@@ -566,18 +566,27 @@ class TuitionCategoryForm(forms.ModelForm):
 
 class TuitionReceiptForm(forms.ModelForm):
     """Form for athletes to upload tuition receipts"""
+    amount_paid = forms.CharField(
+        label='مبلغ پرداخت شده (تومان)',
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 
+            'placeholder': 'مبلغ پرداخت شده به تومان', 
+            'id': 'amount_paid', 
+            'data-type': 'number'
+        }),
+        required=True
+    )
+    
     class Meta:
         model = TuitionReceipt
         fields = ['receipt_image', 'amount_paid', 'payment_date', 'notes']
         widgets = {
             'receipt_image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
-            'amount_paid': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'مبلغ پرداخت شده به تومان'}),
             'payment_date': PersianDateWidget(),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'یادداشت‌های اضافی (اختیاری)'}),
         }
         labels = {
             'receipt_image': 'تصویر رسید',
-            'amount_paid': 'مبلغ پرداخت شده (تومان)',
             'payment_date': 'تاریخ پرداخت',
             'notes': 'یادداشت‌ها',
         }
@@ -585,8 +594,21 @@ class TuitionReceiptForm(forms.ModelForm):
     def clean_amount_paid(self):
         amount = self.cleaned_data.get('amount_paid')
         
-        if amount and amount <= 0:
-            raise forms.ValidationError('مبلغ باید بیشتر از صفر باشد.')
+        if amount:
+            # Remove commas and convert to integer
+            if isinstance(amount, str):
+                # Remove all non-digit characters
+                amount_str = ''.join(filter(str.isdigit, str(amount)))
+                if amount_str:
+                    try:
+                        amount = int(amount_str)
+                    except ValueError:
+                        raise forms.ValidationError('لطفاً یک مبلغ معتبر وارد کنید.')
+                else:
+                    raise forms.ValidationError('لطفاً یک مبلغ معتبر وارد کنید.')
+            
+            if amount and amount <= 0:
+                raise forms.ValidationError('مبلغ باید بیشتر از صفر باشد.')
         
         return amount
 

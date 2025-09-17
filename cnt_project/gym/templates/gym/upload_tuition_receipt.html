@@ -174,4 +174,49 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const amountInput = document.getElementById('amount_paid');
+    
+    if (amountInput) {
+        // Format number with commas as user types
+        amountInput.addEventListener('input', function(e) {
+            let value = e.target.value;
+            // Remove all non-digit characters
+            let numbers = value.replace(/\D/g, '');
+            
+            // Add commas for thousands separator
+            if (numbers) {
+                let formatted = numbers.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+                e.target.value = formatted;
+            }
+        });
+        
+        // Prevent non-numeric characters (except commas)
+        amountInput.addEventListener('keypress', function(e) {
+            // Allow: backspace, delete, tab, escape, enter, comma
+            if ([8, 9, 27, 13, 44].indexOf(e.keyCode) !== -1 ||
+                // Allow: Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+                (e.keyCode === 65 && e.ctrlKey === true) ||
+                (e.keyCode === 67 && e.ctrlKey === true) ||
+                (e.keyCode === 86 && e.ctrlKey === true) ||
+                (e.keyCode === 88 && e.ctrlKey === true)) {
+                return;
+            }
+            // Ensure that it is a number and stop the keypress
+            if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+                e.preventDefault();
+            }
+        });
+        
+        // Format on page load if there's a value
+        if (amountInput.value) {
+            let numbers = amountInput.value.replace(/\D/g, '');
+            if (numbers) {
+                amountInput.value = numbers.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            }
+        }
+    }
+});
+</script>
 {% endblock %}
