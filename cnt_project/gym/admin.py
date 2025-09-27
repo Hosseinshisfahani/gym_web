@@ -33,7 +33,7 @@ admin_site = CustomAdminSite(name='admin')
 from .models import (
     UserProfile, WorkoutPlan, DietPlan, 
     Payment, Ticket, TicketResponse, Document, PlanRequest,
-    BodyAnalysisReport, InBodyReport, MonthlyGoal, ProgressAnalysis, BodyInformationUser, PaymentCard, EmailNotificationSettings, TuitionCategory, TuitionReceipt
+    BodyAnalysisReport, InBodyReport, MonthlyGoal, ProgressAnalysis, BodyInformationUser, PaymentCard, EmailNotificationSettings, TuitionCategory, TuitionReceipt, SpecialTuitionFee
 )
 
 # Import shop models
@@ -294,7 +294,7 @@ class TuitionCategoryAdmin(admin.ModelAdmin):
 class TuitionReceiptAdmin(admin.ModelAdmin):
     verbose_name = 'رسید شهریه'
     verbose_name_plural = 'رسیدهای شهریه'
-    list_display = ('athlete', 'category', 'amount_paid', 'payment_date', 'status', 'expiry_date', 'created_at')
+    list_display = ('get_athlete_name', 'category', 'amount_paid', 'payment_date', 'status', 'expiry_date', 'created_at')
     list_filter = ('status', 'category', 'payment_date', 'created_at')
     search_fields = ('athlete__username', 'athlete__userprofile__name', 'notes', 'admin_notes')
     ordering = ('-created_at',)
@@ -317,6 +317,17 @@ class TuitionReceiptAdmin(admin.ModelAdmin):
         }),
     ]
     
+    def get_athlete_name(self, obj):
+        """Display athlete name instead of username/melli_code"""
+        try:
+            if obj.athlete.userprofile.name:
+                return f"{obj.athlete.userprofile.name} ({obj.athlete.username})"
+            return obj.athlete.username
+        except:
+            return obj.athlete.username
+    get_athlete_name.short_description = 'ورزشکار'
+    get_athlete_name.admin_order_field = 'athlete__userprofile__name'
+
     def save_model(self, request, obj, form, change):
         if change and 'status' in form.changed_data:
             obj.reviewed_by = request.user
@@ -326,6 +337,17 @@ class TuitionReceiptAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('athlete', 'category', 'reviewed_by')
 
+class SpecialTuitionFeeAdmin(admin.ModelAdmin):
+    list_display = ['user', 'title', 'amount', 'due_date', 'status', 'created_by', 'created_at']
+    list_filter = ['status', 'created_at', 'due_date']
+    search_fields = ['user__username', 'user__first_name', 'user__last_name', 'title']
+    readonly_fields = ['created_at', 'updated_at']
+    list_editable = ['status']
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user', 'created_by')
+
 # Register tuition models
 admin_site.register(TuitionCategory, TuitionCategoryAdmin)
 admin_site.register(TuitionReceipt, TuitionReceiptAdmin)
+admin_site.register(SpecialTuitionFee, SpecialTuitionFeeAdmin)

@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 from .models import (
     UserProfile, WorkoutPlan, DietPlan, Payment, 
     Ticket, Document, PlanRequest, BodyAnalysisReport, InBodyReport,
-    MonthlyGoal, ProgressAnalysis, BodyInformationUser, TuitionCategory, TuitionReceipt
+    MonthlyGoal, ProgressAnalysis, BodyInformationUser, TuitionCategory, TuitionReceipt, SpecialTuitionFee
 )
 import jdatetime
 from datetime import datetime, date
@@ -626,4 +626,33 @@ class TuitionReceiptAdminForm(forms.ModelForm):
             'status': 'وضعیت',
             'admin_notes': 'یادداشت‌های ادمین',
             'expiry_date': 'تاریخ انقضا',
-        } 
+        }
+
+class SpecialTuitionFeeForm(forms.ModelForm):
+    """Form for creating and editing special tuition fees"""
+    class Meta:
+        model = SpecialTuitionFee
+        fields = ['user', 'title', 'description', 'amount', 'due_date', 'status', 'notes']
+        widgets = {
+            'user': forms.Select(attrs={'class': 'form-control'}),
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'عنوان شهریه ویژه'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'توضیحات شهریه'}),
+            'amount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'مبلغ به تومان'}),
+            'due_date': PersianDateWidget(),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'یادداشت‌ها'}),
+        }
+        labels = {
+            'user': 'کاربر',
+            'title': 'عنوان شهریه ویژه',
+            'description': 'توضیحات',
+            'amount': 'مبلغ (تومان)',
+            'due_date': 'تاریخ سررسید',
+            'status': 'وضعیت',
+            'notes': 'یادداشت‌ها',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Only show active users
+        self.fields['user'].queryset = User.objects.filter(is_active=True).order_by('username') 

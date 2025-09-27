@@ -888,7 +888,11 @@ class TuitionReceipt(models.Model):
     
     def __str__(self):
         category_name = self.category.name if self.category else "بدون دسته‌بندی"
-        return f"{self.athlete.username} - {category_name} - {self.get_status_display()}"
+        try:
+            athlete_name = self.athlete.userprofile.name if self.athlete.userprofile.name else self.athlete.username
+        except:
+            athlete_name = self.athlete.username
+        return f"{athlete_name} - {category_name} - {self.get_status_display()}"
     
     def save(self, *args, **kwargs):
         # Calculate expiry date based on category duration if not set
@@ -905,4 +909,41 @@ class TuitionReceipt(models.Model):
     def days_until_expiry(self):
         """Calculate days until expiry"""
         delta = self.expiry_date - timezone.now().date()
+        return delta.days
+
+class SpecialTuitionFee(models.Model):
+    """Model for special tuition fees assigned by staff to specific users"""
+    STATUS_CHOICES = [
+        ('active', 'فعال'),
+        ('paid', 'پرداخت شده'),
+        ('expired', 'منقضی شده'),
+        ('cancelled', 'لغو شده'),
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='special_tuition_fees', verbose_name='کاربر')
+    title = models.CharField(max_length=200, verbose_name='عنوان شهریه ویژه')
+    description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
+    amount = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='مبلغ (تومان)')
+    due_date = models.DateField(verbose_name='تاریخ سررسید')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', verbose_name='وضعیت')
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_special_fees', verbose_name='ایجاد شده توسط')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
+    notes = models.TextField(blank=True, null=True, verbose_name='یادداشت‌ها')
+    
+    class Meta:
+        verbose_name = 'شهریه ویژه'
+        verbose_name_plural = 'شهریه‌های ویژه'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.title} - {self.amount:,} تومان"
+    
+    def is_overdue(self):
+        """Check if the fee is overdue"""
+        return self.due_date < timezone.now().date() and self.status == 'active'
+    
+    def days_until_due(self):
+        """Calculate days until due date"""
+        delta = self.due_date - timezone.now().date()
         return delta.days

@@ -96,9 +96,14 @@ urlpatterns = [
     path('tuition/receipt/<int:receipt_id>/', views.tuition_receipt_detail, name='tuition_receipt_detail'),
     
     # Admin Tuition URLs
-    path('staff/tuition/', views.admin_tuition_dashboard, name='admin_tuition_dashboard'),
     path('staff/tuition/receipt/<int:receipt_id>/review/', views.review_tuition_receipt, name='review_tuition_receipt'),
-    path('staff/tuition/categories/', views.manage_tuition_categories, name='manage_tuition_categories'),
-    path('staff/tuition/categories/<int:category_id>/edit/', views.edit_tuition_category, name='edit_tuition_category'),
-    path('staff/tuition/categories/<int:category_id>/delete/', views.delete_tuition_category, name='delete_tuition_category'),
+    path('staff/tuition/receipt/<int:receipt_id>/quick-update/', views.quick_update_tuition_receipt, name='quick_update_tuition_receipt'),
+    
+    # Special Tuition Fee URLs (Integrated into main tuition dashboard)
+    
+    # API endpoints for special tuition fees
+    path('api/users/', views.api_users, name='api_users'),
+    path('api/special-fees/', views.api_special_fees, name='api_special_fees'),
+    path('api/special-fees/create/', views.api_create_special_fee, name='api_create_special_fee'),
+    path('api/special-fees/<int:fee_id>/delete/', views.api_delete_special_fee, name='api_delete_special_fee'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 

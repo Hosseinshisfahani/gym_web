@@ -13,13 +13,13 @@ from .forms import (
     InBodyReportForm, InBodyResponseForm,
     MonthlyGoalForm, MonthlyGoalUpdateForm, MonthlyGoalCoachForm,
     ProgressAnalysisForm, BodyInformationUserForm,
-    TuitionReceiptForm, TuitionReceiptAdminForm, TuitionCategoryForm
+    TuitionReceiptForm, TuitionReceiptAdminForm, SpecialTuitionFeeForm
 )
 from .models import (
     UserProfile, WorkoutPlan, DietPlan, 
     Payment, Ticket, TicketResponse, Document, PlanRequest,
     BodyAnalysisReport, InBodyReport, MonthlyGoal, ProgressAnalysis, BodyInformationUser, PaymentCard,
-    TuitionReceipt, TuitionCategory
+    TuitionReceipt, TuitionCategory, SpecialTuitionFee
 )
 from django.db.models import Q, Avg, Sum, Count
 import datetime
@@ -2970,6 +2970,9 @@ def tuition_dashboard(request):
         expiry_date__gte=timezone.now().date()
     ).first()
     
+    # Get user's special fees
+    user_special_fees = SpecialTuitionFee.objects.filter(user=request.user).order_by('-created_at')
+    
     context = {
         'user_receipts': user_receipts,
         'active_categories': active_categories,
@@ -2978,7 +2981,40 @@ def tuition_dashboard(request):
         'pending_receipts': pending_receipts,
         'expired_receipts': expired_receipts,
         'active_tuition': active_tuition,
+        'user_special_fees': user_special_fees,
     }
+    
+    # Add admin data if user is staff
+    if request.user.is_staff:
+        # Get all receipts for admin overview
+        all_receipts = TuitionReceipt.objects.all().select_related('athlete', 'category', 'reviewed_by').order_by('-created_at')
+        
+        # Admin statistics
+        admin_total_receipts = TuitionReceipt.objects.count()
+        admin_pending_receipts = TuitionReceipt.objects.filter(status='pending').count()
+        admin_approved_receipts = TuitionReceipt.objects.filter(status='approved').count()
+        admin_rejected_receipts = TuitionReceipt.objects.filter(status='rejected').count()
+        admin_expired_receipts = TuitionReceipt.objects.filter(status='expired').count()
+        
+        # Recent receipts for quick review
+        recent_receipts = all_receipts[:10]
+        pending_for_review = TuitionReceipt.objects.filter(status='pending').select_related('athlete', 'category')[:5]
+        
+        # Categories management
+        all_categories = TuitionCategory.objects.all().order_by('amount')
+        
+        context.update({
+            'is_admin': True,
+            'all_receipts': all_receipts,
+            'recent_receipts': recent_receipts,
+            'pending_for_review': pending_for_review,
+            'all_categories': all_categories,
+            'admin_total_receipts': admin_total_receipts,
+            'admin_pending_receipts': admin_pending_receipts,
+            'admin_approved_receipts': admin_approved_receipts,
+            'admin_rejected_receipts': admin_rejected_receipts,
+            'admin_expired_receipts': admin_expired_receipts,
+        })
     
     return render(request, 'gym/tuition_dashboard.html', context)
 
@@ -3027,62 +3063,35 @@ def tuition_receipt_detail(request, receipt_id):
     
     return render(request, 'gym/tuition_receipt_detail.html', context)
 
+
 @staff_member_required
-def admin_tuition_dashboard(request):
-    """Admin dashboard for managing all tuition receipts"""
-    # Get filter parameters
-    status_filter = request.GET.get('status', '')
-    category_filter = request.GET.get('category', '')
-    date_from = request.GET.get('date_from', '')
-    date_to = request.GET.get('date_to', '')
-    
-    receipts = TuitionReceipt.objects.all().select_related('athlete', 'category', 'reviewed_by')
-    
-    # Apply filters
-    if status_filter:
-        receipts = receipts.filter(status=status_filter)
-    if category_filter:
-        receipts = receipts.filter(category_id=category_filter)
-    if date_from:
+def quick_update_tuition_receipt(request, receipt_id):
+    """Quick AJAX endpoint for updating tuition receipt status"""
+    if request.method == 'POST':
         try:
-            from_date = persian_to_gregorian_date(date_from)
-            if from_date:
-                receipts = receipts.filter(payment_date__gte=from_date)
-        except:
-            pass
-    if date_to:
-        try:
-            to_date = persian_to_gregorian_date(date_to)
-            if to_date:
-                receipts = receipts.filter(payment_date__lte=to_date)
-        except:
-            pass
+            import json
+            data = json.loads(request.body)
+            status = data.get('status')
+            
+            if status not in ['approved', 'rejected']:
+                return JsonResponse({'success': False, 'message': 'وضعیت نامعتبر است'})
+            
+            receipt = get_object_or_404(TuitionReceipt, id=receipt_id)
+            receipt.status = status
+            receipt.reviewed_by = request.user
+            receipt.reviewed_at = timezone.now()
+            receipt.save()
+            
+            status_display = receipt.get_status_display()
+            return JsonResponse({
+                'success': True, 
+                'message': f'رسید با موفقیت {status_display} شد'
+            })
+            
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': 'خطا در به‌روزرسانی وضعیت'})
     
-    # Get statistics
-    total_receipts = TuitionReceipt.objects.count()
-    pending_receipts = TuitionReceipt.objects.filter(status='pending').count()
-    approved_receipts = TuitionReceipt.objects.filter(status='approved').count()
-    rejected_receipts = TuitionReceipt.objects.filter(status='rejected').count()
-    expired_receipts = TuitionReceipt.objects.filter(status='expired').count()
-    
-    # Get categories for filter
-    categories = TuitionCategory.objects.filter(is_active=True)
-    
-    context = {
-        'receipts': receipts,
-        'categories': categories,
-        'status_filter': status_filter,
-        'category_filter': category_filter,
-        'date_from': date_from,
-        'date_to': date_to,
-        'total_receipts': total_receipts,
-        'pending_receipts': pending_receipts,
-        'approved_receipts': approved_receipts,
-        'rejected_receipts': rejected_receipts,
-        'expired_receipts': expired_receipts,
-    }
-    
-    return render(request, 'gym/admin_tuition_dashboard.html', context)
+    return JsonResponse({'success': False, 'message': 'روش درخواست نامعتبر است'})
 
 @staff_member_required
 def review_tuition_receipt(request, receipt_id):
@@ -3098,7 +3107,7 @@ def review_tuition_receipt(request, receipt_id):
             receipt.save()
             
             messages.success(request, f'وضعیت رسید {receipt.athlete.username} با موفقیت به‌روزرسانی شد.')
-            return redirect('gym:admin_tuition_dashboard')
+            return redirect('gym:tuition_dashboard')
     else:
         form = TuitionReceiptAdminForm(instance=receipt)
     
@@ -3109,65 +3118,88 @@ def review_tuition_receipt(request, receipt_id):
     
     return render(request, 'gym/review_tuition_receipt.html', context)
 
-@staff_member_required
-def manage_tuition_categories(request):
-    """Admin view to manage tuition categories"""
-    categories = TuitionCategory.objects.all().order_by('amount')
-    
-    if request.method == 'POST':
-        form = TuitionCategoryForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'دسته‌بندی شهریه با موفقیت ایجاد شد.')
-            return redirect('gym:manage_tuition_categories')
-    else:
-        form = TuitionCategoryForm()
-    
-    context = {
-        'categories': categories,
-        'form': form,
-    }
-    
-    return render(request, 'gym/manage_tuition_categories.html', context)
+
+# API endpoints for special tuition fees
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
 
 @staff_member_required
-def edit_tuition_category(request, category_id):
-    """Admin view to edit tuition category"""
-    category = get_object_or_404(TuitionCategory, id=category_id)
+def api_users(request):
+    """API endpoint to get list of users for special fee assignment"""
+    users = User.objects.filter(is_active=True).select_related('userprofile')
+    users_data = []
+    for user in users:
+        users_data.append({
+            'id': user.id,
+            'username': user.username,
+            'name': user.userprofile.name if hasattr(user, 'userprofile') and user.userprofile.name else None
+        })
     
-    if request.method == 'POST':
-        form = TuitionCategoryForm(request.POST, instance=category)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'دسته‌بندی شهریه با موفقیت به‌روزرسانی شد.')
-            return redirect('gym:manage_tuition_categories')
-    else:
-        form = TuitionCategoryForm(instance=category)
-    
-    context = {
-        'category': category,
-        'form': form,
-    }
-    
-    return render(request, 'gym/edit_tuition_category.html', context)
+    return JsonResponse({'users': users_data})
 
 @staff_member_required
-def delete_tuition_category(request, category_id):
-    """Admin view to delete tuition category"""
-    category = get_object_or_404(TuitionCategory, id=category_id)
+def api_special_fees(request):
+    """API endpoint to get all special fees"""
+    special_fees = SpecialTuitionFee.objects.all().select_related('user', 'created_by').order_by('-created_at')
+    fees_data = []
+    for fee in special_fees:
+        fees_data.append({
+            'id': fee.id,
+            'user_name': fee.user.userprofile.name if hasattr(fee.user, 'userprofile') and fee.user.userprofile.name else fee.user.username,
+            'title': fee.title,
+            'amount': float(fee.amount),
+            'status': fee.status,
+            'status_display': fee.get_status_display(),
+            'due_date': fee.due_date.strftime('%Y-%m-%d'),
+            'created_at': fee.created_at.strftime('%Y-%m-%d'),
+        })
     
-    # Check if category has any receipts
-    if category.tuitionreceipt_set.exists():
-        messages.error(request, 'این دسته‌بندی دارای رسید است و قابل حذف نیست.')
-        return redirect('gym:manage_tuition_categories')
-    
+    return JsonResponse({'fees': fees_data})
+
+@csrf_exempt
+@staff_member_required
+def api_create_special_fee(request):
+    """API endpoint to create a new special fee"""
     if request.method == 'POST':
-        category.delete()
-        messages.success(request, 'دسته‌بندی شهریه با موفقیت حذف شد.')
-        return redirect('gym:manage_tuition_categories')
+        try:
+            user_id = request.POST.get('user')
+            title = request.POST.get('title')
+            amount = request.POST.get('amount')
+            due_date = request.POST.get('due_date')
+            description = request.POST.get('description', '')
+            notes = request.POST.get('notes', '')
+            
+            user = User.objects.get(id=user_id)
+            special_fee = SpecialTuitionFee.objects.create(
+                user=user,
+                title=title,
+                amount=amount,
+                due_date=due_date,
+                description=description,
+                notes=notes,
+                created_by=request.user
+            )
+            
+            return JsonResponse({'success': True, 'message': 'شهریه ویژه با موفقیت ایجاد شد'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
     
-    context = {
-        'category': category,
-    }
+    return JsonResponse({'success': False, 'message': 'Method not allowed'})
+
+@csrf_exempt
+@staff_member_required
+def api_delete_special_fee(request, fee_id):
+    """API endpoint to delete a special fee"""
+    if request.method == 'POST':
+        try:
+            special_fee = SpecialTuitionFee.objects.get(id=fee_id)
+            special_fee.delete()
+            return JsonResponse({'success': True, 'message': 'شهریه ویژه با موفقیت حذف شد'})
+        except SpecialTuitionFee.DoesNotExist:
+            return JsonResponse({'success': False, 'message': 'شهریه ویژه یافت نشد'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'message': str(e)})
     
-    return render(request, 'gym/delete_tuition_category.html', context)
+    return JsonResponse({'success': False, 'message': 'Method not allowed'})
+
