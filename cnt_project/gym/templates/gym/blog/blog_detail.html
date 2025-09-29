@@ -1,0 +1,227 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}{{ post.title }} - بلاگ ورزشی{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="section-card">
+                <div class="card-body">
+                    <!-- Post Header -->
+                    <div class="mb-4">
+                        <div class="mb-3">
+                            {% if post.category %}
+                                <span class="badge bg-primary">{{ post.category.name }}</span>
+                            {% endif %}
+                            {% if post.is_featured %}
+                                <span class="badge bg-warning">مقاله ویژه</span>
+                            {% endif %}
+                        </div>
+                        
+                        <h1 class="display-6 mb-3">{{ post.title }}</h1>
+                        
+                        <div class="d-flex justify-content-between align-items-center text-muted mb-3">
+                            <div>
+                                <i class="fas fa-user"></i>
+                                {% if post.author.userprofile.name %}
+                                    {{ post.author.userprofile.name }}
+                                {% else %}
+                                    {{ post.author.username }}
+                                {% endif %}
+                            </div>
+                            <div>
+                                <i class="fas fa-calendar"></i>
+                                {{ post.published_at|date:"Y/m/d" }}
+                            </div>
+                            <div>
+                                <i class="fas fa-eye"></i>
+                                {{ post.view_count }} بازدید
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Featured Image -->
+                    {% if post.featured_image %}
+                        <div class="mb-4">
+                            <img src="{{ post.featured_image.url }}" class="img-fluid rounded" 
+                                 alt="{{ post.title }}" style="width: 100%; max-height: 400px; object-fit: cover;">
+                        </div>
+                    {% endif %}
+
+                    <!-- Post Content -->
+                    <div class="post-content">
+                        {{ post.content|linebreaks }}
+                    </div>
+
+                    <!-- Post Footer -->
+                    <div class="mt-5 pt-4 border-top">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>دسته‌بندی:</h6>
+                                {% if post.category %}
+                                    <span class="badge bg-secondary">{{ post.category.name }}</span>
+                                {% else %}
+                                    <span class="text-muted">بدون دسته‌بندی</span>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <h6>تاریخ انتشار:</h6>
+                                <span class="text-muted">{{ post.published_at|date:"Y/m/d H:i" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comments Section -->
+            {% if post.allow_comments %}
+                <div class="section-card mt-4">
+                    <div class="card-header">
+                        <h4 class="mb-0">
+                            <i class="fas fa-comments"></i>
+                            نظرات ({{ comments.count }})
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Comment Form -->
+                        <div class="mb-4">
+                            <h5>نظر خود را بنویسید:</h5>
+                            <form method="post">
+                                {% csrf_token %}
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ comment_form.author_name }}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        {{ comment_form.author_email }}
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    {{ comment_form.content }}
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane"></i>
+                                    ارسال نظر
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Comments List -->
+                        {% if comments %}
+                            <div class="comments-list">
+                                {% for comment in comments %}
+                                    <div class="comment-item border-bottom pb-3 mb-3">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="mb-0">{{ comment.author_name }}</h6>
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock"></i>
+                                                {{ comment.created_at|date:"Y/m/d H:i" }}
+                                            </small>
+                                        </div>
+                                        <p class="mb-0">{{ comment.content|linebreaks }}</p>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-comment-slash fa-2x mb-2"></i>
+                                <p>هنوز نظری ارسال نشده است. اولین نفری باشید که نظر می‌دهد!</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Related Posts -->
+            {% if related_posts %}
+                <div class="section-card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-newspaper"></i>
+                            مقالات مرتبط
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% for related_post in related_posts %}
+                            <div class="related-post mb-3">
+                                <div class="d-flex">
+                                    {% if related_post.featured_image %}
+                                        <img src="{{ related_post.featured_image.url }}" 
+                                             class="rounded me-3" 
+                                             style="width: 60px; height: 60px; object-fit: cover;"
+                                             alt="{{ related_post.title }}">
+                                    {% else %}
+                                        <div class="bg-secondary rounded me-3 d-flex align-items-center justify-content-center" 
+                                             style="width: 60px; height: 60px;">
+                                            <i class="fas fa-image text-white"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">
+                                            <a href="{% url 'gym:blog_detail' related_post.slug %}" 
+                                               class="text-decoration-none text-white">
+                                                {{ related_post.title|truncatewords:8 }}
+                                            </a>
+                                        </h6>
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar"></i>
+                                            {{ related_post.published_at|date:"Y/m/d" }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Back to Blog -->
+            <div class="section-card">
+                <div class="card-body text-center">
+                    <a href="{% url 'gym:blog_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-right"></i>
+                        بازگشت به بلاگ
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.post-content {
+    line-height: 1.8;
+    font-size: 1.1rem;
+}
+
+.post-content p {
+    margin-bottom: 1.5rem;
+}
+
+.post-content h1, .post-content h2, .post-content h3, 
+.post-content h4, .post-content h5, .post-content h6 {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: white;
+}
+
+.post-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 1rem 0;
+}
+
+.comment-item {
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+</style>
+{% endblock %}

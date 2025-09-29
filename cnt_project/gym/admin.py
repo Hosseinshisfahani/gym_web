@@ -33,7 +33,8 @@ admin_site = CustomAdminSite(name='admin')
 from .models import (
     UserProfile, WorkoutPlan, DietPlan, 
     Payment, Ticket, TicketResponse, Document, PlanRequest,
-    BodyAnalysisReport, InBodyReport, MonthlyGoal, ProgressAnalysis, BodyInformationUser, PaymentCard, EmailNotificationSettings, TuitionCategory, TuitionReceipt, SpecialTuitionFee
+    BodyAnalysisReport, InBodyReport, MonthlyGoal, ProgressAnalysis, BodyInformationUser, PaymentCard, EmailNotificationSettings, TuitionCategory, TuitionReceipt, SpecialTuitionFee,
+    BlogCategory, BlogPost, BlogComment
 )
 
 # Import shop models
@@ -351,3 +352,96 @@ class SpecialTuitionFeeAdmin(admin.ModelAdmin):
 admin_site.register(TuitionCategory, TuitionCategoryAdmin)
 admin_site.register(TuitionReceipt, TuitionReceiptAdmin)
 admin_site.register(SpecialTuitionFee, SpecialTuitionFeeAdmin)
+
+# Blog Admin Classes
+class BlogCategoryAdmin(admin.ModelAdmin):
+    verbose_name = 'دسته‌بندی بلاگ'
+    verbose_name_plural = 'دسته‌بندی‌های بلاگ'
+    list_display = ('name', 'slug', 'is_active', 'created_at')
+    list_filter = ('is_active', 'created_at')
+    search_fields = ('name', 'description')
+    ordering = ('name',)
+    list_editable = ('is_active',)
+    prepopulated_fields = {'slug': ('name',)}
+    
+    fieldsets = [
+        ('اطلاعات پایه', {
+            'fields': ['name', 'slug', 'description', 'is_active']
+        }),
+        ('تاریخ‌ها', {
+            'fields': ['created_at'],
+            'classes': ['collapse']
+        }),
+    ]
+    readonly_fields = ('created_at',)
+
+class BlogPostAdmin(admin.ModelAdmin):
+    verbose_name = 'مقاله بلاگ'
+    verbose_name_plural = 'مقالات بلاگ'
+    list_display = ('title', 'author', 'category', 'status', 'is_featured', 'view_count', 'published_at')
+    list_filter = ('status', 'is_featured', 'category', 'created_at', 'published_at')
+    search_fields = ('title', 'content', 'excerpt', 'author__username', 'author__userprofile__name')
+    ordering = ('-published_at', '-created_at')
+    list_editable = ('status', 'is_featured')
+    prepopulated_fields = {'slug': ('title',)}
+    filter_horizontal = ()
+    
+    fieldsets = [
+        ('اطلاعات اصلی', {
+            'fields': ['title', 'slug', 'content', 'excerpt']
+        }),
+        ('تنظیمات', {
+            'fields': ['author', 'category', 'status', 'is_featured', 'allow_comments']
+        }),
+        ('رسانه', {
+            'fields': ['featured_image']
+        }),
+        ('آمار', {
+            'fields': ['view_count'],
+            'classes': ['collapse']
+        }),
+        ('تاریخ‌ها', {
+            'fields': ['created_at', 'updated_at', 'published_at'],
+            'classes': ['collapse']
+        }),
+    ]
+    readonly_fields = ('created_at', 'updated_at', 'published_at', 'view_count')
+    
+    def save_model(self, request, obj, form, change):
+        if not change:  # New post
+            obj.author = request.user
+        super().save_model(request, obj, form, change)
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('author', 'category')
+
+class BlogCommentAdmin(admin.ModelAdmin):
+    verbose_name = 'کامنت بلاگ'
+    verbose_name_plural = 'کامنت‌های بلاگ'
+    list_display = ('author_name', 'post', 'status', 'created_at')
+    list_filter = ('status', 'created_at')
+    search_fields = ('author_name', 'author_email', 'content', 'post__title')
+    ordering = ('-created_at',)
+    list_editable = ('status',)
+    
+    fieldsets = [
+        ('اطلاعات کامنت', {
+            'fields': ['post', 'author_name', 'author_email', 'content']
+        }),
+        ('وضعیت', {
+            'fields': ['status']
+        }),
+        ('تاریخ‌ها', {
+            'fields': ['created_at', 'updated_at'],
+            'classes': ['collapse']
+        }),
+    ]
+    readonly_fields = ('created_at', 'updated_at')
+    
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('post')
+
+# Register blog models
+admin_site.register(BlogCategory, BlogCategoryAdmin)
+admin_site.register(BlogPost, BlogPostAdmin)
+admin_site.register(BlogComment, BlogCommentAdmin)

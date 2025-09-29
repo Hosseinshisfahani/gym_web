@@ -4,7 +4,8 @@ from django.contrib.auth.models import User
 from .models import (
     UserProfile, WorkoutPlan, DietPlan, Payment, 
     Ticket, Document, PlanRequest, BodyAnalysisReport, InBodyReport,
-    MonthlyGoal, ProgressAnalysis, BodyInformationUser, TuitionCategory, TuitionReceipt, SpecialTuitionFee
+    MonthlyGoal, ProgressAnalysis, BodyInformationUser, TuitionCategory, TuitionReceipt, SpecialTuitionFee,
+    BlogCategory, BlogPost, BlogComment
 )
 import jdatetime
 from datetime import datetime, date
@@ -261,15 +262,17 @@ class UserProfileForm(forms.ModelForm):
     def clean_profile_image(self):
         profile_image = self.cleaned_data.get('profile_image')
         if profile_image:
-            # Check file size (5MB = 5 * 1024 * 1024 bytes)
-            if profile_image.size > 5 * 1024 * 1024:
-                raise forms.ValidationError('حجم فایل نباید بیشتر از 5 مگابایت باشد.')
-            
-            # Check file type
-            allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif']
-            content_type = profile_image.content_type
-            if content_type not in allowed_types:
-                raise forms.ValidationError('فقط فایل‌های تصویری با فرمت JPG، PNG یا GIF مجاز است.')
+            # Only validate if it's a new file upload (not an existing ImageFieldFile)
+            if hasattr(profile_image, 'content_type'):
+                # Check file size (5MB = 5 * 1024 * 1024 bytes)
+                if profile_image.size > 5 * 1024 * 1024:
+                    raise forms.ValidationError('حجم فایل نباید بیشتر از 5 مگابایت باشد.')
+                
+                # Check file type
+                allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif']
+                content_type = profile_image.content_type
+                if content_type not in allowed_types:
+                    raise forms.ValidationError('فقط فایل‌های تصویری با فرمت JPG، PNG یا GIF مجاز است.')
         
         return profile_image
     
@@ -655,4 +658,75 @@ class SpecialTuitionFeeForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Only show active users
-        self.fields['user'].queryset = User.objects.filter(is_active=True).order_by('username') 
+        self.fields['user'].queryset = User.objects.filter(is_active=True).order_by('username')
+
+# Blog Forms
+class BlogCategoryForm(forms.ModelForm):
+    """Form for creating and editing blog categories"""
+    class Meta:
+        model = BlogCategory
+        fields = ['name', 'slug', 'description', 'is_active']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'نام دسته‌بندی'}),
+            'slug': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'نامک (برای URL)'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'توضیحات دسته‌بندی'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        labels = {
+            'name': 'نام دسته‌بندی',
+            'slug': 'نامک',
+            'description': 'توضیحات',
+            'is_active': 'فعال',
+        }
+
+class BlogPostForm(forms.ModelForm):
+    """Form for creating and editing blog posts"""
+    class Meta:
+        model = BlogPost
+        fields = [
+            'title', 'slug', 'content', 'excerpt', 'featured_image', 
+            'category', 'status', 'is_featured', 'allow_comments'
+        ]
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'عنوان مقاله'}),
+            'slug': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'نامک (برای URL)'}),
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 15, 'placeholder': 'محتوای اصلی مقاله...'}),
+            'excerpt': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'خلاصه مقاله (اختیاری)'}),
+            'featured_image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'category': forms.Select(attrs={'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'is_featured': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'allow_comments': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+        labels = {
+            'title': 'عنوان مقاله',
+            'slug': 'نامک',
+            'content': 'محتوای اصلی',
+            'excerpt': 'خلاصه',
+            'featured_image': 'تصویر شاخص',
+            'category': 'دسته‌بندی',
+            'status': 'وضعیت',
+            'is_featured': 'مقاله ویژه',
+            'allow_comments': 'اجازه کامنت',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Only show active categories
+        self.fields['category'].queryset = BlogCategory.objects.filter(is_active=True).order_by('name')
+
+class BlogCommentForm(forms.ModelForm):
+    """Form for submitting blog comments"""
+    class Meta:
+        model = BlogComment
+        fields = ['author_name', 'author_email', 'content']
+        widgets = {
+            'author_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'نام شما'}),
+            'author_email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'ایمیل شما'}),
+            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'نظر خود را بنویسید...'}),
+        }
+        labels = {
+            'author_name': 'نام',
+            'author_email': 'ایمیل',
+            'content': 'نظر',
+        } 

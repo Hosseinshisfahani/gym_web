@@ -109,6 +109,12 @@
         </div>
                     <span>ارتباط با مربی</span>
                 </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-blog"></i>
+                    </div>
+                    <span>مقالات و راهنمایی‌ها</span>
+                </div>
             </div>
             
             <div class="section-buttons">
@@ -120,6 +126,10 @@
                     <a href="{% url 'gym:monthly_goals' %}" class="btn btn-dashboard-secondary">
                         <i class="fas fa-bullseye me-2"></i>
                         اهداف من
+                    </a>
+                    <a href="{% url 'gym:blog_list' %}" class="btn btn-dashboard-secondary">
+                        <i class="fas fa-blog me-2"></i>
+                        بلاگ ورزشی
                     </a>
                 {% else %}
                     <a href="{% url 'gym:login' %}" class="btn btn-dashboard-primary">

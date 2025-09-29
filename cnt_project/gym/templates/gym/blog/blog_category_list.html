@@ -1,0 +1,94 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}مدیریت دسته‌بندی‌های بلاگ{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="section-card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">
+                        <i class="fas fa-tags"></i>
+                        مدیریت دسته‌بندی‌های بلاگ
+                    </h2>
+                    <a href="{% url 'gym:blog_category_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i>
+                        دسته‌بندی جدید
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if categories %}
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>نام</th>
+                                        <th>نامک</th>
+                                        <th>توضیحات</th>
+                                        <th>وضعیت</th>
+                                        <th>تعداد مقالات</th>
+                                        <th>تاریخ ایجاد</th>
+                                        <th>عملیات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for category in categories %}
+                                        <tr>
+                                            <td>
+                                                <strong>{{ category.name }}</strong>
+                                            </td>
+                                            <td>
+                                                <code>{{ category.slug }}</code>
+                                            </td>
+                                            <td>
+                                                {% if category.description %}
+                                                    {{ category.description|truncatewords:10 }}
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if category.is_active %}
+                                                    <span class="badge bg-success">فعال</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">غیرفعال</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-info">{{ category.posts.count }}</span>
+                                            </td>
+                                            <td>
+                                                {{ category.created_at|date:"Y/m/d" }}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <a href="{% url 'gym:blog_category_edit' category.pk %}" 
+                                                       class="btn btn-outline-primary" title="ویرایش">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-tags fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">دسته‌بندی‌ای یافت نشد</h4>
+                            <p class="text-muted">هنوز دسته‌بندی‌ای ایجاد نشده است.</p>
+                            <a href="{% url 'gym:blog_category_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i>
+                                ایجاد اولین دسته‌بندی
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

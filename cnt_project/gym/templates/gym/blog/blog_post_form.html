@@ -1,0 +1,235 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if post %}
+        ویرایش مقاله: {{ post.title }}
+    {% else %}
+        ایجاد مقاله جدید
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="section-card">
+                <div class="card-header">
+                    <h2 class="mb-0">
+                        <i class="fas fa-edit"></i>
+                        {% if post %}
+                            ویرایش مقاله
+                        {% else %}
+                            ایجاد مقاله جدید
+                        {% endif %}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <!-- Title -->
+                                <div class="mb-3">
+                                    <label for="{{ form.title.id_for_label }}" class="form-label">
+                                        {{ form.title.label }}
+                                    </label>
+                                    {{ form.title }}
+                                    {% if form.title.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.title.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Slug -->
+                                <div class="mb-3">
+                                    <label for="{{ form.slug.id_for_label }}" class="form-label">
+                                        {{ form.slug.label }}
+                                    </label>
+                                    {{ form.slug }}
+                                    <div class="form-text">نامک برای URL استفاده می‌شود. فقط حروف انگلیسی، اعداد و خط تیره مجاز است.</div>
+                                    {% if form.slug.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.slug.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Content -->
+                                <div class="mb-3">
+                                    <label for="{{ form.content.id_for_label }}" class="form-label">
+                                        {{ form.content.label }}
+                                    </label>
+                                    {{ form.content }}
+                                    {% if form.content.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.content.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Excerpt -->
+                                <div class="mb-3">
+                                    <label for="{{ form.excerpt.id_for_label }}" class="form-label">
+                                        {{ form.excerpt.label }}
+                                    </label>
+                                    {{ form.excerpt }}
+                                    <div class="form-text">خلاصه کوتاه از مقاله (اختیاری)</div>
+                                    {% if form.excerpt.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.excerpt.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <!-- Featured Image -->
+                                <div class="mb-3">
+                                    <label for="{{ form.featured_image.id_for_label }}" class="form-label">
+                                        {{ form.featured_image.label }}
+                                    </label>
+                                    {{ form.featured_image }}
+                                    {% if post and post.featured_image %}
+                                        <div class="mt-2">
+                                            <img src="{{ post.featured_image.url }}" class="img-fluid rounded" 
+                                                 alt="تصویر فعلی" style="max-height: 200px;">
+                                        </div>
+                                    {% endif %}
+                                    {% if form.featured_image.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.featured_image.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Category -->
+                                <div class="mb-3">
+                                    <label for="{{ form.category.id_for_label }}" class="form-label">
+                                        {{ form.category.label }}
+                                    </label>
+                                    {{ form.category }}
+                                    {% if form.category.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.category.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Status -->
+                                <div class="mb-3">
+                                    <label for="{{ form.status.id_for_label }}" class="form-label">
+                                        {{ form.status.label }}
+                                    </label>
+                                    {{ form.status }}
+                                    {% if form.status.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.status.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Checkboxes -->
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form.is_featured }}
+                                        <label class="form-check-label" for="{{ form.is_featured.id_for_label }}">
+                                            {{ form.is_featured.label }}
+                                        </label>
+                                    </div>
+                                    {% if form.is_featured.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.is_featured.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form.allow_comments }}
+                                        <label class="form-check-label" for="{{ form.allow_comments.id_for_label }}">
+                                            {{ form.allow_comments.label }}
+                                        </label>
+                                    </div>
+                                    {% if form.allow_comments.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.allow_comments.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{% url 'gym:blog_admin_list' %}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-right"></i>
+                                        بازگشت
+                                    </a>
+                                    <div>
+                                        {% if post %}
+                                            <a href="{% url 'gym:blog_detail' post.slug %}" class="btn btn-info me-2">
+                                                <i class="fas fa-eye"></i>
+                                                مشاهده
+                                            </a>
+                                        {% endif %}
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save"></i>
+                                            {% if post %}
+                                                به‌روزرسانی
+                                            {% else %}
+                                                ایجاد
+                                            {% endif %}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-control, .form-select {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-color: #444;
+    color: #333;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: #fff;
+    box-shadow: 0 0 0 0.25rem rgba(255, 0, 0, 0.25);
+    border-color: var(--primary-color);
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+</style>
+{% endblock %}

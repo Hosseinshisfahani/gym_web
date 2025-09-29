@@ -1,0 +1,135 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}
+    {% if category %}
+        ویرایش دسته‌بندی: {{ category.name }}
+    {% else %}
+        ایجاد دسته‌بندی جدید
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="section-card">
+                <div class="card-header">
+                    <h2 class="mb-0">
+                        <i class="fas fa-tag"></i>
+                        {% if category %}
+                            ویرایش دسته‌بندی
+                        {% else %}
+                            ایجاد دسته‌بندی جدید
+                        {% endif %}
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- Name -->
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">
+                                {{ form.name.label }}
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Slug -->
+                        <div class="mb-3">
+                            <label for="{{ form.slug.id_for_label }}" class="form-label">
+                                {{ form.slug.label }}
+                            </label>
+                            {{ form.slug }}
+                            <div class="form-text">نامک برای URL استفاده می‌شود. فقط حروف انگلیسی، اعداد و خط تیره مجاز است.</div>
+                            {% if form.slug.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.slug.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                {{ form.description.label }}
+                            </label>
+                            {{ form.description }}
+                            <div class="form-text">توضیحات کوتاه درباره این دسته‌بندی (اختیاری)</div>
+                            {% if form.description.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Active Status -->
+                        <div class="mb-3">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    {{ form.is_active.label }}
+                                </label>
+                            </div>
+                            {% if form.is_active.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.is_active.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'gym:blog_category_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right"></i>
+                                بازگشت
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i>
+                                {% if category %}
+                                    به‌روزرسانی
+                                {% else %}
+                                    ایجاد
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-control {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-color: #444;
+    color: #333;
+}
+
+.form-control:focus {
+    background-color: #fff;
+    box-shadow: 0 0 0 0.25rem rgba(255, 0, 0, 0.25);
+    border-color: var(--primary-color);
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+</style>
+{% endblock %}

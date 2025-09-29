@@ -13,13 +13,15 @@ from .forms import (
     InBodyReportForm, InBodyResponseForm,
     MonthlyGoalForm, MonthlyGoalUpdateForm, MonthlyGoalCoachForm,
     ProgressAnalysisForm, BodyInformationUserForm,
-    TuitionReceiptForm, TuitionReceiptAdminForm, SpecialTuitionFeeForm
+    TuitionReceiptForm, TuitionReceiptAdminForm, SpecialTuitionFeeForm,
+    BlogCategoryForm, BlogPostForm, BlogCommentForm
 )
 from .models import (
     UserProfile, WorkoutPlan, DietPlan, 
     Payment, Ticket, TicketResponse, Document, PlanRequest,
     BodyAnalysisReport, InBodyReport, MonthlyGoal, ProgressAnalysis, BodyInformationUser, PaymentCard,
-    TuitionReceipt, TuitionCategory, SpecialTuitionFee
+    TuitionReceipt, TuitionCategory, SpecialTuitionFee,
+    BlogCategory, BlogPost, BlogComment
 )
 from django.db.models import Q, Avg, Sum, Count
 import datetime
@@ -264,7 +266,7 @@ def edit_profile(request):
                     redirect_url = request.session.pop('payment_redirect_url')
                     redirect_step = request.session.pop('payment_redirect_step', None)
                     if redirect_step:
-                        return redirect(redirect_url, step=redirect_step)
+                        return redirect(redirect_url)
                     return redirect(redirect_url)
                 
                 # Check if there's a product ID stored for payment
@@ -3153,6 +3155,8 @@ def api_special_fees(request):
             'status_display': fee.get_status_display(),
             'due_date': fee.due_date.strftime('%Y-%m-%d'),
             'created_at': fee.created_at.strftime('%Y-%m-%d'),
+            'due_date_persian': fee.due_date.strftime('%Y-%m-%d'),  # Will be formatted in frontend
+            'created_at_persian': fee.created_at.strftime('%Y-%m-%d'),  # Will be formatted in frontend
         })
     
     return JsonResponse({'fees': fees_data})
@@ -3191,15 +3195,259 @@ def api_create_special_fee(request):
 @staff_member_required
 def api_delete_special_fee(request, fee_id):
     """API endpoint to delete a special fee"""
+    print(f"Delete API called with fee_id: {fee_id}, method: {request.method}")
+    
     if request.method == 'POST':
         try:
+            # First, let's see what special fees exist
+            all_fees = SpecialTuitionFee.objects.all()
+            print(f"All special fees in database: {[f.id for f in all_fees]}")
+            
             special_fee = SpecialTuitionFee.objects.get(id=fee_id)
+            fee_title = special_fee.title
             special_fee.delete()
+            print(f"Successfully deleted special fee: {fee_title} (ID: {fee_id})")
             return JsonResponse({'success': True, 'message': 'شهریه ویژه با موفقیت حذف شد'})
         except SpecialTuitionFee.DoesNotExist:
-            return JsonResponse({'success': False, 'message': 'شهریه ویژه یافت نشد'})
+            print(f"Special fee with ID {fee_id} not found")
+            # Let's see what fees actually exist
+            existing_fees = SpecialTuitionFee.objects.all().values('id', 'title')
+            print(f"Existing fees: {list(existing_fees)}")
+            return JsonResponse({'success': False, 'message': f'شهریه ویژه با ID {fee_id} یافت نشد'})
         except Exception as e:
+            print(f"Error deleting special fee {fee_id}: {str(e)}")
             return JsonResponse({'success': False, 'message': str(e)})
     
+    print(f"Invalid method {request.method} for delete API")
     return JsonResponse({'success': False, 'message': 'Method not allowed'})
+
+# Blog Views
+def blog_list(request):
+    """Display list of published blog posts"""
+    posts = BlogPost.objects.filter(status='published').select_related('author', 'category').order_by('-published_at')
+    categories = BlogCategory.objects.filter(is_active=True).order_by('name')
+    
+    # Filter by category if specified
+    category_slug = request.GET.get('category')
+    if category_slug:
+        posts = posts.filter(category__slug=category_slug)
+    
+    # Search functionality
+    search_query = request.GET.get('search')
+    if search_query:
+        posts = posts.filter(
+            Q(title__icontains=search_query) | 
+            Q(content__icontains=search_query) | 
+            Q(excerpt__icontains=search_query)
+        )
+    
+    # Pagination
+    from django.core.paginator import Paginator
+    paginator = Paginator(posts, 6)  # Show 6 posts per page
+    page_number = request.GET.get('page')
+    posts = paginator.get_page(page_number)
+    
+    context = {
+        'posts': posts,
+        'categories': categories,
+        'current_category': category_slug,
+        'search_query': search_query,
+    }
+    return render(request, 'gym/blog/blog_list.html', context)
+
+def blog_detail(request, slug):
+    """Display individual blog post"""
+    post = get_object_or_404(BlogPost, slug=slug, status='published')
+    
+    # Increment view count
+    post.increment_view_count()
+    
+    # Get related posts (same category, excluding current post)
+    related_posts = BlogPost.objects.filter(
+        category=post.category, 
+        status='published'
+    ).exclude(id=post.id).order_by('-published_at')[:3]
+    
+    # Get approved comments
+    comments = post.comments.filter(status='approved').order_by('-created_at')
+    
+    # Handle comment submission
+    if request.method == 'POST' and post.allow_comments:
+        comment_form = BlogCommentForm(request.POST)
+        if comment_form.is_valid():
+            comment = comment_form.save(commit=False)
+            comment.post = post
+            comment.save()
+            messages.success(request, 'نظر شما با موفقیت ارسال شد و پس از تایید نمایش داده خواهد شد.')
+            return redirect('gym:blog_detail', slug=post.slug)
+    else:
+        comment_form = BlogCommentForm()
+    
+    context = {
+        'post': post,
+        'related_posts': related_posts,
+        'comments': comments,
+        'comment_form': comment_form,
+    }
+    return render(request, 'gym/blog/blog_detail.html', context)
+
+@staff_member_required
+def blog_admin_list(request):
+    """Admin view for managing blog posts"""
+    posts = BlogPost.objects.select_related('author', 'category').order_by('-created_at')
+    
+    # Filter by status
+    status_filter = request.GET.get('status')
+    if status_filter:
+        posts = posts.filter(status=status_filter)
+    
+    # Search functionality
+    search_query = request.GET.get('search')
+    if search_query:
+        posts = posts.filter(
+            Q(title__icontains=search_query) | 
+            Q(content__icontains=search_query) | 
+            Q(author__username__icontains=search_query)
+        )
+    
+    # Pagination
+    from django.core.paginator import Paginator
+    paginator = Paginator(posts, 10)
+    page_number = request.GET.get('page')
+    posts = paginator.get_page(page_number)
+    
+    context = {
+        'posts': posts,
+        'status_filter': status_filter,
+        'search_query': search_query,
+    }
+    return render(request, 'gym/blog/blog_admin_list.html', context)
+
+@staff_member_required
+def blog_post_create(request):
+    """Create new blog post"""
+    if request.method == 'POST':
+        form = BlogPostForm(request.POST, request.FILES)
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.author = request.user
+            post.save()
+            messages.success(request, 'مقاله با موفقیت ایجاد شد.')
+            return redirect('gym:blog_admin_list')
+    else:
+        form = BlogPostForm()
+    
+    context = {'form': form}
+    return render(request, 'gym/blog/blog_post_form.html', context)
+
+@staff_member_required
+def blog_post_edit(request, pk):
+    """Edit existing blog post"""
+    post = get_object_or_404(BlogPost, pk=pk)
+    
+    if request.method == 'POST':
+        form = BlogPostForm(request.POST, request.FILES, instance=post)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'مقاله با موفقیت به‌روزرسانی شد.')
+            return redirect('gym:blog_admin_list')
+    else:
+        form = BlogPostForm(instance=post)
+    
+    context = {'form': form, 'post': post}
+    return render(request, 'gym/blog/blog_post_form.html', context)
+
+@staff_member_required
+def blog_post_delete(request, pk):
+    """Delete blog post"""
+    post = get_object_or_404(BlogPost, pk=pk)
+    
+    if request.method == 'POST':
+        post_title = post.title
+        post.delete()
+        messages.success(request, f'مقاله "{post_title}" با موفقیت حذف شد.')
+        return redirect('gym:blog_admin_list')
+    
+    context = {'post': post}
+    return render(request, 'gym/blog/blog_post_confirm_delete.html', context)
+
+@staff_member_required
+def blog_category_list(request):
+    """Admin view for managing blog categories"""
+    categories = BlogCategory.objects.order_by('name')
+    
+    context = {'categories': categories}
+    return render(request, 'gym/blog/blog_category_list.html', context)
+
+@staff_member_required
+def blog_category_create(request):
+    """Create new blog category"""
+    if request.method == 'POST':
+        form = BlogCategoryForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'دسته‌بندی با موفقیت ایجاد شد.')
+            return redirect('gym:blog_category_list')
+    else:
+        form = BlogCategoryForm()
+    
+    context = {'form': form}
+    return render(request, 'gym/blog/blog_category_form.html', context)
+
+@staff_member_required
+def blog_category_edit(request, pk):
+    """Edit existing blog category"""
+    category = get_object_or_404(BlogCategory, pk=pk)
+    
+    if request.method == 'POST':
+        form = BlogCategoryForm(request.POST, instance=category)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'دسته‌بندی با موفقیت به‌روزرسانی شد.')
+            return redirect('gym:blog_category_list')
+    else:
+        form = BlogCategoryForm(instance=category)
+    
+    context = {'form': form, 'category': category}
+    return render(request, 'gym/blog/blog_category_form.html', context)
+
+@staff_member_required
+def blog_comment_list(request):
+    """Admin view for managing blog comments"""
+    comments = BlogComment.objects.select_related('post').order_by('-created_at')
+    
+    # Filter by status
+    status_filter = request.GET.get('status')
+    if status_filter:
+        comments = comments.filter(status=status_filter)
+    
+    # Pagination
+    from django.core.paginator import Paginator
+    paginator = Paginator(comments, 20)
+    page_number = request.GET.get('page')
+    comments = paginator.get_page(page_number)
+    
+    context = {
+        'comments': comments,
+        'status_filter': status_filter,
+    }
+    return render(request, 'gym/blog/blog_comment_list.html', context)
+
+@staff_member_required
+def blog_comment_approve(request, pk):
+    """Approve blog comment"""
+    comment = get_object_or_404(BlogComment, pk=pk)
+    comment.status = 'approved'
+    comment.save()
+    messages.success(request, 'کامنت تایید شد.')
+    return redirect('gym:blog_comment_list')
+
+@staff_member_required
+def blog_comment_reject(request, pk):
+    """Reject blog comment"""
+    comment = get_object_or_404(BlogComment, pk=pk)
+    comment.status = 'rejected'
+    comment.save()
+    messages.success(request, 'کامنت رد شد.')
+    return redirect('gym:blog_comment_list')
 

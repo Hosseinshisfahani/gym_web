@@ -947,3 +947,88 @@ class SpecialTuitionFee(models.Model):
         """Calculate days until due date"""
         delta = self.due_date - timezone.now().date()
         return delta.days
+
+# Blog Models
+class BlogCategory(models.Model):
+    """Model for blog categories"""
+    name = models.CharField(max_length=100, verbose_name='نام دسته‌بندی')
+    slug = models.SlugField(max_length=100, unique=True, verbose_name='نامک')
+    description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
+    is_active = models.BooleanField(default=True, verbose_name='فعال')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    
+    class Meta:
+        verbose_name = 'دسته‌بندی بلاگ'
+        verbose_name_plural = 'دسته‌بندی‌های بلاگ'
+        ordering = ['name']
+    
+    def __str__(self):
+        return self.name
+
+class BlogPost(models.Model):
+    """Model for blog posts"""
+    STATUS_CHOICES = [
+        ('draft', 'پیش‌نویس'),
+        ('published', 'منتشر شده'),
+        ('archived', 'آرشیو شده'),
+    ]
+    
+    title = models.CharField(max_length=200, verbose_name='عنوان')
+    slug = models.SlugField(max_length=200, unique=True, verbose_name='نامک')
+    content = models.TextField(verbose_name='محتوای اصلی')
+    excerpt = models.TextField(max_length=500, blank=True, null=True, verbose_name='خلاصه')
+    featured_image = models.ImageField(upload_to='blog/images/', blank=True, null=True, verbose_name='تصویر شاخص')
+    category = models.ForeignKey(BlogCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name='posts', verbose_name='دسته‌بندی')
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='blog_posts', verbose_name='نویسنده')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft', verbose_name='وضعیت')
+    is_featured = models.BooleanField(default=False, verbose_name='مقاله ویژه')
+    allow_comments = models.BooleanField(default=True, verbose_name='اجازه کامنت')
+    view_count = models.PositiveIntegerField(default=0, verbose_name='تعداد بازدید')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
+    published_at = models.DateTimeField(blank=True, null=True, verbose_name='تاریخ انتشار')
+    
+    class Meta:
+        verbose_name = 'مقاله بلاگ'
+        verbose_name_plural = 'مقالات بلاگ'
+        ordering = ['-published_at', '-created_at']
+    
+    def __str__(self):
+        return self.title
+    
+    def save(self, *args, **kwargs):
+        # Set published_at when status changes to published
+        if self.status == 'published' and not self.published_at:
+            self.published_at = timezone.now()
+        elif self.status != 'published':
+            self.published_at = None
+        super().save(*args, **kwargs)
+    
+    def increment_view_count(self):
+        """Increment view count"""
+        self.view_count += 1
+        self.save(update_fields=['view_count'])
+
+class BlogComment(models.Model):
+    """Model for blog comments"""
+    STATUS_CHOICES = [
+        ('pending', 'در انتظار تایید'),
+        ('approved', 'تایید شده'),
+        ('rejected', 'رد شده'),
+    ]
+    
+    post = models.ForeignKey(BlogPost, on_delete=models.CASCADE, related_name='comments', verbose_name='مقاله')
+    author_name = models.CharField(max_length=100, verbose_name='نام نویسنده')
+    author_email = models.EmailField(verbose_name='ایمیل نویسنده')
+    content = models.TextField(verbose_name='محتوای کامنت')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='وضعیت')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
+    
+    class Meta:
+        verbose_name = 'کامنت بلاگ'
+        verbose_name_plural = 'کامنت‌های بلاگ'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"کامنت {self.author_name} برای {self.post.title}"

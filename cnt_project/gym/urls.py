@@ -106,4 +106,20 @@ urlpatterns = [
     path('api/special-fees/', views.api_special_fees, name='api_special_fees'),
     path('api/special-fees/create/', views.api_create_special_fee, name='api_create_special_fee'),
     path('api/special-fees/<int:fee_id>/delete/', views.api_delete_special_fee, name='api_delete_special_fee'),
+    
+    # Blog URLs
+    path('blog/', views.blog_list, name='blog_list'),
+    path('blog/<slug:slug>/', views.blog_detail, name='blog_detail'),
+    
+    # Admin Blog URLs
+    path('staff/blog/', views.blog_admin_list, name='blog_admin_list'),
+    path('staff/blog/create/', views.blog_post_create, name='blog_post_create'),
+    path('staff/blog/<int:pk>/edit/', views.blog_post_edit, name='blog_post_edit'),
+    path('staff/blog/<int:pk>/delete/', views.blog_post_delete, name='blog_post_delete'),
+    path('staff/blog/categories/', views.blog_category_list, name='blog_category_list'),
+    path('staff/blog/categories/create/', views.blog_category_create, name='blog_category_create'),
+    path('staff/blog/categories/<int:pk>/edit/', views.blog_category_edit, name='blog_category_edit'),
+    path('staff/blog/comments/', views.blog_comment_list, name='blog_comment_list'),
+    path('staff/blog/comments/<int:pk>/approve/', views.blog_comment_approve, name='blog_comment_approve'),
+    path('staff/blog/comments/<int:pk>/reject/', views.blog_comment_reject, name='blog_comment_reject'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 

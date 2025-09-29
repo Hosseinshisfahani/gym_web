@@ -1,0 +1,180 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}مدیریت نظرات بلاگ{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="section-card">
+                <div class="card-header">
+                    <h2 class="mb-0">
+                        <i class="fas fa-comments"></i>
+                        مدیریت نظرات بلاگ
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <!-- Filter -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <select name="status" class="form-select" onchange="this.form.submit()">
+                                <option value="">همه وضعیت‌ها</option>
+                                <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>در انتظار تایید</option>
+                                <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>تایید شده</option>
+                                <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>رد شده</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="btn-group">
+                                <a href="{% url 'gym:blog_admin_list' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-blog"></i>
+                                    مقالات
+                                </a>
+                                <a href="{% url 'gym:blog_category_list' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-tags"></i>
+                                    دسته‌بندی‌ها
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comments List -->
+                    {% if comments %}
+                        <div class="comments-list">
+                            {% for comment in comments %}
+                                <div class="comment-item mb-4 p-3 border rounded">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <h6 class="mb-1">{{ comment.author_name }}</h6>
+                                            <small class="text-muted">
+                                                <i class="fas fa-envelope"></i>
+                                                {{ comment.author_email }}
+                                            </small>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="mb-1">
+                                                {% if comment.status == 'approved' %}
+                                                    <span class="badge bg-success">تایید شده</span>
+                                                {% elif comment.status == 'pending' %}
+                                                    <span class="badge bg-warning">در انتظار تایید</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">رد شده</span>
+                                                {% endif %}
+                                            </div>
+                                            <small class="text-muted">
+                                                <i class="fas fa-clock"></i>
+                                                {{ comment.created_at|date:"Y/m/d H:i" }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <strong>مقاله:</strong>
+                                        <a href="{% url 'gym:blog_detail' comment.post.slug %}" 
+                                           class="text-decoration-none">
+                                            {{ comment.post.title }}
+                                        </a>
+                                    </div>
+                                    
+                                    <div class="comment-content mb-3 p-3 bg-light rounded">
+                                        {{ comment.content|linebreaks }}
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-end">
+                                        {% if comment.status == 'pending' %}
+                                            <a href="{% url 'gym:blog_comment_approve' comment.pk %}" 
+                                               class="btn btn-success btn-sm me-2">
+                                                <i class="fas fa-check"></i>
+                                                تایید
+                                            </a>
+                                            <a href="{% url 'gym:blog_comment_reject' comment.pk %}" 
+                                               class="btn btn-danger btn-sm">
+                                                <i class="fas fa-times"></i>
+                                                رد
+                                            </a>
+                                        {% elif comment.status == 'approved' %}
+                                            <a href="{% url 'gym:blog_comment_reject' comment.pk %}" 
+                                               class="btn btn-danger btn-sm">
+                                                <i class="fas fa-times"></i>
+                                                رد
+                                            </a>
+                                        {% else %}
+                                            <a href="{% url 'gym:blog_comment_approve' comment.pk %}" 
+                                               class="btn btn-success btn-sm">
+                                                <i class="fas fa-check"></i>
+                                                تایید
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if comments.has_other_pages %}
+                            <nav aria-label="صفحه‌بندی نظرات">
+                                <ul class="pagination justify-content-center">
+                                    {% if comments.has_previous %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ comments.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                                قبلی
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                    
+                                    {% for num in comments.paginator.page_range %}
+                                        {% if comments.number == num %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ num }}</span>
+                                            </li>
+                                        {% elif num > comments.number|add:'-3' and num < comments.number|add:'3' %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="?page={{ num }}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                                    {{ num }}
+                                                </a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if comments.has_next %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ comments.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}">
+                                                بعدی
+                                            </a>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">نظری یافت نشد</h4>
+                            <p class="text-muted">
+                                {% if status_filter %}
+                                    برای وضعیت انتخاب شده نظری یافت نشد.
+                                {% else %}
+                                    هنوز نظری ارسال نشده است.
+                                {% endif %}
+                            </p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.comment-item {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.comment-content {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: white;
+}
+</style>
+{% endblock %}
