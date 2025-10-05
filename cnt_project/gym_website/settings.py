@@ -30,9 +30,11 @@ DOMAIN = os.getenv("DOMAIN", "shirneshansport.ir")
 ALLOWED_HOSTS = [
     DOMAIN,
     f"www.{DOMAIN}",
-    "127.0.0.1" if DEBUG else "",  # allow local only in DEBUG
+    "127.0.0.1",  # allow local development
+    "127.0.0.1:8001",  # allow local development with port
     "testserver",  # for testing
     "localhost",  # for local development
+    "localhost:8001",  # allow localhost with port
 ]
 
 

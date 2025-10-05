@@ -10,6 +10,21 @@ from .models import (
 import jdatetime
 from datetime import datetime, date
 
+def id_validation(id):
+    """Validate Iranian National ID (Melli Code) using the official algorithm"""
+    if not id.isdigit() or len(id) != 10:
+        raise Exception("invalid code melli")
+
+    digits = list(map(int, id))
+    control = digits[-1]
+    total = sum(digits[i] * (10 - i) for i in range(9))
+    remainder = total % 11
+
+    if (remainder < 2 and control == remainder) or (remainder >= 2 and control == 11 - remainder):
+        return id
+    else:
+        raise Exception("invalid code melli")
+
 class PersianDateWidget(forms.DateInput):
     """Persian date widget that displays Persian dates but submits Gregorian dates"""
     
@@ -168,11 +183,14 @@ class UserRegistrationForm(UserCreationForm):
         if not melli_code:
             raise forms.ValidationError('لطفا کد ملی خود را وارد کنید.')
             
-        if not melli_code.isdigit():
-            raise forms.ValidationError('کد ملی باید فقط شامل اعداد باشد.')
-            
-        if len(melli_code) != 10:
-            raise forms.ValidationError('کد ملی باید ۱۰ رقم باشد.')
+        # Use the proper Melli code validation algorithm
+        try:
+            id_validation(melli_code)
+        except Exception as e:
+            if "invalid code melli" in str(e):
+                raise forms.ValidationError('کد ملی وارد شده معتبر نیست.')
+            else:
+                raise forms.ValidationError('خطا در اعتبارسنجی کد ملی.')
             
         # Check if melli code is already used by another user
         from .models import UserProfile
@@ -275,6 +293,27 @@ class UserProfileForm(forms.ModelForm):
                     raise forms.ValidationError('فقط فایل‌های تصویری با فرمت JPG، PNG یا GIF مجاز است.')
         
         return profile_image
+    
+    def clean_melli_code(self):
+        melli_code = self.cleaned_data.get('melli_code')
+        if not melli_code:
+            return melli_code  # Allow empty melli_code in profile form
+            
+        # Use the proper Melli code validation algorithm
+        try:
+            id_validation(melli_code)
+        except Exception as e:
+            if "invalid code melli" in str(e):
+                raise forms.ValidationError('کد ملی وارد شده معتبر نیست.')
+            else:
+                raise forms.ValidationError('خطا در اعتبارسنجی کد ملی.')
+            
+        # Check if melli code is already used by another user (excluding current user)
+        from .models import UserProfile
+        existing_profile = UserProfile.objects.filter(melli_code=melli_code).exclude(pk=self.instance.pk if self.instance else None)
+        if existing_profile.exists():
+            raise forms.ValidationError('این کد ملی قبلا ثبت شده است.')
+        return melli_code
     
     def clean(self):
         cleaned_data = super().clean()

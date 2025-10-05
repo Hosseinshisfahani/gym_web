@@ -1,5 +1,5 @@
 # Core Django and its dependencies
-Django==5.2.1
+Django==4.2.16
 asgiref==3.8.1
 sqlparse==0.5.3
 

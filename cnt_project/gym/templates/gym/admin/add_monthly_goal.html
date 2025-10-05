@@ -133,7 +133,7 @@
                                 <label for="{{ form.start_date.id_for_label }}" class="form-label text-dark">
                                     <i class="fas fa-calendar-alt me-1"></i>تاریخ شروع *
                                 </label>
-                                {% render_field form.start_date class="form-control" type="date" id="start-date-input" %}
+                                {% render_field form.start_date class="form-control" id="start-date-input" %}
                                 {% if goal.start_date %}
                                     <small class="text-muted">تاریخ شمسی: {{ goal.start_date|persian_date:"j F Y" }}</small>
                                 {% endif %}
@@ -146,7 +146,7 @@
                                 <label for="{{ form.end_date.id_for_label }}" class="form-label text-dark">
                                     <i class="fas fa-calendar-check me-1"></i>تاریخ پایان *
                                 </label>
-                                {% render_field form.end_date class="form-control" type="date" id="end-date-input" %}
+                                {% render_field form.end_date class="form-control" id="end-date-input" %}
                                 {% if goal.end_date %}
                                     <small class="text-muted">تاریخ شمسی: {{ goal.end_date|persian_date:"j F Y" }}</small>
                                 {% endif %}
@@ -281,65 +281,108 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Set today as default start date if adding new goal
+    // Set today as default start date if adding new goal (in Persian format)
     {% if not goal %}
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date();
+    const persianToday = today.toLocaleDateString('fa-IR-u-ca-persian');
     const startDateField = document.getElementById('start-date-input');
     if (startDateField && !startDateField.value) {
-        startDateField.value = today;
-        updatePersianDate('start-date-input', 'start-date-persian');
+        // Convert to Persian date format (YYYY/MM/DD)
+        const persianDate = new Intl.DateTimeFormat('fa-IR-u-ca-persian').format(today);
+        const parts = persianDate.split('/');
+        if (parts.length === 3) {
+            const year = parts[0];
+            const month = parts[1].padStart(2, '0');
+            const day = parts[2].padStart(2, '0');
+            startDateField.value = `${year}/${month}/${day}`;
+        }
     }
     
-    // Set end date to 30 days from start date
+    // Set end date to 30 days from start date (in Persian format)
     const endDateField = document.getElementById('end-date-input');
     if (endDateField && !endDateField.value) {
         const endDate = new Date();
         endDate.setDate(endDate.getDate() + 30);
-        endDateField.value = endDate.toISOString().split('T')[0];
-        updatePersianDate('end-date-input', 'end-date-persian');
+        const persianEndDate = new Intl.DateTimeFormat('fa-IR-u-ca-persian').format(endDate);
+        const parts = persianEndDate.split('/');
+        if (parts.length === 3) {
+            const year = parts[0];
+            const month = parts[1].padStart(2, '0');
+            const day = parts[2].padStart(2, '0');
+            endDateField.value = `${year}/${month}/${day}`;
+        }
     }
     {% endif %}
 
-    // Add event listeners to date inputs to show Persian dates
+    // Add event listeners to date inputs for validation
     const startDateInput = document.getElementById('start-date-input');
     const endDateInput = document.getElementById('end-date-input');
     
     if (startDateInput) {
         startDateInput.addEventListener('change', function() {
-            updatePersianDate('start-date-input', 'start-date-persian');
+            validatePersianDate('start-date-input');
         });
-        // Show Persian date on page load if date exists
+        // Validate on page load if date exists
         if (startDateInput.value) {
-            updatePersianDate('start-date-input', 'start-date-persian');
+            validatePersianDate('start-date-input');
         }
     }
     
     if (endDateInput) {
         endDateInput.addEventListener('change', function() {
-            updatePersianDate('end-date-input', 'end-date-persian');
+            validatePersianDate('end-date-input');
         });
-        // Show Persian date on page load if date exists
+        // Validate on page load if date exists
         if (endDateInput.value) {
-            updatePersianDate('end-date-input', 'end-date-persian');
+            validatePersianDate('end-date-input');
         }
     }
 
-    // Function to update Persian date display
-    function updatePersianDate(inputId, displayId) {
+    // Function to validate Persian date format
+    function validatePersianDate(inputId) {
         const input = document.getElementById(inputId);
-        const display = document.getElementById(displayId);
+        if (!input || !input.value) return;
         
-        if (input && display && input.value) {
-            const date = new Date(input.value);
-            const persianDate = date.toLocaleDateString('fa-IR', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
-            display.textContent = 'تاریخ شمسی: ' + persianDate;
-            display.style.display = 'block';
-        } else if (display) {
-            display.style.display = 'none';
+        const value = input.value.trim();
+        const persianDateRegex = /^\d{4}\/\d{2}\/\d{2}$/;
+        
+        if (!persianDateRegex.test(value)) {
+            input.classList.add('is-invalid');
+            showDateError(input, 'فرمت تاریخ باید به صورت YYYY/MM/DD باشد (مثال: ۱۴۰۳/۰۱/۱۵)');
+            return false;
+        }
+        
+        // Check if it's a valid Persian date
+        const parts = value.split('/');
+        const year = parseInt(parts[0]);
+        const month = parseInt(parts[1]);
+        const day = parseInt(parts[2]);
+        
+        if (year < 1300 || year > 1500 || month < 1 || month > 12 || day < 1 || day > 31) {
+            input.classList.add('is-invalid');
+            showDateError(input, 'تاریخ وارد شده معتبر نیست');
+            return false;
+        }
+        
+        input.classList.remove('is-invalid');
+        hideDateError(input);
+        return true;
+    }
+    
+    function showDateError(input, message) {
+        let errorDiv = input.parentNode.querySelector('.date-error');
+        if (!errorDiv) {
+            errorDiv = document.createElement('div');
+            errorDiv.className = 'date-error text-danger small mt-1';
+            input.parentNode.appendChild(errorDiv);
+        }
+        errorDiv.textContent = message;
+    }
+    
+    function hideDateError(input) {
+        const errorDiv = input.parentNode.querySelector('.date-error');
+        if (errorDiv) {
+            errorDiv.remove();
         }
     }
 

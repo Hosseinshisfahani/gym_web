@@ -21,14 +21,6 @@
                         آپلود رسید جدید
                     </a>
                     {% endif %}
-                    <button class="btn btn-success" onclick="showSpecialFeesSection()">
-                        <i class="fas fa-star me-2"></i>
-                        {% if is_admin %}
-                            مدیریت شهریه‌های ویژه
-                        {% else %}
-                            شهریه‌های ویژه من
-                        {% endif %}
-                    </button>
                 </div>
             </div>
         </div>
@@ -424,7 +416,7 @@
     </div>
     {% endif %}
 
-    <div class="row mt-4" id="specialFeesSection" style="display: none;">
+    <div class="row mt-4" id="specialFeesSection">
         <div class="col-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -941,6 +933,11 @@
         copyButtons.forEach(button => {
             button.setAttribute('title', 'کپی کردن');
         });
+        
+        // Auto-load special fees for admin users
+        {% if is_admin %}
+        loadSpecialFees();
+        {% endif %}
     });
     
     // Admin Quick Actions
