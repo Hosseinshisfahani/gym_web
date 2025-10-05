@@ -241,7 +241,195 @@
             </div>
         </div>
     </div>
+
+    <!-- Exchange Rate Management Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-exchange-alt me-2 text-primary"></i>
+                        نرخ‌های تبدیل ارز
+                    </h5>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addExchangeRateModal">
+                            <i class="fas fa-plus me-1"></i>
+                            افزودن نرخ جدید
+                        </button>
+                        <a href="{% url 'gym_shop:update_dollar_prices' %}" class="btn btn-success btn-sm">
+                            <i class="fas fa-sync me-1"></i>
+                            بروزرسانی قیمت‌ها
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Current Exchange Rate -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title text-muted">نرخ فعلی</h6>
+                                    {% if current_exchange_rate %}
+                                        <h3 class="text-primary mb-2">
+                                            1 USD = {{ current_exchange_rate.rate|floatformat:0 }} تومان
+                                        </h3>
+                                        <small class="text-muted">
+                                            آخرین بروزرسانی: {{ current_exchange_rate.created_at|date:"Y/m/d H:i" }}
+                                        </small>
+                                        <div class="mt-2">
+                                            <span class="badge bg-success">{{ current_exchange_rate.source }}</span>
+                                        </div>
+                                    {% else %}
+                                        <h3 class="text-muted mb-2">نرخ تبدیل تنظیم نشده</h3>
+                                        <p class="text-muted">لطفاً نرخ تبدیل ارز را تنظیم کنید</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">اطلاعات نرخ تبدیل</h6>
+                                    <ul class="list-unstyled mb-0">
+                                        <li><i class="fas fa-info-circle me-2 text-info"></i>نرخ تبدیل برای محاسبه قیمت‌های دلاری استفاده می‌شود</li>
+                                        <li><i class="fas fa-sync me-2 text-warning"></i>پس از تغییر نرخ، قیمت‌های محصولات بروزرسانی شوند</li>
+                                        <li><i class="fas fa-history me-2 text-secondary"></i>تاریخچه نرخ‌های قبلی حفظ می‌شود</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Exchange Rate History -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h6 class="mb-3">
+                                <i class="fas fa-history me-2"></i>
+                                تاریخچه نرخ‌های تبدیل
+                            </h6>
+                            {% if exchange_rate_history %}
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-hover">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>نرخ تبدیل</th>
+                                                <th>وضعیت</th>
+                                                <th>منبع</th>
+                                                <th>تاریخ</th>
+                                                <th>عملیات</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for rate in exchange_rate_history %}
+                                                <tr>
+                                                    <td>
+                                                        <strong>1 USD = {{ rate.rate|floatformat:0 }} تومان</strong>
+                                                    </td>
+                                                    <td>
+                                                        {% if rate.is_active %}
+                                                            <span class="badge bg-success">فعال</span>
+                                                        {% else %}
+                                                            <span class="badge bg-secondary">غیرفعال</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>{{ rate.source }}</td>
+                                                    <td>{{ rate.created_at|date:"Y/m/d H:i" }}</td>
+                                                    <td>
+                                                        {% if not rate.is_active %}
+                                                            <button class="btn btn-sm btn-outline-primary" onclick="activateRate({{ rate.id }})">
+                                                                فعال کردن
+                                                            </button>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="text-center py-4">
+                                    <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">هنوز نرخ تبدیلی ثبت نشده است</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Add Exchange Rate Modal -->
+<div class="modal fade" id="addExchangeRateModal" tabindex="-1" aria-labelledby="addExchangeRateModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addExchangeRateModalLabel">
+                    <i class="fas fa-plus me-2"></i>
+                    افزودن نرخ تبدیل جدید
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'gym_shop:add_exchange_rate' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="rate" class="form-label">نرخ تبدیل (تومان به دلار)</label>
+                        <input type="number" class="form-control" id="rate" name="rate" step="0.01" required placeholder="مثال: 4205.00">
+                        <div class="form-text">مثال: 4205.00 به معنای 1 دلار = 4205 تومان</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="source" class="form-label">منبع</label>
+                        <input type="text" class="form-control" id="source" name="source" placeholder="مثال: بانک مرکزی، صرافی">
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                        <label class="form-check-label" for="is_active">
+                            فعال کردن این نرخ (نرخ‌های قبلی غیرفعال می‌شوند)
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>
+                        ذخیره نرخ جدید
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function activateRate(rateId) {
+    if (confirm('آیا مطمئن هستید که می‌خواهید این نرخ را فعال کنید؟')) {
+        fetch('{% url "gym_shop:activate_exchange_rate" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                'rate_id': rateId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('خطا در فعال کردن نرخ: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('خطا در ارتباط با سرور');
+        });
+    }
+}
+</script>
 
 <style>
 .bg-gradient-success {

@@ -73,4 +73,9 @@ urlpatterns = [
     path('admin/orders/<int:order_id>/delete/', views.delete_order, name='delete_order'),
     path('admin/orders/export/', views.order_export, name='order_export'),
     path('admin/orders/statistics/', views.order_statistics, name='order_statistics'),
+    
+    # مدیریت نرخ تبدیل ارز (Exchange Rate Management)
+    path('admin/exchange-rate/add/', views.add_exchange_rate, name='add_exchange_rate'),
+    path('admin/exchange-rate/activate/', views.activate_exchange_rate, name='activate_exchange_rate'),
+    path('admin/update-dollar-prices/', views.update_dollar_prices_view, name='update_dollar_prices'),
 ] 

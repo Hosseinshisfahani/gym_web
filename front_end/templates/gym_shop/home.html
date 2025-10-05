@@ -139,8 +139,16 @@
                                 {% if product.discount_price %}
                                 <span class="text-muted text-decoration-line-through small">{{ product.price|format_price }}</span>
                                 <div class="current-price fw-bold" style="color: #dc2626; font-size: 1rem;">{{ product.discount_price|format_price }} تومان</div>
+                                {% if product.discount_dollar_price %}
+                                    <div class="dollar-price" style="color: #2563eb; font-size: 0.9rem;">${{ product.discount_dollar_price }} USD</div>
+                                {% elif product.dollar_price %}
+                                    <div class="dollar-price" style="color: #2563eb; font-size: 0.9rem;">${{ product.dollar_price }} USD</div>
+                                {% endif %}
                                 {% else %}
                                 <div class="current-price fw-bold" style="color: var(--text-primary); font-size: 1rem;">{{ product.price|format_price }} تومان</div>
+                                {% if product.dollar_price %}
+                                    <div class="dollar-price" style="color: #2563eb; font-size: 0.9rem;">${{ product.dollar_price }} USD</div>
+                                {% endif %}
                                 {% endif %}
                             </div>
                             <a href="{% url 'gym_shop:product_detail' product.slug %}" class="btn btn-sm" style="background: var(--primary-gradient); color: white; border-radius: 15px; padding: 6px 12px;">
@@ -194,8 +202,16 @@
                                 {% if product.discount_price %}
                                 <span class="text-muted text-decoration-line-through small">{{ product.price|format_price }} تومان</span>
                                 <div class="current-price fw-bold" style="color: #dc2626; font-size: 1.1rem;">{{ product.discount_price|format_price }} تومان</div>
+                                {% if product.discount_dollar_price %}
+                                    <div class="dollar-price" style="color: #2563eb; font-size: 1rem;">${{ product.discount_dollar_price }} USD</div>
+                                {% elif product.dollar_price %}
+                                    <div class="dollar-price" style="color: #2563eb; font-size: 1rem;">${{ product.dollar_price }} USD</div>
+                                {% endif %}
                                 {% else %}
                                 <div class="current-price fw-bold" style="color: var(--text-primary); font-size: 1.1rem;">{{ product.price|format_price }} تومان</div>
+                                {% if product.dollar_price %}
+                                    <div class="dollar-price" style="color: #2563eb; font-size: 1rem;">${{ product.dollar_price }} USD</div>
+                                {% endif %}
                                 {% endif %}
                             </div>
                             <a href="{% url 'gym_shop:product_detail' product.slug %}" class="btn btn-sm" style="background: var(--primary-gradient); color: white; border-radius: 15px; padding: 8px 16px;">

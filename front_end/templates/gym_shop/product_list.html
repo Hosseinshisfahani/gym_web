@@ -251,11 +251,28 @@
                                                         <span class="currency">تومان</span>
                                                 </div>
                                                     <div class="original-price">{{ product.price|format_price }} تومان</div>
+                                                    {% if product.discount_dollar_price %}
+                                                        <div class="dollar-price">
+                                                            <span class="dollar-amount">${{ product.discount_dollar_price }}</span>
+                                                            <span class="dollar-label">USD</span>
+                                                        </div>
+                                                    {% elif product.dollar_price %}
+                                                        <div class="dollar-price">
+                                                            <span class="dollar-amount">${{ product.dollar_price }}</span>
+                                                            <span class="dollar-label">USD</span>
+                                                        </div>
+                                                    {% endif %}
                                             {% else %}
                                                     <div class="price-group">
                                                         <span class="current-price">{{ product.price|format_price }}</span>
                                                         <span class="currency">تومان</span>
                                                     </div>
+                                                    {% if product.dollar_price %}
+                                                        <div class="dollar-price">
+                                                            <span class="dollar-amount">${{ product.dollar_price }}</span>
+                                                            <span class="dollar-label">USD</span>
+                                                        </div>
+                                                    {% endif %}
                                             {% endif %}
                                             </div>
                                             

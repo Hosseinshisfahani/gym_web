@@ -202,9 +202,19 @@
                                                 <div>
                                                     <span class="price">{{ product.discount_price|format_price }} تومان</span>
                                                     <small class="original-price ms-2">{{ product.price|format_price }}</small>
+                                                    {% if product.discount_dollar_price %}
+                                                        <div class="dollar-price" style="color: #2563eb; font-size: 0.9rem;">${{ product.discount_dollar_price }} USD</div>
+                                                    {% elif product.dollar_price %}
+                                                        <div class="dollar-price" style="color: #2563eb; font-size: 0.9rem;">${{ product.dollar_price }} USD</div>
+                                                    {% endif %}
                                                 </div>
                                             {% else %}
-                                                <span class="price">{{ product.price|format_price }} تومان</span>
+                                                <div>
+                                                    <span class="price">{{ product.price|format_price }} تومان</span>
+                                                    {% if product.dollar_price %}
+                                                        <div class="dollar-price" style="color: #2563eb; font-size: 0.9rem;">${{ product.dollar_price }} USD</div>
+                                                    {% endif %}
+                                                </div>
                                             {% endif %}
                                             
                                             {% if product.stock > 0 %}

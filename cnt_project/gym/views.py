@@ -3129,15 +3129,38 @@ import json
 @staff_member_required
 def api_users(request):
     """API endpoint to get list of users for special fee assignment"""
-    users = User.objects.filter(is_active=True).select_related('userprofile')
+    # Only get users with proper profiles and names
+    users = User.objects.filter(
+        is_active=True,
+        userprofile__isnull=False,
+        userprofile__name__isnull=False
+    ).exclude(
+        userprofile__name=''
+    ).exclude(
+        userprofile__name__isnull=True
+    ).select_related('userprofile').order_by('userprofile__name')
+    
     users_data = []
     for user in users:
-        users_data.append({
-            'id': user.id,
-            'username': user.username,
-            'name': user.userprofile.name if hasattr(user, 'userprofile') and user.userprofile.name else None
-        })
+        try:
+            profile = user.userprofile
+            # Additional safety checks
+            if (profile.name and 
+                profile.name.strip() and 
+                profile.name.strip() != 'null' and 
+                profile.name.strip() != 'None' and
+                len(profile.name.strip()) > 0):
+                
+                users_data.append({
+                    'id': user.id,
+                    'username': user.username,
+                    'name': profile.name.strip()
+                })
+        except Exception as e:
+            print(f"Skipping user {user.username} due to error: {e}")
+            continue  # Skip users with profile issues
     
+    print(f"API returning {len(users_data)} users")
     return JsonResponse({'users': users_data})
 
 @staff_member_required

@@ -1,1 +1,1 @@
-# Management package for gym_shop 
+

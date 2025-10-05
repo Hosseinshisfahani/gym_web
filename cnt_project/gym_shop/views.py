@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 import json
 from django.contrib.auth.models import User
 
-from .models import Category, Product, Cart, CartItem, Order, OrderItem, Wishlist, ProductImage, UserShippingAddress
+from .models import Category, Product, Cart, CartItem, Order, OrderItem, Wishlist, ProductImage, UserShippingAddress, ExchangeRate
 from gym.templatetags.custom_filters import format_price
 from .forms import ProductForm, CategoryForm, ProductImageForm, ProductSearchForm
 
@@ -814,6 +814,15 @@ def shop_financial_dashboard(request):
         total_sold=Sum('orderitem__quantity')
     ).filter(total_sold__gt=0).order_by('-total_sold')[:5]
     
+    # نرخ تبدیل ارز
+    try:
+        current_exchange_rate = ExchangeRate.objects.filter(is_active=True).latest('created_at')
+    except ExchangeRate.DoesNotExist:
+        current_exchange_rate = None
+    
+    # تاریخچه نرخ‌های تبدیل
+    exchange_rate_history = ExchangeRate.objects.all().order_by('-created_at')[:10]
+    
     context = {
         'current_month_income': current_month_income,
         'current_month_expense': current_month_expense,
@@ -825,6 +834,8 @@ def shop_financial_dashboard(request):
         'recent_incomes': recent_incomes,
         'recent_expenses': recent_expenses,
         'best_selling_products': best_selling_products,
+        'current_exchange_rate': current_exchange_rate,
+        'exchange_rate_history': exchange_rate_history,
     }
     return render(request, 'gym_shop/admin/financial_dashboard.html', context)
 
@@ -1835,3 +1846,99 @@ def sitemap_xml(request):
 </urlset>'''
     
     return HttpResponse(xml_content, content_type='application/xml')
+
+
+# Exchange Rate Management Views
+@staff_member_required
+def add_exchange_rate(request):
+    """افزودن نرخ تبدیل جدید"""
+    if request.method == 'POST':
+        try:
+            rate = Decimal(request.POST.get('rate'))
+            source = request.POST.get('source', 'Manual')
+            is_active = request.POST.get('is_active') == 'on'
+            
+            # اگر نرخ فعال است، سایر نرخ‌ها را غیرفعال کن
+            if is_active:
+                ExchangeRate.objects.filter(is_active=True).update(is_active=False)
+            
+            # ایجاد نرخ جدید
+            exchange_rate = ExchangeRate.objects.create(
+                rate=rate,
+                source=source,
+                is_active=is_active
+            )
+            
+            messages.success(request, f'نرخ تبدیل {rate} تومان با موفقیت اضافه شد.')
+            
+        except (ValueError, TypeError) as e:
+            messages.error(request, 'خطا در ورودی داده‌ها. لطفاً مقادیر صحیح وارد کنید.')
+        except Exception as e:
+            messages.error(request, f'خطا در ذخیره نرخ تبدیل: {str(e)}')
+    
+    return redirect('gym_shop:shop_financial_dashboard')
+
+
+@staff_member_required
+def activate_exchange_rate(request):
+    """فعال کردن نرخ تبدیل"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            rate_id = data.get('rate_id')
+            
+            if not rate_id:
+                return JsonResponse({'success': False, 'error': 'شناسه نرخ مشخص نشده است'})
+            
+            # غیرفعال کردن سایر نرخ‌ها
+            ExchangeRate.objects.filter(is_active=True).update(is_active=False)
+            
+            # فعال کردن نرخ انتخابی
+            exchange_rate = ExchangeRate.objects.get(id=rate_id)
+            exchange_rate.is_active = True
+            exchange_rate.save()
+            
+            return JsonResponse({'success': True})
+            
+        except ExchangeRate.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'نرخ تبدیل یافت نشد'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)})
+    
+    return JsonResponse({'success': False, 'error': 'درخواست نامعتبر'})
+
+
+@staff_member_required
+def update_dollar_prices_view(request):
+    """بروزرسانی قیمت‌های دلاری تمام محصولات"""
+    try:
+        # دریافت نرخ فعال
+        exchange_rate = ExchangeRate.objects.filter(is_active=True).latest('created_at')
+        
+        # بروزرسانی قیمت‌های تمام محصولات
+        products = Product.objects.all()
+        updated_count = 0
+        
+        for product in products:
+            # محاسبه قیمت دلاری از قیمت تومانی
+            dollar_price = round(product.price / exchange_rate.rate, 2)
+            discount_dollar_price = None
+            
+            if product.discount_price:
+                discount_dollar_price = round(product.discount_price / exchange_rate.rate, 2)
+            
+            # بروزرسانی قیمت‌ها
+            product.dollar_price = dollar_price
+            if discount_dollar_price:
+                product.discount_dollar_price = discount_dollar_price
+            product.save()
+            updated_count += 1
+        
+        messages.success(request, f'قیمت‌های دلاری {updated_count} محصول با موفقیت بروزرسانی شد.')
+        
+    except ExchangeRate.DoesNotExist:
+        messages.error(request, 'نرخ تبدیل فعالی یافت نشد. لطفاً ابتدا نرخ تبدیل را تنظیم کنید.')
+    except Exception as e:
+        messages.error(request, f'خطا در بروزرسانی قیمت‌ها: {str(e)}')
+    
+    return redirect('gym_shop:shop_financial_dashboard')

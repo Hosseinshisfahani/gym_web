@@ -78,7 +78,9 @@ class Product(models.Model):
     description = models.TextField(verbose_name='توضیحات')
     short_description = models.CharField(max_length=300, verbose_name='توضیح کوتاه')
     price = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='قیمت (تومان)')
+    dollar_price = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True, verbose_name='قیمت (دلار)')
     discount_price = models.DecimalField(max_digits=10, decimal_places=0, blank=True, null=True, verbose_name='قیمت تخفیف‌دار')
+    discount_dollar_price = models.DecimalField(max_digits=8, decimal_places=2, blank=True, null=True, verbose_name='قیمت تخفیف‌دار (دلار)')
     image = models.ImageField(upload_to='shop/products/', verbose_name='تصویر اصلی')
     stock = models.PositiveIntegerField(verbose_name='موجودی')
     available_sizes = models.CharField(max_length=100, blank=True, verbose_name='سایزهای موجود')
@@ -143,6 +145,38 @@ class Product(models.Model):
         """Return available colors with Persian display names"""
         color_dict = dict(self.COLOR_CHOICES)
         return [(color, color_dict.get(color, color)) for color in self.available_colors_list]
+    
+    @property
+    def final_dollar_price(self):
+        """Return the final dollar price (discount or regular)"""
+        return self.discount_dollar_price if self.discount_dollar_price else self.dollar_price
+    
+    def get_dollar_price_from_toman(self, toman_price=None):
+        """Convert Toman price to Dollar price using current exchange rate"""
+        if toman_price is None:
+            toman_price = self.final_price
+        
+        try:
+            exchange_rate = ExchangeRate.objects.filter(is_active=True).latest('created_at')
+            return round(toman_price / exchange_rate.rate, 2)
+        except ExchangeRate.DoesNotExist:
+            # Fallback to default rate if no exchange rate is set
+            return round(toman_price / 4205, 2)  # Default rate: 1 USD = 4205 Toman
+    
+    def get_toman_price_from_dollar(self, dollar_price=None):
+        """Convert Dollar price to Toman price using current exchange rate"""
+        if dollar_price is None:
+            dollar_price = self.final_dollar_price
+        
+        if not dollar_price:
+            return None
+            
+        try:
+            exchange_rate = ExchangeRate.objects.filter(is_active=True).latest('created_at')
+            return int(dollar_price * exchange_rate.rate)
+        except ExchangeRate.DoesNotExist:
+            # Fallback to default rate if no exchange rate is set
+            return int(dollar_price * 4205)  # Default rate: 1 USD = 4205 Toman
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='additional_images', verbose_name='محصول')
@@ -517,3 +551,26 @@ class Wishlist(models.Model):
     
     def __str__(self):
         return f'{self.user.username} - {self.product.name}'
+
+
+class ExchangeRate(models.Model):
+    """Model to store USD to Toman exchange rates"""
+    rate = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='نرخ تبدیل (تومان به دلار)')
+    is_active = models.BooleanField(default=True, verbose_name='فعال')
+    source = models.CharField(max_length=100, default='Manual', verbose_name='منبع')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
+    
+    class Meta:
+        verbose_name = 'نرخ تبدیل ارز'
+        verbose_name_plural = 'نرخ‌های تبدیل ارز'
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f'1 USD = {self.rate} Toman ({self.created_at.strftime("%Y-%m-%d %H:%M")})'
+    
+    def save(self, *args, **kwargs):
+        # Deactivate other rates when setting a new active rate
+        if self.is_active:
+            ExchangeRate.objects.filter(is_active=True).exclude(pk=self.pk).update(is_active=False)
+        super().save(*args, **kwargs)

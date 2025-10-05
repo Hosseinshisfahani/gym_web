@@ -14,21 +14,22 @@
                     <i class="fas fa-graduation-cap text-primary me-2"></i>
                     داشبورد شهریه
                 </h2>
-                {% if not is_admin %}
                 <div class="d-flex gap-2">
+                    {% if not is_admin %}
                     <a href="{% url 'gym:upload_tuition_receipt' %}" class="btn btn-primary">
                         <i class="fas fa-upload me-2"></i>
                         آپلود رسید جدید
                     </a>
-                </div>
-                {% else %}
-                <div class="d-flex gap-2">
+                    {% endif %}
                     <button class="btn btn-success" onclick="showSpecialFeesSection()">
                         <i class="fas fa-star me-2"></i>
-                        مدیریت شهریه‌های ویژه
+                        {% if is_admin %}
+                            مدیریت شهریه‌های ویژه
+                        {% else %}
+                            شهریه‌های ویژه من
+                        {% endif %}
                     </button>
                 </div>
-                {% endif %}
             </div>
         </div>
     </div>
@@ -448,6 +449,11 @@
                         <i class="fas fa-refresh me-2"></i>
                         بارگذاری مجدد
                     </button>
+                    {% else %}
+                    <button class="btn btn-outline-light btn-sm" onclick="location.reload()">
+                        <i class="fas fa-sync me-2"></i>
+                        به‌روزرسانی
+                    </button>
                     {% endif %}
                 </div>
                 <div class="card-body">
@@ -512,7 +518,8 @@
                                     <div class="col-md-6">
                                         <div class="mb-3">
                                             <label class="form-label">تاریخ سررسید</label>
-                                            <input type="date" name="due_date" class="form-control" required>
+                                            <input type="text" name="due_date" id="due_date_persian" class="form-control" placeholder="مثال: 1403/07/15" required>
+                                            <small class="form-text text-muted">تاریخ را به صورت شمسی وارد کنید (سال/ماه/روز)</small>
                                         </div>
                                     </div>
                                 </div>
@@ -1059,8 +1066,11 @@
     function showSpecialFeesSection() {
         document.getElementById('specialFeesSection').style.display = 'block';
         {% if is_admin %}
-        // Load special fees when section is shown
+        // Load special fees when section is shown (admin view)
         loadSpecialFees();
+        {% else %}
+        // For regular users, the special fees are already loaded from the backend
+        // No need to make AJAX call since data is already in the template
         {% endif %}
     }
     
@@ -1068,6 +1078,14 @@
         document.getElementById('createSpecialFeeForm').style.display = 'block';
         document.getElementById('specialFeesList').style.display = 'none';
         loadUsers();
+        
+        // Set today's Persian date as placeholder
+        const today = new Date();
+        const persianToday = formatPersianDate(today.toISOString().split('T')[0]);
+        const dueDateInput = document.getElementById('due_date_persian');
+        if (dueDateInput) {
+            dueDateInput.placeholder = `امروز: ${persianToday}`;
+        }
     }
     
     function hideCreateSpecialFeeForm() {
@@ -1076,15 +1094,36 @@
     }
     
     function loadUsers() {
-        fetch('{% url "gym:api_users" %}')
+        // Add cache-busting to ensure fresh data
+        const timestamp = new Date().getTime();
+        fetch(`{% url "gym:api_users" %}?t=${timestamp}`)
         .then(response => response.json())
         .then(data => {
             const select = document.querySelector('select[name="user"]');
             select.innerHTML = '<option value="">انتخاب کاربر</option>';
-            data.users.forEach(user => {
+            
+            // Filter out any users with null/empty names
+            const validUsers = data.users.filter(user => {
+                return user.name && 
+                       user.name.trim() !== '' && 
+                       user.name.trim() !== 'null' && 
+                       user.name.trim() !== 'None' &&
+                       user.name.trim().length > 0;
+            });
+            
+            console.log(`Loading ${validUsers.length} valid users (filtered from ${data.users.length} total)`);
+            
+            validUsers.forEach(user => {
                 const option = document.createElement('option');
                 option.value = user.id;
-                option.textContent = user.username + (user.name ? ' (' + user.name + ')' : '');
+                // Display format: "Name (Username)" or just "Name" if username is same as name
+                const displayName = user.name.trim();
+                const username = user.username;
+                if (username && username !== user.name) {
+                    option.textContent = `${displayName} (${username})`;
+                } else {
+                    option.textContent = displayName;
+                }
                 select.appendChild(option);
             });
         })
@@ -1215,13 +1254,91 @@
         });
     }
     
+    // Persian Date Conversion Functions
+    function convertPersianToGregorian(persianDate) {
+        if (!persianDate) return '';
+        
+        try {
+            // Parse Persian date (YYYY/MM/DD format)
+            const parts = persianDate.split('/');
+            if (parts.length !== 3) {
+                throw new Error('Invalid Persian date format');
+            }
+            
+            const persianYear = parseInt(parts[0]);
+            const persianMonth = parseInt(parts[1]);
+            const persianDay = parseInt(parts[2]);
+            
+            // Convert Persian to Gregorian (approximate)
+            let gregorianYear = persianYear + 621;
+            let gregorianMonth = persianMonth;
+            let gregorianDay = persianDay;
+            
+            // Adjust for month differences
+            if (persianMonth <= 3) {
+                gregorianYear = persianYear + 622;
+                gregorianMonth = persianMonth + 9;
+            } else if (persianMonth <= 6) {
+                gregorianYear = persianYear + 621;
+                gregorianMonth = persianMonth - 3;
+            } else if (persianMonth <= 9) {
+                gregorianYear = persianYear + 621;
+                gregorianMonth = persianMonth - 3;
+            } else {
+                gregorianYear = persianYear + 621;
+                gregorianMonth = persianMonth - 3;
+            }
+            
+            // Format as YYYY-MM-DD for backend
+            return `${gregorianYear}-${String(gregorianMonth).padStart(2, '0')}-${String(gregorianDay).padStart(2, '0')}`;
+        } catch (error) {
+            console.error('Error converting Persian date:', error);
+            return persianDate; // Return original if conversion fails
+        }
+    }
+    
+    function validatePersianDate(dateString) {
+        if (!dateString) return false;
+        
+        // Check if it matches Persian date format (YYYY/MM/DD)
+        const persianDateRegex = /^\d{4}\/\d{1,2}\/\d{1,2}$/;
+        if (!persianDateRegex.test(dateString)) {
+            return false;
+        }
+        
+        const parts = dateString.split('/');
+        const year = parseInt(parts[0]);
+        const month = parseInt(parts[1]);
+        const day = parseInt(parts[2]);
+        
+        // Basic validation
+        if (year < 1300 || year > 1500) return false; // Reasonable Persian year range
+        if (month < 1 || month > 12) return false;
+        if (day < 1 || day > 31) return false;
+        
+        return true;
+    }
+    
     // Handle special fee form submission
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('specialFeeForm');
         if (form) {
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
+                
+                // Get the Persian date and convert it
+                const persianDate = document.getElementById('due_date_persian').value;
+                
+                if (!validatePersianDate(persianDate)) {
+                    showToast('لطفاً تاریخ را به صورت صحیح وارد کنید (مثال: 1403/07/15)', 'error');
+                    return;
+                }
+                
+                const gregorianDate = convertPersianToGregorian(persianDate);
+                console.log('Persian date:', persianDate, 'Converted to Gregorian:', gregorianDate);
+                
                 const formData = new FormData(form);
+                formData.set('due_date', gregorianDate); // Override with converted date
                 
                 fetch('{% url "gym:api_create_special_fee" %}', {
                     method: 'POST',

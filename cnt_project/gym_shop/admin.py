@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Product, ProductImage, Cart, CartItem, Order, OrderItem, UserShippingAddress
+from .models import Category, Product, ProductImage, Cart, CartItem, Order, OrderItem, UserShippingAddress, ExchangeRate
 from .forms import ProductForm
 
 @admin.register(Category)
@@ -18,7 +18,7 @@ class ProductImageInline(admin.TabularInline):
 class ProductAdmin(admin.ModelAdmin):
     form = ProductForm
     exclude = ['color']  # Exclude the old color field
-    list_display = ['name', 'category', 'price', 'discount_price', 'stock', 'available_colors', 'is_featured', 'is_active', 'created_at']
+    list_display = ['name', 'category', 'price', 'dollar_price', 'discount_price', 'discount_dollar_price', 'stock', 'available_colors', 'is_featured', 'is_active', 'created_at']
     list_filter = ['category', 'is_featured', 'is_active', 'created_at', 'brand']
     search_fields = ['name', 'name_en', 'description', 'brand']
     prepopulated_fields = {'slug': ('name_en',)}
@@ -29,7 +29,7 @@ class ProductAdmin(admin.ModelAdmin):
             'fields': ('name', 'name_en', 'slug', 'category', 'short_description', 'description')
         }),
         ('قیمت و موجودی', {
-            'fields': ('price', 'discount_price', 'stock')
+            'fields': ('price', 'dollar_price', 'discount_price', 'discount_dollar_price', 'stock')
         }),
         ('مشخصات محصول', {
             'fields': ('available_sizes', 'available_colors', 'weight', 'brand', 'material')
@@ -190,6 +190,23 @@ class UserShippingAddressAdmin(admin.ModelAdmin):
         }),
         ('تنظیمات', {
             'fields': ('is_default',)
+        }),
+        ('تاریخ', {
+            'fields': ('created_at', 'updated_at')
+        })
+    )
+
+@admin.register(ExchangeRate)
+class ExchangeRateAdmin(admin.ModelAdmin):
+    list_display = ['rate', 'is_active', 'source', 'created_at']
+    list_filter = ['is_active', 'source', 'created_at']
+    list_editable = ['is_active']
+    readonly_fields = ['created_at', 'updated_at']
+    date_hierarchy = 'created_at'
+    
+    fieldsets = (
+        ('اطلاعات نرخ تبدیل', {
+            'fields': ('rate', 'is_active', 'source')
         }),
         ('تاریخ', {
             'fields': ('created_at', 'updated_at')

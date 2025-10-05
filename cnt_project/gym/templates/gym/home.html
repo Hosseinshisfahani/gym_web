@@ -13,9 +13,9 @@
 <div class="corner-decoration corner-bottom-left"></div>
 <div class="corner-decoration corner-bottom-right"></div>
 
-<div class="split-screen-container">
-    <!-- Left Section - Shop Entrance -->
-    <div class="split-section shop-section">
+<div class="three-section-container">
+    <!-- Section 1 - Shop -->
+    <div class="section-card shop-section">
         <div class="section-overlay"></div>
         <div class="section-content">
             <div class="section-header">
@@ -25,11 +25,11 @@
                         <span></span>
                         <span></span>
                         <span></span>
-                        </div>
+                    </div>
                 </div>
                 <h1 class="section-title">فروشگاه</h1>
                 <p class="section-subtitle">تجهیزات و لباس ورزشی</p>
-    </div>
+            </div>
 
             <div class="features-list">
                 <div class="feature-item">
@@ -41,9 +41,9 @@
                 <div class="feature-item">
                     <div class="feature-icon">
                         <i class="fas fa-running"></i>
-            </div>
+                    </div>
                     <span>لباس‌های ورزشی با کیفیت</span>
-        </div>
+                </div>
                 <div class="feature-item">
                     <div class="feature-icon">
                         <i class="fas fa-capsules"></i>
@@ -61,7 +61,7 @@
             <div class="section-buttons">
                 <a href="{% url 'gym_shop:home' %}" class="btn btn-shop-primary">
                     <i class="fas fa-store me-2"></i>
-                    مشاهده تمامی پکیج‌ها و محصولات
+                    مشاهده تمامی محصولات
                 </a>
                 <a href="{% url 'gym_shop:product_list' %}" class="btn btn-shop-secondary">
                     <i class="fas fa-list me-2"></i>
@@ -71,8 +71,8 @@
         </div>
     </div>
 
-    <!-- Right Section - Dashboard Entrance -->
-    <div class="split-section dashboard-section">
+    <!-- Section 2 - User Panel -->
+    <div class="section-card dashboard-section">
         <div class="section-overlay"></div>
         <div class="section-content">
             <div class="section-header">
@@ -106,14 +106,8 @@
                 <div class="feature-item">
                     <div class="feature-icon">
                         <i class="fas fa-user-friends"></i>
-        </div>
-                    <span>ارتباط با مربی</span>
-                </div>
-                <div class="feature-item">
-                    <div class="feature-icon">
-                        <i class="fas fa-blog"></i>
                     </div>
-                    <span>مقالات و راهنمایی‌ها</span>
+                    <span>ارتباط با مربی</span>
                 </div>
             </div>
             
@@ -127,10 +121,6 @@
                         <i class="fas fa-bullseye me-2"></i>
                         اهداف من
                     </a>
-                    <a href="{% url 'gym:blog_list' %}" class="btn btn-dashboard-secondary">
-                        <i class="fas fa-blog me-2"></i>
-                        بلاگ ورزشی
-                    </a>
                 {% else %}
                     <a href="{% url 'gym:login' %}" class="btn btn-dashboard-primary">
                         <i class="fas fa-sign-in-alt me-2"></i>
@@ -141,6 +131,59 @@
                         ثبت نام
                     </a>
                 {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 3 - Sports Articles (Blog) -->
+    <div class="section-card blog-section">
+        <div class="section-overlay"></div>
+        <div class="section-content">
+            <div class="section-header">
+                <div class="animated-icon blog-icon">
+                    <i class="fas fa-blog"></i>
+                    <div class="icon-pulse"></div>
+                </div>
+                <h1 class="section-title">مقالات ورزشی</h1>
+                <p class="section-subtitle">راهنمایی‌ها و نکات ورزشی</p>
+            </div>
+            
+            <div class="features-list">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <span>تغذیه ورزشی</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-dumbbell"></i>
+                    </div>
+                    <span>تمرینات و تکنیک‌ها</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <span>سلامت و ریکاوری</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <span>روانشناسی ورزشی</span>
+                </div>
+            </div>
+            
+            <div class="section-buttons">
+                <a href="{% url 'gym:blog_list' %}" class="btn btn-blog-primary">
+                    <i class="fas fa-blog me-2"></i>
+                    مشاهده مقالات
+                </a>
+                <a href="{% url 'gym:blog_list' %}?category=featured" class="btn btn-blog-secondary">
+                    <i class="fas fa-star me-2"></i>
+                    مقالات ویژه
+                </a>
             </div>
         </div>
     </div>
@@ -168,31 +211,40 @@ body {
     box-shadow: inset 0 0 50px rgba(255, 0, 0, 0.1);
 }
 
-/* Split Sections */
-.split-section {
-    flex: 1;
+/* Three Section Layout */
+.three-section-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    padding: 2rem;
     min-height: 100vh;
+}
+
+.section-card {
+    flex: 1;
+    min-height: 400px;
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 3rem 2.5rem;
-    margin: 0 1rem;
-    transition: all 0.5s ease;
+    padding: 2rem;
+    margin: 0;
+    border-radius: 15px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
-.split-section:hover {
-    flex: 1.1;
-}
-
-.split-section:hover + .split-section {
-    flex: 0.9;
+.section-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
 }
 
 /* Shop Section */
 .shop-section {
-    background: linear-gradient(135deg, #1a1a1a 0%, #2d1b1b 50%, #1a1a1a 100%);
-    border-right: 3px solid #ff0000;
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d1b1b 100%);
+    border: 2px solid #ff0000;
+    border-radius: 15px;
 }
 
 .shop-section .section-overlay {
@@ -201,14 +253,16 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(45deg, rgba(255, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.3) 100%);
+    background: linear-gradient(45deg, rgba(255, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.2) 100%);
     pointer-events: none;
+    border-radius: 15px;
 }
 
 /* Dashboard Section */
 .dashboard-section {
-    background: linear-gradient(135deg, #2d1b1b 0%, #1a1a1a 50%, #2d1b1b 100%);
-    border-left: 3px solid #ff0000;
+    background: linear-gradient(135deg, #2d1b1b 0%, #1a1a1a 100%);
+    border: 2px solid #ff0000;
+    border-radius: 15px;
 }
 
 .dashboard-section .section-overlay {
@@ -217,8 +271,27 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(-45deg, rgba(255, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.3) 100%);
+    background: linear-gradient(-45deg, rgba(255, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.2) 100%);
     pointer-events: none;
+    border-radius: 15px;
+}
+
+/* Blog Section */
+.blog-section {
+    background: linear-gradient(135deg, #1a1a1a 0%, #2d1b1b 100%);
+    border: 2px solid #ff0000;
+    border-radius: 15px;
+}
+
+.blog-section .section-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(255, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.2) 100%);
+    pointer-events: none;
+    border-radius: 15px;
 }
 
 /* Section Content */
@@ -310,6 +383,20 @@ body {
     animation: glowPulse 2s ease-in-out infinite;
 }
 
+/* Blog Icon Animation */
+.blog-icon {
+    animation: blogFloat 3s ease-in-out infinite;
+}
+
+.blog-icon .icon-pulse {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255, 0, 0, 0.2) 0%, transparent 60%);
+    border-radius: 50%;
+    animation: pulseGlow 2.5s ease-in-out infinite;
+}
+
 /* Feature Icons */
 .feature-icon {
     position: relative;
@@ -383,6 +470,24 @@ body {
 @keyframes iconSpin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+@keyframes blogFloat {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    25% { transform: translateY(-8px) rotate(2deg); }
+    50% { transform: translateY(-12px) rotate(0deg); }
+    75% { transform: translateY(-8px) rotate(-2deg); }
+}
+
+@keyframes pulseGlow {
+    0%, 100% { 
+        transform: scale(1);
+        opacity: 0.2;
+    }
+    50% { 
+        transform: scale(1.3);
+        opacity: 0.4;
+    }
 }
 
 .section-title {
@@ -528,7 +633,31 @@ body {
 
 .btn-dashboard-secondary:hover {
     background: #ff0000;
-        color: white;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 0, 0, 0.4);
+}
+
+.btn-blog-primary {
+    background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+    color: white;
+}
+
+.btn-blog-primary:hover {
+    background: linear-gradient(135deg, #cc0000 0%, #990000 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 0, 0, 0.4);
+}
+
+.btn-blog-secondary {
+    background: transparent;
+    color: #ff0000;
+    border: 2px solid #ff0000;
+}
+
+.btn-blog-secondary:hover {
+    background: #ff0000;
+    color: white;
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(255, 0, 0, 0.4);
 }
@@ -537,44 +666,44 @@ body {
     
 /* Responsive Design */
 @media (max-width: 768px) {
-    .split-screen-container {
+    .three-section-container {
         flex-direction: column;
-        margin: 5px;
-        border-radius: 10px;
+        gap: 1.5rem;
+        padding: 1rem;
     }
     
-    .split-section {
-        min-height: 50vh;
-        padding: 2rem 1.5rem;
-        margin: 0.5rem;
-    }
-    
-    .split-section:hover {
-        flex: 1;
+    .section-card {
+        min-height: 300px;
+        padding: 1.5rem;
+        margin: 0;
     }
     
     .section-content {
-        padding: 1.5rem 1rem;
+        padding: 1rem;
         max-width: 100%;
     }
     
     .section-header {
-        margin-bottom: 2.5rem;
+        margin-bottom: 2rem;
     }
     
     .section-title {
-        font-size: 2.2rem;
+        font-size: 2rem;
         letter-spacing: 1px;
     }
     
+    .section-subtitle {
+        font-size: 1rem;
+    }
+    
     .features-list {
-        margin-bottom: 2.5rem;
+        margin-bottom: 2rem;
         padding: 0;
     }
     
     .feature-item {
-        padding: 1rem 1.2rem;
-        margin-bottom: 1rem;
+        padding: 0.8rem 1rem;
+        margin-bottom: 0.8rem;
     }
     
     .section-buttons {
@@ -585,12 +714,10 @@ body {
     }
     
     .btn {
-        padding: 1rem 2rem;
-        font-size: 1rem;
+        padding: 0.8rem 1.5rem;
+        font-size: 0.9rem;
         letter-spacing: 0.5px;
     }
-    
-
     
     .animated-icon {
         width: 80px;
