@@ -12,6 +12,7 @@
     <div class="card mb-4">
         <div class="card-body">
             <form method="get" class="row g-3">
+                {% if not plan_type %}
                 <div class="col-md-3">
                     <label for="plan_type" class="form-label">نوع برنامه</label>
                     <select class="form-select" id="plan_type" name="plan_type">
@@ -20,6 +21,10 @@
                         <option value="diet" {% if plan_type == 'diet' %}selected{% endif %}>برنامه غذایی</option>
                     </select>
                 </div>
+                {% else %}
+                <!-- Hidden field to maintain the filter -->
+                <input type="hidden" name="plan_type" value="{{ plan_type }}">
+                {% endif %}
                 <div class="col-md-3">
                     <label for="status" class="form-label">وضعیت</label>
                     <select class="form-select" id="status" name="status">

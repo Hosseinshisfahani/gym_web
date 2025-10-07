@@ -48,13 +48,21 @@
 
                     {% if current_step == 'request' %}
                         <!-- Step 1: Request Form -->
-                        <div class="alert alert-info mb-4">
-                            <h6><i class="fas fa-info-circle me-2"></i>درخواست برنامه ورزشی یا غذایی</h6>
-                            <p class="mb-0">لطفاً نوع برنامه مورد نظر خود را انتخاب کرده و توضیحات کامل در مورد اهداف و نیازهای خود ارائه دهید.</p>
-                        </div>
+                        {% if pre_selected_plan_type %}
+                            <div class="alert alert-info mb-4">
+                                <h6><i class="fas fa-info-circle me-2"></i>درخواست برنامه {% if pre_selected_plan_type == 'workout' %}تمرینی{% else %}غذایی{% endif %}</h6>
+                                <p class="mb-0">لطفاً توضیحات کامل در مورد اهداف و نیازهای خود ارائه دهید.</p>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info mb-4">
+                                <h6><i class="fas fa-info-circle me-2"></i>درخواست برنامه ورزشی یا غذایی</h6>
+                                <p class="mb-0">لطفاً نوع برنامه مورد نظر خود را انتخاب کرده و توضیحات کامل در مورد اهداف و نیازهای خود ارائه دهید.</p>
+                            </div>
+                        {% endif %}
 
                         <form method="post">
                             {% csrf_token %}
+                            {% if not pre_selected_plan_type %}
                             <div class="mb-3">
                                 <label class="form-label">نوع برنامه <span class="text-danger">*</span></label>
                                 <div class="row">
@@ -76,6 +84,10 @@
                                     </div>
                                 </div>
                             </div>
+                            {% else %}
+                            <!-- Hidden field to pass the pre-selected plan type -->
+                            <input type="hidden" name="plan_type" value="{{ pre_selected_plan_type }}">
+                            {% endif %}
 
                             <div class="mb-3">
                                 <label for="description" class="form-label">توضیحات و اهداف شما <span class="text-danger">*</span></label>
@@ -326,7 +338,7 @@
                             <!-- Diet Plan Fields -->
                             <div id="diet_fields" class="plan-specific-fields" style="display: none;">
                                 <!-- Field 1: Diet Goal -->
-                                <div class="mb-4">
+                                <div class="mb-4 diet-question" data-question="1">
                                     <label class="form-label">هدف اصلی شما از برنامه‌ی غذایی چیه؟ (می‌خواید عضلات رو تغذیه کنید، چربی‌ها رو آب کنید یا فقط سالم‌تر زندگی کنید؟)</label>
                                     <div class="row">
                                         <div class="col-12">
@@ -364,7 +376,7 @@
                                 </div>
 
                                 <!-- Field 2: Dietary Restrictions -->
-                                <div class="mb-4">
+                                <div class="mb-4 diet-question" data-question="2" style="display: none;">
                                     <label class="form-label">آیا محدودیت غذایی خاصی دارید؟ (مثلاً آلرژی، عدم تحمل یا توصیه‌های پزشک؟)</label>
                                     <div class="row">
                                         <div class="col-12">
@@ -396,7 +408,7 @@
                                 </div>
 
                                 <!-- Field 3: Cooking Time -->
-                                <div class="mb-4">
+                                <div class="mb-4 diet-question" data-question="3" style="display: none;">
                                     <label class="form-label">چقدر زمان و حوصله برای آشپزی و آماده‌سازی غذا دارید؟ (می‌خواید هر روز آشپزی کنید یا غذای آماده‌تر ترجیح می‌دید؟)</label>
                                     <div class="row">
                                         <div class="col-12">
@@ -423,7 +435,7 @@
                                 </div>
 
                                 <!-- Field 4: Meal Frequency -->
-                                <div class="mb-4">
+                                <div class="mb-4 diet-question" data-question="4" style="display: none;">
                                     <label class="form-label">در حال حاضر چند وعده غذایی در طول روز می‌خورید؟ (صبحانه، ناهار، شام و میان‌وعده‌ها رو حساب کنید.)</label>
                                     <div class="row">
                                         <div class="col-12">
@@ -456,7 +468,7 @@
                                 </div>
 
                                 <!-- Field 5: Daily Activity -->
-                                <div class="mb-4">
+                                <div class="mb-4 diet-question" data-question="5" style="display: none;">
                                     <label class="form-label">میزان فعالیت بدنی روزانه‌تون چقدره؟ (غیر از باشگاه، کارهای روزمره‌تون چقدر انرژی می‌بره؟)</label>
                                     <div class="row">
                                         <div class="col-12">
@@ -489,7 +501,7 @@
                                 </div>
 
                                 <!-- Field 6: Supplement Use -->
-                                <div class="mb-4">
+                                <div class="mb-4 diet-question" data-question="6" style="display: none;">
                                     <label class="form-label">آیا از مکمل‌های غذایی خاصی استفاده می‌کنید یا قصد دارید استفاده کنید؟ (مثل پروتئین وی، کراتین، مولتی‌ویتامین و…؟)</label>
                                     <div class="row">
                                         <div class="col-12">
@@ -527,7 +539,7 @@
                                 </div>
 
                                 <!-- Field 7: Water Intake -->
-                                <div class="mb-4">
+                                <div class="mb-4 diet-question" data-question="7" style="display: none;">
                                     <label class="form-label">آب کافی در طول روز می‌نوشید؟ (اهمیت آب رو دست کم نگیرید، رفیقِ سلامتیه!)</label>
                                     <div class="row">
                                         <div class="col-12">
@@ -560,7 +572,7 @@
                                 </div>
 
                                 <!-- Field 8: Medical Conditions -->
-                                <div class="mb-4">
+                                <div class="mb-4 diet-question" data-question="8" style="display: none;">
                                     <label class="form-label">آیا در حال حاضر بیماری خاصی دارید یا داروی خاصی مصرف می‌کنید که ممکنه روی رژیم غذایی شما تاثیر بگذاره؟</label>
                                     <div class="row">
                                         <div class="col-12">
@@ -592,7 +604,7 @@
                                 </div>
 
                                 <!-- Field 9: Food Type Preference -->
-                                <div class="mb-4">
+                                <div class="mb-4 diet-question" data-question="9" style="display: none;">
                                     <label class="form-label">ترجیح می‌دهید برنامه‌ی غذایی‌تون شامل چه نوع خوراکی‌هایی باشه؟ (مثلاً بیشتر خانگی، رستورانی یا ترکیبی؟)</label>
                                     <div class="row">
                                         <div class="col-12">
@@ -803,21 +815,36 @@
         const workoutFields = document.getElementById('workout_fields');
         const dietFields = document.getElementById('diet_fields');
         
-        planTypeRadios.forEach(radio => {
-            radio.addEventListener('change', function() {
-                if (this.value === 'workout') {
-                    workoutFields.style.display = 'block';
-                    dietFields.style.display = 'none';
-                    // Clear diet field values
-                    clearFieldValues('diet_fields');
-                } else if (this.value === 'diet') {
-                    dietFields.style.display = 'block';
-                    workoutFields.style.display = 'none';
-                    // Clear workout field values
-                    clearFieldValues('workout_fields');
-                }
+        // Check if plan type is pre-selected
+        const preSelectedPlanType = '{{ pre_selected_plan_type|default:"" }}';
+        
+        if (preSelectedPlanType) {
+            // Show appropriate fields based on pre-selected plan type
+            if (preSelectedPlanType === 'workout') {
+                if (workoutFields) workoutFields.style.display = 'block';
+                if (dietFields) dietFields.style.display = 'none';
+            } else if (preSelectedPlanType === 'diet') {
+                if (workoutFields) workoutFields.style.display = 'none';
+                if (dietFields) dietFields.style.display = 'block';
+            }
+        } else {
+            // Handle plan type changes for radio buttons
+            planTypeRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === 'workout') {
+                        if (workoutFields) workoutFields.style.display = 'block';
+                        if (dietFields) dietFields.style.display = 'none';
+                        // Clear diet field values
+                        clearFieldValues('diet_fields');
+                    } else if (this.value === 'diet') {
+                        if (workoutFields) workoutFields.style.display = 'none';
+                        if (dietFields) dietFields.style.display = 'block';
+                        // Clear workout field values
+                        clearFieldValues('workout_fields');
+                    }
+                });
             });
-        });
+        }
 
         // Function to clear field values in a section
         function clearFieldValues(sectionId) {
@@ -940,6 +967,80 @@
                 });
             });
         }
+
+        // Progressive Diet Questions Functionality
+        (function setupProgressiveDietQuestions() {
+            const dietSection = document.getElementById('diet_fields');
+            if (!dietSection) return;
+
+            const questions = Array.from(dietSection.querySelectorAll('.diet-question'))
+                .sort((a, b) => parseInt(a.dataset.question) - parseInt(b.dataset.question));
+            if (questions.length === 0) return;
+
+            function isAnswered(questionEl) {
+                // Consider answered if any radio is checked or any textarea/input within has a value
+                const anyChecked = questionEl.querySelector('input[type="radio"]:checked');
+                if (anyChecked) return true;
+                const anyFilled = Array.from(questionEl.querySelectorAll('input[type="text"], textarea'))
+                    .some(el => (el.value || '').trim().length > 0);
+                return anyFilled;
+            }
+
+            function resetFollowing(fromIndexExclusive) {
+                for (let i = fromIndexExclusive + 1; i < questions.length; i++) {
+                    const q = questions[i];
+                    // clear radios and inputs
+                    q.querySelectorAll('input[type="radio"]').forEach(r => { r.checked = false; });
+                    q.querySelectorAll('input[type="text"], textarea').forEach(el => { el.value = ''; });
+                }
+            }
+
+            function updateVisibility() {
+                // Hide all first
+                questions.forEach(q => { q.style.display = 'none'; });
+
+                // Find the last answered in order
+                let lastAnsweredIdx = -1;
+                for (let i = 0; i < questions.length; i++) {
+                    if (isAnswered(questions[i])) {
+                        lastAnsweredIdx = i;
+                    } else {
+                        break;
+                    }
+                }
+
+                // Show up to last answered, and the next one
+                const nextIdx = Math.min(lastAnsweredIdx + 1, questions.length - 1);
+                for (let i = 0; i <= lastAnsweredIdx; i++) {
+                    questions[i].style.display = 'block';
+                }
+                questions[nextIdx].style.display = 'block';
+
+                // Smooth scroll to the currently active question (next unanswered)
+                if (questions[nextIdx]) {
+                    questions[nextIdx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+
+            // Initial state: show only first (or up to last answered if coming back)
+            updateVisibility();
+
+            // Wire change handlers to radios and textareas
+            questions.forEach((q, idx) => {
+                q.querySelectorAll('input[type="radio"]').forEach(radio => {
+                    radio.addEventListener('change', () => {
+                        resetFollowing(idx);
+                        updateVisibility();
+                    });
+                });
+                q.querySelectorAll('input[type="text"], textarea').forEach(input => {
+                    input.addEventListener('input', () => {
+                        // Don't reset following on typing, just update visibility so next appears when filled if needed
+                        updateVisibility();
+                    });
+                });
+            });
+        })();
     });
 </script>
 {% endblock %} 

@@ -88,9 +88,7 @@
                                     <a href="{% url 'gym:download_diet_plan' plan.id %}" class="btn btn-sm btn-primary">
                                         <i class="fas fa-download"></i> دانلود
                                     </a>
-                                    <button class="btn btn-sm btn-warning" onclick="editPlan({{ plan.id }})">
-                                        <i class="fas fa-edit"></i> ویرایش
-                                    </button>
+                                    
                                     <button class="btn btn-sm {% if plan.is_active %}btn-danger{% else %}btn-success{% endif %}" 
                                             onclick="toggleStatus({{ plan.id }}, {% if plan.is_active %}false{% else %}true{% endif %})">
                                         {% if plan.is_active %}
@@ -99,6 +97,12 @@
                                         <i class="fas fa-check"></i> فعال کردن
                                         {% endif %}
                                     </button>
+                                    <form method="post" action="{% url 'gym:delete_diet_plan' plan.id %}" style="display:inline-block" onsubmit="return confirm('آیا از حذف برنامه \"{{ plan.title|escapejs }}\" اطمینان دارید؟ این عملیات قابل بازگشت نیست.');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -205,6 +209,23 @@
     function toggleStatus(planId, makeActive) {
         // Toggle plan status (will be implemented later)
         alert('تغییر وضعیت برنامه با شناسه ' + planId + ' به ' + (makeActive ? 'فعال' : 'غیرفعال'));
+    }
+</script>
+<form id="deleteForm" method="post" action="" style="display:none;">
+    {% csrf_token %}
+    <input type="hidden" name="_method" value="delete">
+    <input type="hidden" name="_confirm" value="1">
+    <input type="hidden" id="deletePlanId" value="">
+    <input type="hidden" id="deletePlanTitle" value="">
+    <input type="hidden" id="deleteAction" value="">
+</form>
+<script>
+    function confirmDelete(planId, planTitle) {
+        if (confirm('آیا از حذف برنامه \"' + planTitle + '\" اطمینان دارید؟ این عملیات قابل بازگشت نیست.')) {
+            const form = document.getElementById('deleteForm');
+            form.action = '{% url "gym:delete_diet_plan" 0 %}'.replace('/0/', '/' + planId + '/');
+            form.submit();
+        }
     }
 </script>
 {% endblock %} 

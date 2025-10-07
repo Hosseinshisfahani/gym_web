@@ -101,31 +101,14 @@ WSGI_APPLICATION = 'gym_website.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 # PostgreSQL configuration (for production)
-DATABASES_POSTGRESQL = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'gymdb',
-        'USER': 'gymuser',
-        'PASSWORD': 'strongpassword',
-        'HOST': 'localhost',
-        'PORT': '5432',
-        'CONN_MAX_AGE': 60,  # Keep connections alive for 60 seconds
-        'OPTIONS': {
-            'connect_timeout': 10,
-            'client_encoding': 'UTF8',
-        },
-    }
-}
-
-# PostgreSQL configuration (for production)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'gymdb',
-        'USER': 'gymuser',
-        'PASSWORD': 'strongpassword',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': os.getenv('DB_NAME', 'gymdb'),
+        'USER': os.getenv('DB_USER', 'gymuser'),
+        'PASSWORD': os.getenv('DB_PASSWORD', ''),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('DB_PORT', '5432'),
         'CONN_MAX_AGE': 60,  # Keep connections alive for 60 seconds
         'OPTIONS': {
             'connect_timeout': 10,
@@ -181,11 +164,11 @@ DATA_UPLOAD_MAX_NUMBER_FIELDS = 1000
 
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'hosseinshateripourisfahani@gmail.com'  # Your actual Gmail
-EMAIL_HOST_PASSWORD = 'ixdn smhc phte ahjl'  # App Password from Google
+EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # Default primary key field type
@@ -276,9 +259,9 @@ CSRF_TRUSTED_ORIGINS = [
 
 # Payment Gateway Configuration
 # ZarinPal Configuration
-ZARINPAL_MERCHANT_ID = '464a4cee-3b87-497c-bb4f-93fb5d3a3fa7'  # Your Zarinpal merchant ID
-ZARINPAL_SANDBOX = False  # Set to False for production
-ZARINPAL_CALLBACK_URL = 'https://shirneshansport.ir/payment/verify/'  # Your callback URL
+ZARINPAL_MERCHANT_ID = os.getenv('ZARINPAL_MERCHANT_ID', '')
+ZARINPAL_SANDBOX = os.getenv('ZARINPAL_SANDBOX', 'False') == 'True'
+ZARINPAL_CALLBACK_URL = os.getenv('ZARINPAL_CALLBACK_URL', f'https://{DOMAIN}/payment/verify/')
 
 PAYMENT_GATEWAY_TYPE = 'zarinpal'  
 

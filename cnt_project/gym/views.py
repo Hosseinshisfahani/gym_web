@@ -40,6 +40,7 @@ import random
 from django.core.mail import send_mail
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from datetime import timedelta
 
 
@@ -552,10 +553,16 @@ def download_workout_plan(request, plan_id):
     # Add footer with user info
     p.showPage()  # Start a new page for the footer
     p.setFont('Helvetica', 10)
-    try:
-        full_name = plan.user.userprofile.name if hasattr(plan.user, 'userprofile') else plan.user.username
-    except UserProfile.DoesNotExist:
-        full_name = plan.user.username
+    # Resolve a safe display name for the user without raising
+    user_profile = getattr(plan.user, 'userprofile', None)
+    full_name = None
+    if user_profile:
+        # Try common name fields
+        full_name = getattr(user_profile, 'full_name', None) or getattr(user_profile, 'name', None)
+    # Fallbacks
+    if not full_name:
+        # Django's built-in full name, then username
+        full_name = (getattr(plan.user, 'get_full_name', lambda: '')() or plan.user.username)
     footer = f"Created by: {full_name}"
     p.drawString(50, 30, footer)
     
@@ -758,98 +765,162 @@ def add_diet_plan(request, user_id=None):
 
 @login_required
 def download_diet_plan(request, plan_id):
-    # Get the diet plan
-    plan = get_object_or_404(DietPlan, id=plan_id)
+    import logging
+    logger = logging.getLogger(__name__)
     
-    # Check if user has access to this plan
-    if plan.user != request.user and not request.user.is_staff:
-        messages.error(request, "شما دسترسی لازم برای دانلود این برنامه غذایی را ندارید.")
-        return redirect('gym:diet_plans')
-    
-    # Create a BytesIO buffer to receive PDF data
-    buffer = BytesIO()
-    
-    # Create the PDF object, using the BytesIO buffer as its "file"
-    p = canvas.Canvas(buffer, pagesize=letter)
-    
-    # Always use Helvetica font - it's available on all systems
-    p.setFont('Helvetica', 14)
-    
-    # Draw the title (no RTL support, but will still be readable)
-    title = f"Diet Plan: {plan.get_plan_type_display()}"
-    p.drawCentredString(300, 750, title)
-    
-    # Add creation date
-    date_text = f"Created on: {plan.created_at.strftime('%Y/%m/%d')}"
-    p.setFont('Helvetica', 10)
-    p.drawString(50, 720, date_text)
-    
-    # Add description
-    if plan.description:
-        p.setFont('Helvetica', 12)
-        description = plan.description
-        
-        # Split description into lines that fit on the page
-        lines = []
-        for line in description.split('\n'):
-            if len(line) > 80:  # Rough estimate of characters that fit on a line
-                chunks = [line[i:i+80] for i in range(0, len(line), 80)]
-                lines.extend(chunks)
-            else:
-                lines.append(line)
-        
-        y_position = 680
-        for line in lines:
-            if y_position < 50:  # Start a new page if we're at the bottom
-                p.showPage()
-                p.setFont('Helvetica', 12)
-                y_position = 750
-            p.drawString(50, y_position, line)
-            y_position -= 15
-    
-    # Add image if available
-    if plan.image:
-        try:
-            img_path = plan.image.path
-            img = Image.open(img_path)
-            img_width, img_height = img.size
-            
-            # Scale down image if it's too large
-            max_width = 500
-            max_height = 400
-            if img_width > max_width or img_height > max_height:
-                ratio = min(max_width/img_width, max_height/img_height)
-                img_width = int(img_width * ratio)
-                img_height = int(img_height * ratio)
-            
-            # Start a new page for the image
-            p.showPage()
-            p.drawInlineImage(img_path, 50, 500, width=img_width, height=img_height)
-        except Exception as e:
-            print(f"Error adding image to PDF: {str(e)}")
-    
-    # Add footer with user info
-    p.showPage()  # Start a new page for the footer
-    p.setFont('Helvetica', 10)
     try:
-        full_name = plan.user.userprofile.name if hasattr(plan.user, 'userprofile') else plan.user.username
-    except UserProfile.DoesNotExist:
-        full_name = plan.user.username
-    footer = f"Created by: {full_name}"
-    p.drawString(50, 30, footer)
-    
-    # Close the PDF object cleanly, and we're done
-    p.save()
-    
-    # Get the value of the BytesIO buffer and write it to the response
-    buffer.seek(0)
-    
-    # Create the response with PDF mime type
-    filename = f"diet_plan_{plan.get_plan_type_display()}_{plan.id}.pdf"
-    response = HttpResponse(buffer, content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    
-    return response
+        # Get the diet plan
+        plan = get_object_or_404(DietPlan, id=plan_id)
+        
+        # Check if user has access to this plan
+        if plan.user != request.user and not request.user.is_staff:
+            messages.error(request, "شما دسترسی لازم برای دانلود این برنامه غذایی را ندارید.")
+            return redirect('gym:diet_plans')
+        
+        # Create a BytesIO buffer to receive PDF data
+        buffer = BytesIO()
+        
+        # Create the PDF object, using the BytesIO buffer as its "file"
+        p = canvas.Canvas(buffer, pagesize=letter)
+        
+        # Always use Helvetica font - it's available on all systems
+        p.setFont('Helvetica', 14)
+        
+        # Draw the title (no RTL support, but will still be readable)
+        try:
+            plan_type_display = plan.get_plan_type_display() if hasattr(plan, 'get_plan_type_display') else 'Diet Plan'
+        except:
+            plan_type_display = 'Diet Plan'
+        
+        title = f"Diet Plan: {plan_type_display}"
+        p.drawCentredString(300, 750, title)
+        
+        # Add creation date
+        try:
+            date_text = f"Created on: {plan.created_at.strftime('%Y/%m/%d')}"
+            p.setFont('Helvetica', 10)
+            p.drawString(50, 720, date_text)
+        except Exception as e:
+            logger.error(f"Error adding date to PDF: {str(e)}")
+        
+        # Add description
+        if plan.description:
+            try:
+                p.setFont('Helvetica', 12)
+                description = str(plan.description)
+                
+                # Split description into lines that fit on the page
+                lines = []
+                for line in description.split('\n'):
+                    if len(line) > 80:  # Rough estimate of characters that fit on a line
+                        chunks = [line[i:i+80] for i in range(0, len(line), 80)]
+                        lines.extend(chunks)
+                    else:
+                        lines.append(line)
+                
+                y_position = 680
+                for line in lines:
+                    if y_position < 50:  # Start a new page if we're at the bottom
+                        p.showPage()
+                        p.setFont('Helvetica', 12)
+                        y_position = 750
+                    # Only draw ASCII-safe characters to avoid encoding issues
+                    safe_line = line.encode('ascii', 'ignore').decode('ascii')
+                    p.drawString(50, y_position, safe_line)
+                    y_position -= 15
+            except Exception as e:
+                logger.error(f"Error adding description to PDF: {str(e)}")
+        
+        # Add image if available
+        if plan.image:
+            try:
+                import os
+                # Check if image field has a path and the file exists
+                if hasattr(plan.image, 'path'):
+                    img_path = plan.image.path
+                    if os.path.exists(img_path) and os.path.isfile(img_path):
+                        # Try to open and verify the image
+                        img = Image.open(img_path)
+                        img.verify()  # Verify it's a valid image
+                        
+                        # Reopen after verify (verify closes the file)
+                        img = Image.open(img_path)
+                        img_width, img_height = img.size
+                        
+                        # Scale down image if it's too large
+                        max_width = 500
+                        max_height = 400
+                        if img_width > max_width or img_height > max_height:
+                            ratio = min(max_width/img_width, max_height/img_height)
+                            img_width = int(img_width * ratio)
+                            img_height = int(img_height * ratio)
+                        
+                        # Start a new page for the image
+                        p.showPage()
+                        p.setFont('Helvetica', 12)
+                        p.drawString(50, 750, "Diet Plan Image:")
+                        
+                        # Draw the image
+                        p.drawInlineImage(img_path, 50, 300, width=img_width, height=img_height, preserveAspectRatio=True)
+                        logger.info(f"Successfully added image to PDF for diet plan {plan.id}")
+                    else:
+                        logger.warning(f"Image file does not exist for diet plan {plan.id}: {img_path}")
+                else:
+                    logger.warning(f"Image field has no path for diet plan {plan.id}")
+            except Exception as e:
+                logger.error(f"Error adding image to PDF for diet plan {plan.id}: {str(e)}", exc_info=True)
+                # Continue without image - don't fail the entire PDF generation
+        
+        # Add footer with user info
+        try:
+            p.showPage()  # Start a new page for the footer
+            p.setFont('Helvetica', 10)
+            # Resolve a safe display name for the user without raising
+            user_profile = getattr(plan.user, 'userprofile', None)
+            full_name = None
+            if user_profile:
+                # Try common name fields
+                full_name = getattr(user_profile, 'full_name', None) or getattr(user_profile, 'name', None)
+            # Fallbacks
+            if not full_name:
+                # Django's built-in full name, then username
+                full_name = getattr(plan.user, 'get_full_name', lambda: '')() or plan.user.username
+            
+            # Make sure full_name is ASCII-safe
+            safe_full_name = str(full_name).encode('ascii', 'ignore').decode('ascii') if full_name else 'Unknown'
+            footer = f"Created by: {safe_full_name}"
+            p.drawString(50, 30, footer)
+        except Exception as e:
+            logger.error(f"Error adding footer to PDF: {str(e)}")
+        
+        # Close the PDF object cleanly
+        p.save()
+        
+        # Rewind the buffer so FileResponse can stream from the beginning
+        buffer.seek(0)
+        
+        # Create safe filename
+        safe_plan_type = plan_type_display.replace(' ', '_')
+        filename = f"diet_plan_{safe_plan_type}_{plan.id}.pdf"
+        
+        # Use FileResponse for efficient streaming and correct headers
+        return FileResponse(buffer, as_attachment=True, filename=filename, content_type='application/pdf')
+        
+    except Exception as e:
+        logger.error(f"Critical error in download_diet_plan: {str(e)}", exc_info=True)
+        messages.error(request, f"خطا در ایجاد فایل PDF: {str(e)}")
+        return redirect('gym:diet_plans')
+
+@login_required
+@staff_member_required
+@require_POST
+def delete_diet_plan(request, plan_id):
+    """Admin-only: delete a diet plan and redirect back with a message."""
+    plan = get_object_or_404(DietPlan, id=plan_id)
+    title = getattr(plan, 'title', str(plan_id))
+    plan.delete()
+    messages.success(request, f'برنامه غذایی "{title}" حذف شد.')
+    return redirect('gym:diet_plans')
 
 # Ticket views
 @login_required
@@ -2331,7 +2402,7 @@ def check_body_information_required(request, plan_type):
         return redirect(f'gym:body_information_form?next=gym:request_plan')
 
 @login_required
-def plan_request_flow(request, step=None):
+def plan_request_flow(request, step=None, plan_type=None):
     """Continuous 5-step plan request flow"""
     
     # Define the steps
@@ -2347,10 +2418,25 @@ def plan_request_flow(request, step=None):
     if not step:
         step = 'request'
     
+    # Get plan_type from URL parameter or session
+    if not plan_type:
+        plan_type = request.GET.get('plan_type')
+    
+    # If plan_type is provided via URL, store it in session for use in the form
+    if plan_type and plan_type in ['workout', 'diet']:
+        # Store the pre-selected plan type in session
+        request.session['pre_selected_plan_type'] = plan_type
+        request.session.modified = True  # Ensure session is saved
+    
     # Handle Step 1: Request submission
     if step == 'request':
         if request.method == 'POST':
-            plan_type = request.POST.get('plan_type')
+            # Use pre-selected plan type if available, otherwise get from form
+            if 'pre_selected_plan_type' in request.session:
+                plan_type = request.session['pre_selected_plan_type']
+            else:
+                plan_type = request.POST.get('plan_type')
+            
             description = request.POST.get('description')
             
             if plan_type in ['workout', 'diet'] and description:
@@ -2385,6 +2471,11 @@ def plan_request_flow(request, step=None):
                 
                 # Store plan request data in session
                 request.session['pending_plan_request'] = plan_data
+                
+                # Clear the pre_selected_plan_type now that it's been used
+                if 'pre_selected_plan_type' in request.session:
+                    del request.session['pre_selected_plan_type']
+                
                 # Don't show success message here as user hasn't completed the process yet
                 return redirect('gym:plan_request_flow', step='body_info')
             else:
@@ -2393,7 +2484,9 @@ def plan_request_flow(request, step=None):
         context = {
             'steps': STEPS,
             'current_step': step,
-            'step_data': STEPS[step]
+            'step_data': STEPS[step],
+            'pre_selected_plan_type': request.session.get('pre_selected_plan_type'),
+            'plan_data': {}
         }
         return render(request, 'gym/plan_request_flow.html', context)
     
@@ -2466,7 +2559,8 @@ def plan_request_flow(request, step=None):
         'steps': STEPS,
         'current_step': step,
         'step_data': STEPS[step],
-        'plan_data': plan_data
+        'plan_data': plan_data,
+        'pre_selected_plan_type': request.session.get('pre_selected_plan_type')
     }
     return render(request, 'gym/plan_request_flow.html', context)
 

@@ -65,6 +65,14 @@
                         </div>
                         <div class="col-md-4">
                             <div class="dashboard-card dashboard-card-teal text-center h-100">
+                                <div class="icon-circle mb-2 mx-auto"><i class="fas fa-graduation-cap fa-2x"></i></div>
+                                شهریه
+                                <div class="mt-1 text-light small">مشاهده وضعیت و آپلود رسید</div>
+                                <div><a href="{% url 'gym:tuition_dashboard' %}" class="btn btn-outline-light btn-sm mt-2">ورود به شهریه <i class="fa fa-arrow-left"></i></a></div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="dashboard-card dashboard-card-teal text-center h-100">
                                 <div class="icon-circle mb-2 mx-auto"><i class="fas fa-chart-line fa-2x"></i></div>
                                 آنالیز پیشرفت
                                 <div class="badge bg-light text-dark mb-1">{{ stats.progress_entries }} اندازه‌گیری</div>

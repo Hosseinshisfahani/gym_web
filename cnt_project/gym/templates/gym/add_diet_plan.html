@@ -277,28 +277,48 @@
 function toggleMonthlyGoalForm() {
     const checkbox = document.getElementById('create_monthly_goal');
     const form = document.getElementById('monthly-goal-form');
+    const controls = form ? form.querySelectorAll('input, select, textarea') : [];
     
+    if (!form) return;
+
     if (checkbox.checked) {
         form.style.display = 'block';
+        controls.forEach(el => {
+            el.disabled = false;
+            // This optional section should not enforce required constraints
+            el.removeAttribute('required');
+        });
     } else {
         form.style.display = 'none';
+        controls.forEach(el => {
+            // Prevent browser validation on hidden optional fields
+            el.disabled = true;
+            el.removeAttribute('required');
+        });
     }
 }
 
-// Auto-populate end date when start date is selected
+// Initialize state on load
 document.addEventListener('DOMContentLoaded', function() {
-    const startDateInput = document.querySelector('input[name="start_date"]');
-    const endDateInput = document.querySelector('input[name="end_date"]');
+    toggleMonthlyGoalForm();
+
+    // Auto-populate end date when start date is selected (scoped to monthly goal form)
+    const goalForm = document.getElementById('monthly-goal-form');
+    if (!goalForm) return;
+
+    const startDateInput = goalForm.querySelector('input[name="start_date"]');
+    const endDateInput = goalForm.querySelector('input[name="end_date"]');
     
     if (startDateInput && endDateInput) {
         startDateInput.addEventListener('change', function() {
             if (this.value) {
                 const startDate = new Date(this.value);
-                const endDate = new Date(startDate);
-                endDate.setDate(startDate.getDate() + 30); // Add 30 days
-                
-                const endDateString = endDate.toISOString().split('T')[0];
-                endDateInput.value = endDateString;
+                if (!isNaN(startDate)) {
+                    const endDate = new Date(startDate);
+                    endDate.setDate(startDate.getDate() + 30); // Add 30 days
+                    const endDateString = endDate.toISOString().split('T')[0];
+                    endDateInput.value = endDateString;
+                }
             }
         });
     }

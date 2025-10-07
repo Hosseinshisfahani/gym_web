@@ -93,9 +93,7 @@
                                     <a href="{% url 'gym:download_workout_plan' plan.id %}" class="btn btn-sm btn-primary">
                                         <i class="fas fa-download"></i> دانلود
                                     </a>
-                                    <button class="btn btn-sm btn-warning" onclick="editPlan({{ plan.id }})">
-                                        <i class="fas fa-edit"></i> ویرایش
-                                    </button>
+                                    
                                     <button class="btn btn-sm {% if plan.is_active %}btn-danger{% else %}btn-success{% endif %}" 
                                             onclick="toggleStatus({{ plan.id }}, {% if plan.is_active %}false{% else %}true{% endif %})">
                                         {% if plan.is_active %}

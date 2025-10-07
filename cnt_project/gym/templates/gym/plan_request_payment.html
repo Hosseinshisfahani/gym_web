@@ -37,7 +37,7 @@
                             <div class="row">
                                 <!-- Gateway Payment -->
                                 <div class="col-md-6 mb-3">
-                                    <div class="payment-method-card" onclick="selectPaymentMethod('gateway')">
+                                    <div class="payment-method-card" onclick="selectPaymentMethod('gateway', this)">
                                         <div class="text-center p-4">
                                             <i class="fas fa-credit-card fa-3x text-success mb-3"></i>
                                             <h5>پرداخت آنلاین</h5>
@@ -50,7 +50,7 @@
                                 <!-- Manual Payment -->
                                 {% if payment_card %}
                                 <div class="col-md-6 mb-3">
-                                    <div class="payment-method-card" onclick="selectPaymentMethod('manual')">
+                                    <div class="payment-method-card" onclick="selectPaymentMethod('manual', this)">
                                         <div class="text-center p-4">
                                             <i class="fas fa-receipt fa-3x text-warning mb-3"></i>
                                             <h5>پرداخت دستی</h5>
@@ -273,14 +273,16 @@
 
 <script>
 // Payment method selection
-function selectPaymentMethod(method) {
+function selectPaymentMethod(method, clickedElement) {
     // Remove selected class from all cards
     document.querySelectorAll('.payment-method-card').forEach(card => {
         card.classList.remove('selected');
     });
     
     // Add selected class to clicked card
-    event.currentTarget.classList.add('selected');
+    if (clickedElement) {
+        clickedElement.classList.add('selected');
+    }
     
     // Hide all payment forms
     document.querySelectorAll('.payment-form').forEach(form => {
@@ -422,8 +424,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Auto-select gateway payment method
     const gatewayCard = document.querySelector('.payment-method-card');
     if (gatewayCard) {
-        selectPaymentMethod('gateway');
-        gatewayCard.classList.add('selected');
+        selectPaymentMethod('gateway', gatewayCard);
     }
 });
 </script>

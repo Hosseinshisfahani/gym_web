@@ -31,6 +31,7 @@ urlpatterns = [
     path('diet-plans/add/', views.add_diet_plan, name='add_diet_plan'),
     path('diet-plans/add/<int:user_id>/', views.add_diet_plan, name='add_diet_plan_for_user'),
     path('diet-plans/<int:plan_id>/download/', views.download_diet_plan, name='download_diet_plan'),
+    path('diet-plans/<int:plan_id>/delete/', views.delete_diet_plan, name='delete_diet_plan'),
     path('payments/', views.payments, name='payments'),
     path('payments/add/', views.add_payment, name='add_payment'),
     path('payments/plan-request/', views.plan_request_payment, name='plan_request_payment'),
