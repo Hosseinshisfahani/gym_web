@@ -42,6 +42,31 @@ from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from datetime import timedelta
+from functools import wraps
+
+
+# Custom decorator for AJAX views that require staff authentication
+def ajax_staff_required(view_func):
+    """
+    Decorator for AJAX views that require staff authentication.
+    Returns JSON error instead of redirecting to login page.
+    """
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return JsonResponse({
+                'success': False,
+                'message': 'لطفاً ابتدا وارد سیستم شوید.'
+            }, status=401)
+        
+        if not request.user.is_staff:
+            return JsonResponse({
+                'success': False,
+                'message': 'شما دسترسی لازم برای این عملیات را ندارید.'
+            }, status=403)
+        
+        return view_func(request, *args, **kwargs)
+    return wrapper
 
 
 # Home view
@@ -266,9 +291,12 @@ def edit_profile(request):
                 if 'payment_redirect_url' in request.session:
                     redirect_url = request.session.pop('payment_redirect_url')
                     redirect_step = request.session.pop('payment_redirect_step', None)
-                    if redirect_step:
+                    
+                    # Handle plan request flow redirect
+                    if redirect_url == 'gym:plan_request_flow' and redirect_step:
+                        return redirect('gym:plan_request_flow', step=redirect_step)
+                    elif redirect_url:
                         return redirect(redirect_url)
-                    return redirect(redirect_url)
                 
                 # Check if there's a product ID stored for payment
                 if 'payment_product_id' in request.session:
@@ -480,6 +508,7 @@ def add_workout_plan(request, user_id=None):
 
 @login_required
 def download_workout_plan(request, plan_id):
+    import os
     # Get the workout plan
     plan = get_object_or_404(WorkoutPlan, id=plan_id)
     
@@ -488,6 +517,21 @@ def download_workout_plan(request, plan_id):
         messages.error(request, "شما دسترسی لازم برای دانلود این برنامه تمرینی را ندارید.")
         return redirect('gym:workout_plans')
     
+    # If plan_file exists, serve it directly
+    if plan.plan_file:
+        try:
+            file_path = plan.plan_file.path
+            if os.path.exists(file_path):
+                # Serve the uploaded file directly
+                response = FileResponse(open(file_path, 'rb'), content_type='application/pdf')
+                filename = os.path.basename(file_path)
+                response['Content-Disposition'] = f'attachment; filename="{filename}"'
+                return response
+        except Exception as e:
+            messages.error(request, f"خطا در دانلود فایل: {str(e)}")
+            return redirect('gym:workout_plans')
+    
+    # If no plan_file, generate PDF from description (fallback)
     # Create a BytesIO buffer to receive PDF data
     buffer = BytesIO()
     
@@ -766,6 +810,7 @@ def add_diet_plan(request, user_id=None):
 @login_required
 def download_diet_plan(request, plan_id):
     import logging
+    import os
     logger = logging.getLogger(__name__)
     
     try:
@@ -777,6 +822,23 @@ def download_diet_plan(request, plan_id):
             messages.error(request, "شما دسترسی لازم برای دانلود این برنامه غذایی را ندارید.")
             return redirect('gym:diet_plans')
         
+        # If plan_file exists, serve it directly
+        if plan.plan_file:
+            try:
+                file_path = plan.plan_file.path
+                if os.path.exists(file_path):
+                    # Serve the uploaded file directly
+                    response = FileResponse(open(file_path, 'rb'), content_type='application/pdf')
+                    filename = os.path.basename(file_path)
+                    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+                    logger.info(f"Serving uploaded file for diet plan {plan.id}")
+                    return response
+            except Exception as e:
+                logger.error(f"Error serving uploaded file: {str(e)}")
+                messages.error(request, f"خطا در دانلود فایل: {str(e)}")
+                return redirect('gym:diet_plans')
+        
+        # If no plan_file, generate PDF from description (fallback)
         # Create a BytesIO buffer to receive PDF data
         buffer = BytesIO()
         
@@ -921,6 +983,17 @@ def delete_diet_plan(request, plan_id):
     plan.delete()
     messages.success(request, f'برنامه غذایی "{title}" حذف شد.')
     return redirect('gym:diet_plans')
+
+@login_required
+@staff_member_required
+@require_POST
+def delete_workout_plan(request, plan_id):
+    """Admin-only: delete a workout plan and redirect back with a message."""
+    plan = get_object_or_404(WorkoutPlan, id=plan_id)
+    plan_type_display = plan.get_plan_type_display()
+    plan.delete()
+    messages.success(request, f'برنامه تمرینی "{plan_type_display}" حذف شد.')
+    return redirect('gym:workout_plans')
 
 # Ticket views
 @login_required
@@ -2374,6 +2447,11 @@ def body_information_form(request):
             
             # Check if user is in the middle of a plan request process
             if 'pending_plan_request' in request.session:
+                # Update the current step in session and continue the flow
+                plan_data = request.session['pending_plan_request']
+                plan_data['current_step'] = 'profile_check'
+                request.session['pending_plan_request'] = plan_data
+                request.session.modified = True  # Ensure session is saved
                 return redirect('gym:plan_request_flow', step='profile_check')
             
             # Redirect to the page that originally requested this form
@@ -2514,6 +2592,9 @@ def plan_request_flow(request, step=None, plan_type=None):
     
     # Get plan data from session (only for steps that need it)
     plan_data = request.session.get('pending_plan_request', {})
+    
+    # Ensure session is saved
+    request.session.modified = True
     
     # Handle Step 2: Body information check
     if step == 'body_info':
@@ -3160,7 +3241,7 @@ def tuition_receipt_detail(request, receipt_id):
     return render(request, 'gym/tuition_receipt_detail.html', context)
 
 
-@staff_member_required
+@ajax_staff_required
 def quick_update_tuition_receipt(request, receipt_id):
     """Quick AJAX endpoint for updating tuition receipt status"""
     if request.method == 'POST':
@@ -3185,7 +3266,8 @@ def quick_update_tuition_receipt(request, receipt_id):
             })
             
         except Exception as e:
-            return JsonResponse({'success': False, 'message': 'خطا در به‌روزرسانی وضعیت'})
+            print(f"Error in quick_update_tuition_receipt: {str(e)}")
+            return JsonResponse({'success': False, 'message': f'خطا در به‌روزرسانی وضعیت: {str(e)}'})
     
     return JsonResponse({'success': False, 'message': 'روش درخواست نامعتبر است'})
 
@@ -3195,15 +3277,55 @@ def review_tuition_receipt(request, receipt_id):
     receipt = get_object_or_404(TuitionReceipt, id=receipt_id)
     
     if request.method == 'POST':
-        form = TuitionReceiptAdminForm(request.POST, instance=receipt)
-        if form.is_valid():
-            receipt = form.save(commit=False)
-            receipt.reviewed_by = request.user
-            receipt.reviewed_at = timezone.now()
-            receipt.save()
-            
-            messages.success(request, f'وضعیت رسید {receipt.athlete.username} با موفقیت به‌روزرسانی شد.')
-            return redirect('gym:tuition_dashboard')
+        # Check if this is an AJAX request
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.content_type == 'application/json'
+        
+        if is_ajax:
+            # Handle AJAX request - return JSON
+            try:
+                # Parse JSON data if content type is application/json
+                if request.content_type == 'application/json':
+                    import json
+                    data = json.loads(request.body)
+                    status = data.get('status')
+                    admin_notes = data.get('admin_notes', '')
+                else:
+                    # Handle form data
+                    status = request.POST.get('status')
+                    admin_notes = request.POST.get('admin_notes', '')
+                
+                if status in ['approved', 'rejected', 'pending']:
+                    receipt.status = status
+                    receipt.admin_notes = admin_notes
+                    receipt.reviewed_by = request.user
+                    receipt.reviewed_at = timezone.now()
+                    receipt.save()
+                    
+                    return JsonResponse({
+                        'success': True,
+                        'message': f'وضعیت رسید با موفقیت به "{receipt.get_status_display()}" تغییر یافت.'
+                    })
+                else:
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'وضعیت نامعتبر است.'
+                    }, status=400)
+            except Exception as e:
+                return JsonResponse({
+                    'success': False,
+                    'message': f'خطا در به‌روزرسانی: {str(e)}'
+                }, status=500)
+        else:
+            # Handle normal form submission
+            form = TuitionReceiptAdminForm(request.POST, instance=receipt)
+            if form.is_valid():
+                receipt = form.save(commit=False)
+                receipt.reviewed_by = request.user
+                receipt.reviewed_at = timezone.now()
+                receipt.save()
+                
+                messages.success(request, f'وضعیت رسید {receipt.athlete.username} با موفقیت به‌روزرسانی شد.')
+                return redirect('gym:tuition_dashboard')
     else:
         form = TuitionReceiptAdminForm(instance=receipt)
     

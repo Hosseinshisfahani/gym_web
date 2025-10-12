@@ -70,10 +70,10 @@
                                 <option value="">لطفاً یک کاربر انتخاب کنید</option>
                                 {% for user in users %}
                                     <option value="{{ user.id }}">
-                                        {% if user.userprofile.full_name %}
-                                            {{ user.userprofile.full_name }} ({{ user.username }})
+                                        {% if user.userprofile.name %}
+                                            {{ user.userprofile.name }}{% if user.userprofile.melli_code %} - کد ملی: {{ user.userprofile.melli_code }}{% endif %}
                                         {% else %}
-                                            {{ user.username }}
+                                            {{ user.username }}{% if user.userprofile.melli_code %} - کد ملی: {{ user.userprofile.melli_code }}{% endif %}
                                         {% endif %}
                                     </option>
                                 {% endfor %}
@@ -99,21 +99,21 @@
                         </div>
                         
                         <div class="mb-3">
-                            <label for="{{ form.image.id_for_label }}" class="form-label">تصویر برنامه <span class="text-danger">*</span></label>
-                            {{ form.image }}
-                            {% if form.image.errors %}
-                                <div class="text-danger mt-1">{{ form.image.errors }}</div>
-                            {% endif %}
-                            <div class="form-text text-muted">تصویری که نشان‌دهنده برنامه غذایی باشد (ضروری)</div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="{{ form.plan_file.id_for_label }}" class="form-label">فایل برنامه (اختیاری)</label>
+                            <label for="{{ form.plan_file.id_for_label }}" class="form-label">فایل برنامه <span class="text-danger">*</span></label>
                             {{ form.plan_file }}
                             {% if form.plan_file.errors %}
                                 <div class="text-danger mt-1">{{ form.plan_file.errors }}</div>
                             {% endif %}
                             <div class="form-text text-muted">فایل PDF یا سند برنامه غذایی (در صورت وجود)</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.image.id_for_label }}" class="form-label">تصویر برنامه (اختیاری)</label>
+                            {{ form.image }}
+                            {% if form.image.errors %}
+                                <div class="text-danger mt-1">{{ form.image.errors }}</div>
+                            {% endif %}
+                            <div class="form-text text-muted">تصویری که نشان‌دهنده برنامه غذایی باشد (اختیاری)</div>
                         </div>
                         
                         <div class="row">

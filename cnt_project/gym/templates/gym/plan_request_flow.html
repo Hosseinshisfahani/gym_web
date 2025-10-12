@@ -105,7 +105,7 @@
                             <!-- Workout Plan Fields -->
                             <div id="workout_fields" class="plan-specific-fields" style="display: none;">
                                 <!-- Field 1: Training Goal -->
-                                <div class="mb-4">
+                                <div class="mb-4 workout-question" data-question="1">
                                     <label class="form-label">هدف اصلی‌تون از تمرین کردن چیه؟ (اگه می‌خواید مثل آرنولد بشید یا فقط یه بدن سلامت داشته باشید، بگید بهم!)</label>
                                     <div class="row">
                                         <div class="col-12">
@@ -144,7 +144,7 @@
                                 </div>
 
                                 <!-- Field 2: Training Frequency -->
-                                <div class="mb-4">
+                                <div class="mb-4 workout-question" data-question="2" style="display: none;">
                                     <label class="form-label">در هفته چند روز می‌تونید حسابی عرق بریزید و تمرین کنید؟ (واقع‌بین باشید، قرار نیست از همون اول قهرمان جهان شید!)</label>
                                     <div class="row">
                                         <div class="col-12">
@@ -177,7 +177,7 @@
                                 </div>
 
                                 <!-- Field 3: Equipment Access -->
-                                <div class="mb-4">
+                                <div class="mb-4 workout-question" data-question="3" style="display: none;">
                                     <label class="form-label">به چه تجهیزاتی دسترسی دارید؟ (باشگاه کامل یا فقط یه جفت دمبل تو خونه؟)</label>
                                     <div class="row">
                                         <div class="col-12">
@@ -210,7 +210,7 @@
                                 </div>
 
                                 <!-- Field 4: Session Duration -->
-                                <div class="mb-4">
+                                <div class="mb-4 workout-question" data-question="4" style="display: none;">
                                     <label class="form-label">چقدر زمان می‌تونید برای هر جلسه‌ی تمرینی اختصاص بدید؟ (اگه قراره مثل فشفشه بیاید و برید یا می‌خواید با تمرکز کار کنید؟)</label>
                                     <div class="row">
                                         <div class="col-12">
@@ -243,7 +243,7 @@
                                 </div>
 
                                 <!-- Field 5: Injury History -->
-                                <div class="mb-4">
+                                <div class="mb-4 workout-question" data-question="5" style="display: none;">
                                     <label class="form-label">آیا سابقه‌ی آسیب‌دیدگی خاصی دارید؟ (مثل زانو، کمر، شانه، مچ و…) یا درد مزمنی در قسمتی از بدنتون احساس می‌کنید؟</label>
                                     <div class="row">
                                         <div class="col-12">
@@ -269,7 +269,7 @@
                                 </div>
 
                                 <!-- Field 6: Training Experience -->
-                                <div class="mb-4">
+                                <div class="mb-4 workout-question" data-question="6" style="display: none;">
                                     <label class="form-label">سابقه‌ی تمرینی شما چقدره؟ (یعنی کلاً چند وقته که به صورت جدی ورزش می‌کنید؟)</label>
                                     <div class="row">
                                         <div class="col-12">
@@ -296,7 +296,7 @@
                                 </div>
 
                                 <!-- Field 7: Preferred Training Time -->
-                                <div class="mb-4">
+                                <div class="mb-4 workout-question" data-question="7" style="display: none;">
                                     <label class="form-label">معمولاً چه ساعاتی از روز برای تمرین کردن راحت‌ترید؟ (ساعت‌های خاصی که بدنتون و ذهنتون آمادگی بیشتری برای جنب و جوش داره!)</label>
                                     <div class="row">
                                         <div class="col-12">
@@ -967,6 +967,80 @@
                 });
             });
         }
+
+        // Progressive Workout Questions Functionality
+        (function setupProgressiveWorkoutQuestions() {
+            const workoutSection = document.getElementById('workout_fields');
+            if (!workoutSection) return;
+
+            const questions = Array.from(workoutSection.querySelectorAll('.workout-question'))
+                .sort((a, b) => parseInt(a.dataset.question) - parseInt(b.dataset.question));
+            if (questions.length === 0) return;
+
+            function isAnswered(questionEl) {
+                // Consider answered if any radio is checked or any textarea/input within has a value
+                const anyChecked = questionEl.querySelector('input[type="radio"]:checked');
+                if (anyChecked) return true;
+                const anyFilled = Array.from(questionEl.querySelectorAll('input[type="text"], textarea'))
+                    .some(el => (el.value || '').trim().length > 0);
+                return anyFilled;
+            }
+
+            function resetFollowing(fromIndexExclusive) {
+                for (let i = fromIndexExclusive + 1; i < questions.length; i++) {
+                    const q = questions[i];
+                    // clear radios and inputs
+                    q.querySelectorAll('input[type="radio"]').forEach(r => { r.checked = false; });
+                    q.querySelectorAll('input[type="text"], textarea').forEach(el => { el.value = ''; });
+                }
+            }
+
+            function updateVisibility() {
+                // Hide all first
+                questions.forEach(q => { q.style.display = 'none'; });
+
+                // Find the last answered in order
+                let lastAnsweredIdx = -1;
+                for (let i = 0; i < questions.length; i++) {
+                    if (isAnswered(questions[i])) {
+                        lastAnsweredIdx = i;
+                    } else {
+                        break;
+                    }
+                }
+
+                // Show up to last answered, and the next one
+                const nextIdx = Math.min(lastAnsweredIdx + 1, questions.length - 1);
+                for (let i = 0; i <= lastAnsweredIdx; i++) {
+                    questions[i].style.display = 'block';
+                }
+                questions[nextIdx].style.display = 'block';
+
+                // Smooth scroll to the currently active question (next unanswered)
+                if (questions[nextIdx]) {
+                    questions[nextIdx].scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }
+
+            // Initial state: show only first (or up to last answered if coming back)
+            updateVisibility();
+
+            // Wire change handlers to radios and textareas
+            questions.forEach((q, idx) => {
+                q.querySelectorAll('input[type="radio"]').forEach(radio => {
+                    radio.addEventListener('change', () => {
+                        resetFollowing(idx);
+                        updateVisibility();
+                    });
+                });
+                q.querySelectorAll('input[type="text"], textarea').forEach(input => {
+                    input.addEventListener('input', () => {
+                        // Don't reset following on typing, just update visibility so next appears when filled if needed
+                        updateVisibility();
+                    });
+                });
+            });
+        })();
 
         // Progressive Diet Questions Functionality
         (function setupProgressiveDietQuestions() {

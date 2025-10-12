@@ -958,7 +958,9 @@
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value || 
                          document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         
-        fetch(`/gym/staff/tuition/receipt/${receiptId}/quick-update/`, {
+        // Generate URL using Django template tag pattern
+        const quickUpdateUrl = '{% url "gym:quick_update_tuition_receipt" 0 %}'.replace('/0/', `/${receiptId}/`);
+        fetch(quickUpdateUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -969,7 +971,22 @@
                 'status': status
             })
         })
-        .then(response => response.json())
+        .then(response => {
+            // Check if response is not ok (401, 403, etc.)
+            if (!response.ok) {
+                if (response.status === 401) {
+                    showToast('لطفاً ابتدا وارد سیستم شوید.', 'error');
+                    setTimeout(() => {
+                        window.location.href = '{% url "gym:login" %}?next=' + encodeURIComponent(window.location.pathname);
+                    }, 2000);
+                    throw new Error('Unauthorized');
+                } else if (response.status === 403) {
+                    showToast('شما دسترسی لازم برای این عملیات را ندارید.', 'error');
+                    throw new Error('Forbidden');
+                }
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
                 showToast(data.message, 'success');
@@ -990,7 +1007,9 @@
         })
         .catch(error => {
             console.error('Error:', error);
-            showToast('خطا در ارتباط با سرور', 'error');
+            if (error.message !== 'Unauthorized' && error.message !== 'Forbidden') {
+                showToast('خطا در ارتباط با سرور', 'error');
+            }
         });
     }
     

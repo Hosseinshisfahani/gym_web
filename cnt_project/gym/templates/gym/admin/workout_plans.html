@@ -102,6 +102,13 @@
                                         <i class="fas fa-check"></i> فعال کردن
                                         {% endif %}
                                     </button>
+                                    
+                                    <form action="{% url 'gym:delete_workout_plan' plan.id %}" method="post" class="d-inline" onsubmit="return confirm('آیا از حذف برنامه تمرینی &quot;{{ plan.get_plan_type_display }}&quot; اطمینان دارید؟ این عمل غیرقابل بازگشت است.');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-danger" title="حذف">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>

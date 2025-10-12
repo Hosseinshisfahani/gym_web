@@ -27,6 +27,7 @@ urlpatterns = [
     path('workout-plans/add/', views.add_workout_plan, name='add_workout_plan'),
     path('workout-plans/add/<int:user_id>/', views.add_workout_plan, name='add_workout_plan_for_user'),
     path('workout-plans/<int:plan_id>/download/', views.download_workout_plan, name='download_workout_plan'),
+    path('workout-plans/<int:plan_id>/delete/', views.delete_workout_plan, name='delete_workout_plan'),
     path('diet-plans/', views.diet_plans, name='diet_plans'),
     path('diet-plans/add/', views.add_diet_plan, name='add_diet_plan'),
     path('diet-plans/add/<int:user_id>/', views.add_diet_plan, name='add_diet_plan_for_user'),

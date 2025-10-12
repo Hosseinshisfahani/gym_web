@@ -334,15 +334,18 @@ class WorkoutPlanForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'rows': 4}),
             'image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
             'plan_type': forms.Select(attrs={'class': 'form-control'}),
+            'plan_file': forms.FileInput(attrs={'class': 'form-control', 'accept': 'application/pdf,.pdf'}),
         }
         labels = {
-            'image': 'تصویر برنامه (ضروری)',
+            'image': 'تصویر برنامه (اختیاری)',
             'plan_type': 'نوع برنامه تمرینی',
+            'plan_file': 'فایل برنامه (ضروری)',
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['image'].required = True
+        self.fields['image'].required = False
+        self.fields['plan_file'].required = True
 
 class DietPlanForm(forms.ModelForm):
     class Meta:
@@ -352,14 +355,17 @@ class DietPlanForm(forms.ModelForm):
             'start_date': PersianDateWidget(),
             'description': forms.Textarea(attrs={'rows': 4}),
             'image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+            'plan_file': forms.FileInput(attrs={'class': 'form-control', 'accept': 'application/pdf,.pdf'}),
         }
         labels = {
-            'image': 'تصویر برنامه (ضروری)',
+            'image': 'تصویر برنامه (اختیاری)',
+            'plan_file': 'فایل برنامه (ضروری)',
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['image'].required = True
+        self.fields['image'].required = False
+        self.fields['plan_file'].required = True
 
 class PaymentForm(forms.ModelForm):
     class Meta:
