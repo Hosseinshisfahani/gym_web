@@ -74,6 +74,7 @@ logs/
 *.dump
 *.sql
 *.sqlite3
+db_backups/
 
 # Coverage reports
 htmlcov/
