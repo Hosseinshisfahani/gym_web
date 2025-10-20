@@ -19,6 +19,7 @@ urlpatterns = [
     path('profile/', views.profile, name='profile'),
     path('profile/<int:user_id>/', views.profile, name='profile'),
     path('profile/edit/', views.edit_profile, name='edit_profile'),
+    path('calendar-test/', views.calendar_test, name='calendar_test'),
     path('body-information/', views.body_information_form, name='body_information_form'),
     path('accept-agreement/', views.accept_agreement, name='accept_agreement'),
     path('verify-profile-for-payment/', views.verify_profile_for_payment, name='verify_profile_for_payment'),

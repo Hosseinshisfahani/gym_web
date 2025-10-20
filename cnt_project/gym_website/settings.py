@@ -136,12 +136,9 @@ AUTH_PASSWORD_VALIDATORS_HELP_TEXTS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'fa'
-
-TIME_ZONE = 'Asia/Tehran'
-
+LANGUAGE_CODE = 'fa-ir'      # if your UI is Persian
+TIME_ZONE = 'Asia/Tehran'    # birthdays are dates (no time), but nice to have
 USE_I18N = True
-
 USE_TZ = True
 
 

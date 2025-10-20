@@ -307,6 +307,10 @@ def edit_profile(request):
     }
     return render(request, 'gym/edit_profile.html', context)
 
+def calendar_test(request):
+    """Test page for Persian calendar functionality"""
+    return render(request, 'gym/calendar_test.html')
+
 # Workout plan views
 @login_required
 def workout_plans(request):

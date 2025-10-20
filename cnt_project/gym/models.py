@@ -18,7 +18,7 @@ class UserProfile(models.Model):
     phone_number = models.CharField(max_length=15, blank=True, null=True, verbose_name='شماره تلفن')
     post_code = models.CharField(max_length=10, blank=True, null=True, verbose_name='کد پستی')
     home_address = models.TextField(blank=True, null=True, verbose_name='آدرس منزل')
-    birth_date = jmodels.jDateField(blank=True, null=True, verbose_name='تاریخ تولد')
+    birth_date = models.DateField(null=True, blank=True, verbose_name='تاریخ تولد')
     agreement_accepted = models.BooleanField(default=False, verbose_name='توافقنامه پذیرفته شده')
     is_vip = models.BooleanField(default=False, verbose_name='کاربر VIP')
     
@@ -651,7 +651,7 @@ class BodyInformationUser(models.Model):
     ]
     
     user_profile = models.OneToOneField(UserProfile, on_delete=models.CASCADE, related_name='body_information')
-    birth_date = jmodels.jDateField(verbose_name='تاریخ تولد')
+    birth_date = models.DateField(verbose_name='تاریخ تولد')
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, verbose_name='جنسیت')
     height_cm = models.PositiveIntegerField(verbose_name='قد (سانتی متر)')
     weight_kg = models.DecimalField(max_digits=5, decimal_places=2, verbose_name='وزن (کیلوگرم)')

@@ -25,24 +25,26 @@ def id_validation(id):
     else:
         raise Exception("invalid code melli")
 
-class PersianDateWidget(forms.DateInput):
-    """Persian date widget that displays Persian dates but submits Gregorian dates"""
+class JalaliToGregorianDateField(forms.CharField):
+    """
+    Custom field that accepts Persian date input and converts to Gregorian date.
+    Uses simple TextInput widget for JavaScript datepicker integration.
+    """
     
-    def __init__(self, attrs=None):
-        default_attrs = {
-            'class': 'form-control persian-date-input',
+    def __init__(self, *args, **kwargs):
+        # Set default widget to TextInput for JavaScript integration
+        kwargs.setdefault('widget', forms.TextInput(attrs={
+            'class': 'form-control persian-date-input jalali-date',
             'placeholder': '۱۴۰۳/۰۱/۰۱',
-            'dir': 'ltr'
-        }
-        if attrs:
-            default_attrs.update(attrs)
-        super().__init__(attrs=default_attrs)
+            'readonly': True,  # Make readonly to force calendar usage
+        }))
+        super().__init__(*args, **kwargs)
     
-    def format_value(self, value):
-        if value is None:
+    def prepare_value(self, value):
+        """Convert Gregorian date to Persian for display"""
+        if not value:
             return ''
         
-        # Convert Gregorian date to Persian for display
         if isinstance(value, (datetime, date)):
             try:
                 if isinstance(value, datetime):
@@ -54,41 +56,25 @@ class PersianDateWidget(forms.DateInput):
                 return ''
         return str(value)
     
-    def value_from_datadict(self, data, files, name):
-        # Get the Persian date string from form
-        persian_date_str = data.get(name)
-        if not persian_date_str:
+    def clean(self, value):
+        """Convert Persian date to Gregorian date for storage"""
+        if not value:
             return None
         
         try:
             # Parse Persian date (expected format: YYYY/MM/DD)
-            parts = persian_date_str.split('/')
+            parts = value.split('/')
             if len(parts) == 3:
                 year, month, day = int(parts[0]), int(parts[1]), int(parts[2])
                 # Convert Persian date to Gregorian
                 persian_date = jdatetime.date(year, month, day)
                 gregorian_date = persian_date.togregorian()
-                return gregorian_date.strftime('%Y-%m-%d')
-        except (ValueError, AttributeError):
-            pass
+                return gregorian_date
+        except (ValueError, AttributeError, TypeError):
+            raise forms.ValidationError('لطفاً تاریخ را به صورت صحیح وارد کنید (مثال: ۱۴۰۳/۰۱/۰۱)')
         
-        return persian_date_str
-
-def persian_to_gregorian_date(persian_date_str):
-    """Convert Persian date string to Gregorian date object"""
-    if not persian_date_str:
         return None
-    
-    try:
-        parts = persian_date_str.split('/')
-        if len(parts) == 3:
-            year, month, day = int(parts[0]), int(parts[1]), int(parts[2])
-            persian_date = jdatetime.date(year, month, day)
-            return persian_date.togregorian()
-    except (ValueError, AttributeError):
-        pass
-    
-    return None
+
 
 class UserRegistrationForm(UserCreationForm):
     name = forms.CharField(
@@ -253,6 +239,12 @@ class UserProfileForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput(), required=False, label='رمز عبور جدید')
     confirm_password = forms.CharField(widget=forms.PasswordInput(), required=False, label='تکرار رمز عبور جدید')
     
+    # Custom field that converts Persian date to Gregorian
+    birth_date = JalaliToGregorianDateField(
+        required=False,
+        label='تاریخ تولد'
+    )
+    
     class Meta:
         model = UserProfile
         fields = ['profile_image', 'name', 'melli_code', 'phone_number', 'birth_date', 'post_code', 'home_address']
@@ -269,7 +261,6 @@ class UserProfileForm(forms.ModelForm):
             'home_address': forms.Textarea(attrs={'rows': 3}),
             'melli_code': forms.TextInput(attrs={'maxlength': '10', 'placeholder': 'مثال: 1234567890'}),
             'post_code': forms.TextInput(attrs={'maxlength': '10', 'placeholder': 'مثال: 1234567890'}),
-            'birth_date': PersianDateWidget(attrs={'class': 'form-control'}),
         }
     
     def __init__(self, *args, **kwargs):
@@ -330,7 +321,7 @@ class WorkoutPlanForm(forms.ModelForm):
         model = WorkoutPlan
         fields = ['plan_type', 'description', 'image', 'plan_file', 'duration_weeks', 'start_date', 'is_active']
         widgets = {
-            'start_date': PersianDateWidget(),
+            'start_date': forms.TextInput(attrs={'class': 'form-control persian-date-input', 'readonly': True}),
             'description': forms.Textarea(attrs={'rows': 4}),
             'image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
             'plan_type': forms.Select(attrs={'class': 'form-control'}),
@@ -352,7 +343,7 @@ class DietPlanForm(forms.ModelForm):
         model = DietPlan
         fields = ['title', 'description', 'image', 'plan_file', 'duration_weeks', 'start_date', 'is_active']
         widgets = {
-            'start_date': PersianDateWidget(),
+            'start_date': forms.TextInput(attrs={'class': 'form-control persian-date-input', 'readonly': True}),
             'description': forms.Textarea(attrs={'rows': 4}),
             'image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
             'plan_file': forms.FileInput(attrs={'class': 'form-control', 'accept': 'application/pdf,.pdf'}),
@@ -372,7 +363,7 @@ class PaymentForm(forms.ModelForm):
         model = Payment
         fields = ['amount', 'payment_type', 'payment_date', 'proof_image', 'description']
         widgets = {
-            'payment_date': PersianDateWidget(),
+            'payment_date': forms.TextInput(attrs={'class': 'form-control persian-date-input', 'readonly': True}),
             'description': forms.Textarea(attrs={'rows': 3}),
         }
 
@@ -409,7 +400,7 @@ class BodyAnalysisReportForm(forms.ModelForm):
         model = BodyAnalysisReport
         fields = ['image', 'description', 'report_date']
         widgets = {
-            'report_date': PersianDateWidget(),
+            'report_date': forms.TextInput(attrs={'class': 'form-control persian-date-input', 'readonly': True}),
             'description': forms.Textarea(attrs={'rows': 3, 'placeholder': 'توضیحات اضافی خود را وارد کنید...'}),
         }
 
@@ -426,7 +417,7 @@ class InBodyReportForm(forms.ModelForm):
         model = InBodyReport
         fields = ['image', 'description', 'report_date']
         widgets = {
-            'report_date': PersianDateWidget(),
+            'report_date': forms.TextInput(attrs={'class': 'form-control persian-date-input', 'readonly': True}),
             'description': forms.Textarea(attrs={'rows': 3, 'placeholder': 'توضیحات اضافی خود را وارد کنید...'}),
         }
 
@@ -449,8 +440,8 @@ class MonthlyGoalForm(forms.ModelForm):
             'coach_notes'
         ]
         widgets = {
-            'start_date': PersianDateWidget(),
-            'end_date': PersianDateWidget(),
+            'start_date': forms.TextInput(attrs={'class': 'form-control persian-date-input', 'readonly': True}),
+            'end_date': forms.TextInput(attrs={'class': 'form-control persian-date-input', 'readonly': True}),
             'coach_notes': forms.Textarea(attrs={'rows': 3, 'placeholder': 'توصیه‌ها، راهنمایی‌ها و نکات مربی...'}),
             'target_weight': forms.NumberInput(attrs={'min': 30, 'max': 200, 'step': 0.1, 'placeholder': 'مثال: 70.5'}),
             'target_body_fat_percentage': forms.NumberInput(attrs={'min': 5, 'max': 50, 'step': 0.1, 'placeholder': 'مثال: 15.5'}),
@@ -514,11 +505,17 @@ class ProgressAnalysisForm(forms.ModelForm):
         model = ProgressAnalysis
         fields = ['measurement_type', 'value', 'unit', 'measurement_date', 'notes']
         widgets = {
-            'measurement_date': PersianDateWidget(),
+            'measurement_date': forms.TextInput(attrs={'class': 'form-control persian-date-input', 'readonly': True}),
             'notes': forms.Textarea(attrs={'rows': 2, 'placeholder': 'یادداشت...'}),
         }
 
 class BodyInformationUserForm(forms.ModelForm):
+    # Custom field that converts Persian date to Gregorian
+    birth_date = JalaliToGregorianDateField(
+        required=True,
+        label='تاریخ تولد'
+    )
+    
     class Meta:
         model = BodyInformationUser
         fields = [
@@ -528,7 +525,6 @@ class BodyInformationUserForm(forms.ModelForm):
             'body_image_left', 'body_image_right'
         ]
         widgets = {
-            'birth_date': PersianDateWidget(attrs={'class': 'form-control'}),
             'gender': forms.Select(attrs={'class': 'form-control'}),
             'height_cm': forms.NumberInput(attrs={'class': 'form-control', 'min': '100', 'max': '250', 'placeholder': 'مثال: 175'}),
             'weight_kg': forms.NumberInput(attrs={'class': 'form-control', 'min': '30', 'max': '200', 'placeholder': 'مثال: 70'}),
@@ -630,7 +626,7 @@ class TuitionReceiptForm(forms.ModelForm):
         fields = ['receipt_image', 'amount_paid', 'payment_date', 'notes']
         widgets = {
             'receipt_image': forms.FileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
-            'payment_date': PersianDateWidget(),
+            'payment_date': forms.TextInput(attrs={'class': 'form-control persian-date-input', 'readonly': True}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'یادداشت‌های اضافی (اختیاری)'}),
         }
         labels = {
@@ -668,7 +664,7 @@ class TuitionReceiptAdminForm(forms.ModelForm):
         widgets = {
             'status': forms.Select(attrs={'class': 'form-control'}),
             'admin_notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'یادداشت‌های ادمین'}),
-            'expiry_date': PersianDateWidget(),
+            'expiry_date': forms.TextInput(attrs={'class': 'form-control persian-date-input', 'readonly': True}),
         }
         labels = {
             'status': 'وضعیت',
@@ -686,7 +682,7 @@ class SpecialTuitionFeeForm(forms.ModelForm):
             'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'عنوان شهریه ویژه'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'توضیحات شهریه'}),
             'amount': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'مبلغ به تومان'}),
-            'due_date': PersianDateWidget(),
+            'due_date': forms.TextInput(attrs={'class': 'form-control persian-date-input', 'readonly': True}),
             'status': forms.Select(attrs={'class': 'form-control'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'یادداشت‌ها'}),
         }

@@ -1,0 +1,189 @@
+{% extends 'gym/base.html' %}
+{% load static %}
+
+{% block title %}تست تقویم فارسی{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">تست تقویم فارسی</h5>
+                </div>
+                <div class="card-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="test_date" class="form-label">تاریخ تولد</label>
+                            <input type="text" class="form-control" id="test_date" name="test_date" placeholder="مثال: 1370/01/01">
+                            <small class="text-muted">برای انتخاب تاریخ روی فیلد کلیک کنید</small>
+                        </div>
+                        <div class="text-center">
+                            <button type="button" class="btn btn-primary" onclick="alert('تاریخ انتخاب شده: ' + document.getElementById('test_date').value)">نمایش تاریخ انتخاب شده</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Persian Date Widget CSS and JS - Custom Implementation -->
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    console.log('jQuery loaded:', typeof $ !== 'undefined');
+    
+    // Create Persian calendar for test input
+    createSimplePersianCalendar($('#test_date'));
+    
+    console.log('Test datepicker initialized');
+});
+
+function createSimplePersianCalendar(input) {
+    // Make the input readonly
+    input.attr('readonly', true);
+    input.css('cursor', 'pointer');
+    
+    // Create calendar container
+    var calendar = $('<div class="persian-calendar-widget" style="display: none; position: absolute; background: white; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; padding: 15px; direction: rtl; font-family: Tahoma, Arial, sans-serif;"></div>');
+    
+    // Insert calendar after input
+    input.parent().css('position', 'relative');
+    input.parent().append(calendar);
+    
+    // Current date
+    var currentYear = 1403;
+    var currentMonth = 1;
+    
+    // Persian month names
+    var monthNames = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+    
+    function renderCalendar() {
+        var html = '<div style="text-align: center; margin-bottom: 15px;">';
+        html += '<button type="button" class="prev-month" style="background: none; border: none; font-size: 18px; cursor: pointer; margin: 0 10px;">‹</button>';
+        html += '<span class="month-year" style="font-weight: bold; font-size: 16px;">' + monthNames[currentMonth - 1] + ' ' + currentYear + '</span>';
+        html += '<button type="button" class="next-month" style="background: none; border: none; font-size: 18px; cursor: pointer; margin: 0 10px;">›</button>';
+        html += '</div>';
+        
+        // Weekdays
+        html += '<div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 8px;">';
+        var weekdays = ['ش', 'ی', 'د', 'س', 'چ', 'پ', 'ج'];
+        weekdays.forEach(function(day) {
+            html += '<div style="text-align: center; font-weight: bold; padding: 8px 4px; color: #6c757d; font-size: 14px;">' + day + '</div>';
+        });
+        html += '</div>';
+        
+        // Days
+        html += '<div class="calendar-days" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;">';
+        
+        // Get days in month (simplified)
+        var daysInMonth = currentMonth <= 6 ? 31 : (currentMonth <= 11 ? 30 : 29);
+        
+        for (var day = 1; day <= daysInMonth; day++) {
+            html += '<div class="calendar-day" data-day="' + day + '" style="height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 4px; font-size: 14px; transition: all 0.2s;">' + day + '</div>';
+        }
+        
+        html += '</div>';
+        
+        // Footer buttons
+        html += '<div style="margin-top: 15px; text-align: center;">';
+        html += '<button type="button" class="today-btn" style="background: #007bff; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; margin: 0 5px;">امروز</button>';
+        html += '<button type="button" class="clear-btn" style="background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; margin: 0 5px;">پاک کردن</button>';
+        html += '<button type="button" class="close-btn" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 14px; margin: 0 5px;">بستن</button>';
+        html += '</div>';
+        
+        calendar.html(html);
+        
+        // Bind events
+        calendar.find('.prev-month').click(function() {
+            currentMonth--;
+            if (currentMonth < 1) {
+                currentMonth = 12;
+                currentYear--;
+            }
+            renderCalendar();
+        });
+        
+        calendar.find('.next-month').click(function() {
+            currentMonth++;
+            if (currentMonth > 12) {
+                currentMonth = 1;
+                currentYear++;
+            }
+            renderCalendar();
+        });
+        
+        calendar.find('.calendar-day').click(function() {
+            var day = $(this).data('day');
+            var selectedDate = currentYear + '/' + String(currentMonth).padStart(2, '0') + '/' + String(day).padStart(2, '0');
+            input.val(selectedDate);
+            calendar.hide();
+            console.log('Date selected:', selectedDate);
+        });
+        
+        calendar.find('.today-btn').click(function() {
+            var today = new Date();
+            var persianToday = gregorianToPersian(today);
+            var selectedDate = persianToday.year + '/' + String(persianToday.month).padStart(2, '0') + '/' + String(persianToday.day).padStart(2, '0');
+            input.val(selectedDate);
+            calendar.hide();
+        });
+        
+        calendar.find('.clear-btn').click(function() {
+            input.val('');
+            calendar.hide();
+        });
+        
+        calendar.find('.close-btn').click(function() {
+            calendar.hide();
+        });
+        
+        // Hover effects
+        calendar.find('.calendar-day').hover(
+            function() { $(this).css('background', '#e9ecef'); },
+            function() { $(this).css('background', ''); }
+        );
+    }
+    
+    // Show calendar on input click
+    input.click(function(e) {
+        e.preventDefault();
+        if (calendar.is(':visible')) {
+            calendar.hide();
+        } else {
+            renderCalendar();
+            calendar.show();
+        }
+    });
+    
+    // Hide calendar when clicking outside
+    $(document).click(function(e) {
+        if (!calendar.is(e.target) && calendar.has(e.target).length === 0 && !input.is(e.target)) {
+            calendar.hide();
+        }
+    });
+    
+    // Simple Gregorian to Persian conversion
+    function gregorianToPersian(date) {
+        var year = date.getFullYear();
+        var month = date.getMonth() + 1;
+        var day = date.getDate();
+        
+        var persianYear = year - 621;
+        var persianMonth = month + 3;
+        var persianDay = day;
+        
+        if (persianMonth > 12) {
+            persianMonth -= 12;
+            persianYear += 1;
+        }
+        
+        return { year: persianYear, month: persianMonth, day: persianDay };
+    }
+    
+    console.log('Simple Persian calendar created for:', input.attr('id') || input.attr('name'));
+}
+</script>
+{% endblock %}
