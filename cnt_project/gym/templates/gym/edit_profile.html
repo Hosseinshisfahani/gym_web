@@ -60,6 +60,11 @@
                                     <label for="id_melli_code" class="form-label">کد ملی</label>
                                     <input type="text" class="form-control" id="id_melli_code" name="melli_code" value="{{ user_profile.melli_code|default:'' }}" maxlength="10" placeholder="مثال: 1234567890">
                                 </div>
+                                <div class="mb-3">
+                                    <label for="id_birth_date" class="form-label">تاریخ تولد</label>
+                                    <input type="text" class="form-control" id="id_birth_date" name="birth_date" value="{{ user_profile.birth_date|date:'Y-m-d'|default:'' }}" placeholder="مثال: 1370/01/01">
+                                    <small class="text-muted">تاریخ را به صورت شمسی وارد کنید (مثال: 1370/01/01)</small>
+                                </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -102,6 +107,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const fileInput = document.getElementById('id_profile_image');
+    const birthDateInput = document.getElementById('id_birth_date');
     const form = document.querySelector('form');
     
     fileInput.addEventListener('change', function() {
@@ -125,12 +131,123 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Persian date validation and conversion
+    function validatePersianDate(dateStr) {
+        if (!dateStr) return true; // Optional field
+        
+        const pattern = /^(\d{4})\/(\d{1,2})\/(\d{1,2})$/;
+        const match = dateStr.match(pattern);
+        
+        if (!match) {
+            return false;
+        }
+        
+        const year = parseInt(match[1]);
+        const month = parseInt(match[2]);
+        const day = parseInt(match[3]);
+        
+        if (year < 1300 || year > 1420) return false;
+        if (month < 1 || month > 12) return false;
+        if (day < 1 || day > 31) return false;
+        
+        // Check month days
+        if (month <= 6 && day > 31) return false;
+        if (month > 6 && month <= 11 && day > 30) return false;
+        if (month === 12 && day > 29) return false;
+        
+        return true;
+    }
+    
+    function convertPersianToGregorian(persianDate) {
+        if (!persianDate) return '';
+        
+        try {
+            const parts = persianDate.split('/');
+            if (parts.length !== 3) {
+                throw new Error('Invalid Persian date format');
+            }
+            
+            const persianYear = parseInt(parts[0]);
+            const persianMonth = parseInt(parts[1]);
+            const persianDay = parseInt(parts[2]);
+            
+            // Simple conversion (approximation)
+            let gregorianYear = persianYear + 621;
+            let gregorianMonth = persianMonth + 3;
+            let gregorianDay = persianDay;
+            
+            if (gregorianMonth > 12) {
+                gregorianMonth -= 12;
+                gregorianYear += 1;
+            }
+            
+            return `${gregorianYear}-${String(gregorianMonth).padStart(2, '0')}-${String(gregorianDay).padStart(2, '0')}`;
+        } catch (error) {
+            console.error('Error converting Persian date:', error);
+            return persianDate;
+        }
+    }
+    
+    function convertGregorianToPersian(gregorianDate) {
+        if (!gregorianDate) return '';
+        
+        try {
+            const parts = gregorianDate.split('-');
+            if (parts.length !== 3) {
+                return '';
+            }
+            
+            const gregorianYear = parseInt(parts[0]);
+            const gregorianMonth = parseInt(parts[1]);
+            const gregorianDay = parseInt(parts[2]);
+            
+            // Simple conversion (approximation)
+            let persianYear = gregorianYear - 621;
+            let persianMonth = gregorianMonth - 3;
+            let persianDay = gregorianDay;
+            
+            if (persianMonth < 1) {
+                persianMonth += 12;
+                persianYear -= 1;
+            }
+            
+            return `${persianYear}/${String(persianMonth).padStart(2, '0')}/${String(persianDay).padStart(2, '0')}`;
+        } catch (error) {
+            console.error('Error converting Gregorian date:', error);
+            return gregorianDate;
+        }
+    }
+    
+    // Convert Gregorian date to Persian on page load
+    if (birthDateInput && birthDateInput.value) {
+        const gregorianDate = birthDateInput.value;
+        if (gregorianDate.includes('-')) {
+            birthDateInput.value = convertGregorianToPersian(gregorianDate);
+        }
+    }
+    
     form.addEventListener('submit', function(e) {
         const file = fileInput.files[0];
         if (file && file.size > 5 * 1024 * 1024) {
             e.preventDefault();
             alert('حجم فایل نباید بیشتر از 5 مگابایت باشد.');
             return false;
+        }
+        
+        // Validate and convert Persian birth date
+        if (birthDateInput && birthDateInput.value) {
+            const persianDate = birthDateInput.value.trim();
+            
+            if (!validatePersianDate(persianDate)) {
+                e.preventDefault();
+                alert('لطفاً تاریخ تولد را به صورت صحیح وارد کنید (مثال: 1370/01/01)');
+                birthDateInput.focus();
+                return false;
+            }
+            
+            // Convert to Gregorian for backend
+            const gregorianDate = convertPersianToGregorian(persianDate);
+            birthDateInput.value = gregorianDate;
         }
     });
 });

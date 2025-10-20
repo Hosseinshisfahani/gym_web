@@ -5,6 +5,8 @@ from django.utils.text import slugify
 from PIL import Image
 from decimal import Decimal
 import os
+from django_jalali.db import models as jmodels
+from django.utils import timezone
 
 class Category(models.Model):
     name = models.CharField(max_length=100, verbose_name='نام دسته‌بندی')
@@ -12,8 +14,8 @@ class Category(models.Model):
     slug = models.SlugField(unique=True, verbose_name='شناسه')
     description = models.TextField(blank=True, verbose_name='توضیحات')
     image = models.ImageField(upload_to='shop/categories/', blank=True, null=True, verbose_name='تصویر')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = jmodels.jDateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
     is_active = models.BooleanField(default=True, verbose_name='فعال')
 
     class Meta:
@@ -91,8 +93,8 @@ class Product(models.Model):
     color = models.CharField(max_length=50, choices=COLOR_CHOICES, blank=True, verbose_name='رنگ (قدیمی - استفاده نشود)')
     is_featured = models.BooleanField(default=False, verbose_name='محصول ویژه')
     is_active = models.BooleanField(default=True, verbose_name='فعال')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = jmodels.jDateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
 
     class Meta:
         verbose_name = 'محصول'
@@ -201,8 +203,8 @@ class ProductImage(models.Model):
 
 class Cart(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name='کاربر')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = jmodels.jDateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
 
     class Meta:
         verbose_name = 'سبد خرید'
@@ -235,7 +237,7 @@ class CartItem(models.Model):
     quantity = models.PositiveIntegerField(default=1, verbose_name='تعداد')
     size = models.CharField(max_length=10, blank=True, verbose_name='سایز')
     color = models.CharField(max_length=50, blank=True, verbose_name='رنگ انتخابی')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ اضافه')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ اضافه')
 
     class Meta:
         verbose_name = 'آیتم سبد خرید'
@@ -309,8 +311,8 @@ class Order(models.Model):
     total = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='مجموع')
     
     # Timestamps
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = jmodels.jDateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
     
     # Notes
     notes = models.TextField(blank=True, verbose_name='یادداشت')
@@ -383,8 +385,8 @@ class UserShippingAddress(models.Model):
     city = models.CharField(max_length=50, verbose_name='شهر')
     postal_code = models.CharField(max_length=10, verbose_name='کد پستی')
     is_default = models.BooleanField(default=False, verbose_name='آدرس پیش‌فرض')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = jmodels.jDateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
 
     class Meta:
         verbose_name = 'آدرس ارسال کاربر'
@@ -419,13 +421,13 @@ class ShopIncome(models.Model):
     amount = models.DecimalField(max_digits=12, decimal_places=0, verbose_name='مبلغ (تومان)')
     description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
     status = models.CharField(max_length=20, choices=INCOME_STATUS_CHOICES, default='confirmed', verbose_name='وضعیت')
-    date = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ')
+    date = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ')
     
     # ارتباط با سفارش (اختیاری)
     related_order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True, blank=True, related_name='incomes', verbose_name='سفارش مرتبط')
     
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = jmodels.jDateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
 
     class Meta:
         verbose_name = 'درآمد فروشگاه'
@@ -460,7 +462,7 @@ class ShopExpense(models.Model):
     amount = models.DecimalField(max_digits=12, decimal_places=0, verbose_name='مبلغ (تومان)')
     description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
     status = models.CharField(max_length=20, choices=EXPENSE_STATUS_CHOICES, default='pending', verbose_name='وضعیت')
-    date = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ')
+    date = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ')
     
     # فایل رسید (اختیاری)
     receipt_file = models.FileField(upload_to='shop/receipts/', blank=True, null=True, verbose_name='فایل رسید')
@@ -468,8 +470,8 @@ class ShopExpense(models.Model):
     # ارتباط با محصول (اختیاری)
     related_product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True, blank=True, related_name='expenses', verbose_name='محصول مرتبط')
     
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = jmodels.jDateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
 
     class Meta:
         verbose_name = 'هزینه فروشگاه'
@@ -489,8 +491,8 @@ class ShopSalesReport(models.Model):
     
     title = models.CharField(max_length=200, verbose_name='عنوان گزارش')
     report_period = models.CharField(max_length=20, choices=REPORT_PERIOD_CHOICES, verbose_name='دوره گزارش')
-    start_date = models.DateField(verbose_name='تاریخ شروع')
-    end_date = models.DateField(verbose_name='تاریخ پایان')
+    start_date = jmodels.jDateField(verbose_name='تاریخ شروع')
+    end_date = jmodels.jDateField(blank=True, null=True, verbose_name='تاریخ پایان')
     
     # آمار فروش
     total_orders = models.PositiveIntegerField(default=0, verbose_name='تعداد سفارشات')
@@ -513,8 +515,8 @@ class ShopSalesReport(models.Model):
     # گزارش خودکار
     is_auto_generated = models.BooleanField(default=False, verbose_name='گزارش خودکار')
     
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = jmodels.jDateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
 
     class Meta:
         verbose_name = 'گزارش فروش'
@@ -541,12 +543,12 @@ class Wishlist(models.Model):
     """مدل لیست علاقه‌مندی‌ها"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlists', verbose_name='کاربر')
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='wishlisted_by', verbose_name='محصول')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ اضافه')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ اضافه')
     
     class Meta:
         verbose_name = 'علاقه‌مندی'
         verbose_name_plural = 'علاقه‌مندی‌ها'
-        unique_together = ['user', 'product']  # هر کاربر فقط یکبار می‌تواند محصول را به علاقه‌مندی‌ها اضافه کند
+        unique_together = ['user', 'product'] 
         ordering = ['-created_at']
     
     def __str__(self):
@@ -558,8 +560,8 @@ class ExchangeRate(models.Model):
     rate = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='نرخ تبدیل (تومان به دلار)')
     is_active = models.BooleanField(default=True, verbose_name='فعال')
     source = models.CharField(max_length=100, default='Manual', verbose_name='منبع')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = jmodels.jDateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
     
     class Meta:
         verbose_name = 'نرخ تبدیل ارز'

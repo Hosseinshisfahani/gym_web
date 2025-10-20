@@ -5,6 +5,8 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 import datetime
+from django_jalali.db import models as jmodels
+from django.utils import timezone
 
 # Create your models here.
 
@@ -16,7 +18,7 @@ class UserProfile(models.Model):
     phone_number = models.CharField(max_length=15, blank=True, null=True, verbose_name='شماره تلفن')
     post_code = models.CharField(max_length=10, blank=True, null=True, verbose_name='کد پستی')
     home_address = models.TextField(blank=True, null=True, verbose_name='آدرس منزل')
-    birth_date = models.DateField(blank=True, null=True, verbose_name='تاریخ تولد')
+    birth_date = jmodels.jDateField(blank=True, null=True, verbose_name='تاریخ تولد')
     agreement_accepted = models.BooleanField(default=False, verbose_name='توافقنامه پذیرفته شده')
     is_vip = models.BooleanField(default=False, verbose_name='کاربر VIP')
     
@@ -55,12 +57,12 @@ class WorkoutPlan(models.Model):
     description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
     image = models.ImageField(upload_to='workout_plans/images/', blank=True, null=True, verbose_name='تصویر برنامه')
     plan_file = models.FileField(upload_to='workout_plans/', blank=True, null=True, verbose_name='فایل برنامه')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = jmodels.jDateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
     is_active = models.BooleanField(default=True, verbose_name='فعال')
     duration_weeks = models.PositiveIntegerField(default=4, verbose_name='مدت (هفته)')
-    start_date = models.DateField(default=timezone.now, verbose_name='تاریخ شروع')
-    end_date = models.DateField(blank=True, null=True, verbose_name='تاریخ پایان')
+    start_date = jmodels.jDateField(default=timezone.now, verbose_name='تاریخ شروع')
+    end_date = jmodels.jDateField(blank=True, null=True, verbose_name='تاریخ پایان')
     
     class Meta:
         verbose_name = 'برنامه تمرینی'
@@ -81,12 +83,12 @@ class DietPlan(models.Model):
     description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
     image = models.ImageField(upload_to='diet_plans/images/', blank=True, null=True, verbose_name='تصویر برنامه')
     plan_file = models.FileField(upload_to='diet_plans/', blank=True, null=True, verbose_name='فایل برنامه')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = jmodels.jDateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
     is_active = models.BooleanField(default=True, verbose_name='فعال')
     duration_weeks = models.PositiveIntegerField(default=4, verbose_name='مدت (هفته)')
-    start_date = models.DateField(default=timezone.now, verbose_name='تاریخ شروع')
-    end_date = models.DateField(blank=True, null=True, verbose_name='تاریخ پایان')
+    start_date = jmodels.jDateField(default=timezone.now, verbose_name='تاریخ شروع')
+    end_date = jmodels.jDateField(blank=True, null=True, verbose_name='تاریخ پایان')
     
     class Meta:
         verbose_name = 'برنامه غذایی'
@@ -123,7 +125,7 @@ class Payment(models.Model):
     amount = models.PositiveIntegerField(verbose_name='مبلغ (تومان)')
     payment_type = models.CharField(max_length=20, choices=PAYMENT_TYPE_CHOICES, default='other', verbose_name='نوع پرداخت')
     payment_method = models.CharField(max_length=10, choices=PAYMENT_METHOD_CHOICES, default='manual', verbose_name='روش پرداخت')
-    payment_date = models.DateField(default=timezone.now, verbose_name='تاریخ پرداخت')
+    payment_date = jmodels.jDateField(default=timezone.now, verbose_name='تاریخ پرداخت')
     proof_image = models.ImageField(upload_to='payment_proofs/', blank=True, null=True, verbose_name='تصویر رسید پرداخت')
     description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
     status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default='pending', verbose_name='وضعیت')
@@ -155,8 +157,8 @@ class Ticket(models.Model):
     subject = models.CharField(max_length=200, verbose_name='موضوع')
     message = models.TextField(verbose_name='پیام')
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='open', verbose_name='وضعیت')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = jmodels.jDateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
     
     class Meta:
         verbose_name = 'تیکت پشتیبانی'
@@ -170,7 +172,7 @@ class TicketResponse(models.Model):
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE, related_name='responses')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ticket_responses')
     message = models.TextField(verbose_name='پیام')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
     is_staff = models.BooleanField(default=False, verbose_name='پاسخ کارمند')
     
     class Meta:
@@ -194,7 +196,7 @@ class Document(models.Model):
     document_type = models.CharField(max_length=20, choices=DOCUMENT_TYPES, default='other', verbose_name='نوع سند')
     file = models.FileField(upload_to='documents/', verbose_name='فایل')
     description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
-    upload_date = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ آپلود')
+    upload_date = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ آپلود')
     
     class Meta:
         verbose_name = 'سند'
@@ -275,8 +277,8 @@ class PlanRequest(models.Model):
     plan_type = models.CharField(max_length=10, choices=PLAN_TYPES, verbose_name='نوع برنامه')
     description = models.TextField(verbose_name='توضیحات')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', verbose_name='وضعیت')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ درخواست')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ درخواست')
+    updated_at = jmodels.jDateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
     admin_response = models.TextField(blank=True, null=True, verbose_name='پاسخ ادمین')
     
     # Diet plan specific fields
@@ -390,12 +392,12 @@ class BodyAnalysisReport(models.Model):
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='body_analysis_reports')
-    report_date = models.DateField(default=timezone.now, verbose_name='تاریخ آزمایش')
+    report_date = jmodels.jDateField(default=timezone.now, verbose_name='تاریخ آزمایش')
     image = models.ImageField(upload_to='body_analysis/', verbose_name='تصویر آزمایش')
     description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', verbose_name='وضعیت')
     admin_response = models.TextField(blank=True, null=True, verbose_name='پاسخ مربی')
-    response_date = models.DateTimeField(blank=True, null=True, verbose_name='تاریخ پاسخ')
+    response_date = jmodels.jDateTimeField(blank=True, null=True, verbose_name='تاریخ پاسخ')
     
     class Meta:
         verbose_name = 'گزارش آنالیز بدن'
@@ -415,12 +417,12 @@ class InBodyReport(models.Model):
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='inbody_reports')
-    report_date = models.DateField(default=timezone.now, verbose_name='تاریخ آزمایش اینبادی')
+    report_date = jmodels.jDateField(default=timezone.now, verbose_name='تاریخ آزمایش اینبادی')
     image = models.ImageField(upload_to='inbody_reports/', verbose_name='تصویر آزمایش اینبادی')
     description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending', verbose_name='وضعیت')
     admin_response = models.TextField(blank=True, null=True, verbose_name='پاسخ مربی')
-    response_date = models.DateTimeField(blank=True, null=True, verbose_name='تاریخ پاسخ')
+    response_date = jmodels.jDateTimeField(blank=True, null=True, verbose_name='تاریخ پاسخ')
     
     class Meta:
         verbose_name = 'گزارش اینبادی'
@@ -445,8 +447,8 @@ class MonthlyGoal(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='monthly_goals')
     title = models.CharField(max_length=200, blank=True, null=True, verbose_name='عنوان هدف')
     description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
-    start_date = models.DateField(default=timezone.now, verbose_name='تاریخ شروع')
-    end_date = models.DateField(verbose_name='تاریخ پایان')
+    start_date = jmodels.jDateField(default=timezone.now, verbose_name='تاریخ شروع')
+    end_date = jmodels.jDateField(blank=True, null=True, verbose_name='تاریخ پایان')
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='not_started', verbose_name='وضعیت')
     progress = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(100)], verbose_name='پیشرفت (درصد)')
     coach_notes = models.TextField(blank=True, null=True, verbose_name='یادداشت مربی')
@@ -623,7 +625,7 @@ class ProgressAnalysis(models.Model):
     measurement_type = models.CharField(max_length=20, choices=MEASUREMENT_TYPES, verbose_name='نوع اندازه‌گیری')
     value = models.DecimalField(max_digits=6, decimal_places=2, verbose_name='مقدار')
     unit = models.CharField(max_length=10, default='kg', verbose_name='واحد')
-    measurement_date = models.DateField(default=timezone.now, verbose_name='تاریخ اندازه‌گیری')
+    measurement_date = jmodels.jDateField(default=timezone.now, verbose_name='تاریخ اندازه‌گیری')
     notes = models.TextField(blank=True, null=True, verbose_name='یادداشت')
     
     class Meta:
@@ -649,7 +651,7 @@ class BodyInformationUser(models.Model):
     ]
     
     user_profile = models.OneToOneField(UserProfile, on_delete=models.CASCADE, related_name='body_information')
-    birth_date = models.DateField(verbose_name='تاریخ تولد')
+    birth_date = jmodels.jDateField(verbose_name='تاریخ تولد')
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES, verbose_name='جنسیت')
     height_cm = models.PositiveIntegerField(verbose_name='قد (سانتی متر)')
     weight_kg = models.DecimalField(max_digits=5, decimal_places=2, verbose_name='وزن (کیلوگرم)')
@@ -662,8 +664,8 @@ class BodyInformationUser(models.Model):
     body_image_left = models.ImageField(upload_to='body_images/', blank=True, null=True, verbose_name='عکس از طرف چپ')
     body_image_right = models.ImageField(upload_to='body_images/', blank=True, null=True, verbose_name='عکس از طرف راست')
     
-    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    updated_at = models.DateTimeField(auto_now=True, blank=True, null=True)
+    created_at = jmodels.jDateTimeField(auto_now_add=True, blank=True, null=True)
+    updated_at = jmodels.jDateTimeField(auto_now=True, blank=True, null=True)
     
     class Meta:
         verbose_name = 'اطلاعات بدنی کاربر'
@@ -689,8 +691,8 @@ class PaymentCard(models.Model):
     price_both = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='قیمت هر دو برنامه (تومان)')
     is_active = models.BooleanField(default=True, verbose_name='فعال')
     
-    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
-    updated_at = models.DateTimeField(auto_now=True, blank=True, null=True)
+    created_at = jmodels.jDateTimeField(auto_now_add=True, blank=True, null=True)
+    updated_at = jmodels.jDateTimeField(auto_now=True, blank=True, null=True)
     
     class Meta:
         verbose_name = 'کارت پرداخت'
@@ -722,7 +724,7 @@ class Booklet(models.Model):
     file = models.FileField(upload_to='booklets/', verbose_name='فایل')
     description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
     is_active = models.BooleanField(default=True, verbose_name='فعال')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
     
     class Meta:
         verbose_name = 'جزوه'
@@ -742,7 +744,7 @@ class BookletPayment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='booklet_payments')
     booklet = models.ForeignKey(Booklet, on_delete=models.CASCADE, related_name='payments')
     amount = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='مبلغ (تومان)')
-    payment_date = models.DateField(default=timezone.now, verbose_name='تاریخ پرداخت')
+    payment_date = jmodels.jDateField(default=timezone.now, verbose_name='تاریخ پرداخت')
     proof_image = models.ImageField(upload_to='booklet_payment_proofs/', verbose_name='تصویر رسید پرداخت')
     status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default='pending', verbose_name='وضعیت')
     admin_note = models.TextField(blank=True, null=True, verbose_name='توضیحات مدیر')
@@ -802,8 +804,8 @@ class EmailNotificationSettings(models.Model):
     is_active = models.BooleanField(default=True, verbose_name='فعال')
     
     # Timestamps
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = jmodels.jDateTimeField(auto_now=True, verbose_name='تاریخ بروزرسانی')
 
     class Meta:
         verbose_name = 'تنظیمات اطلاع‌رسانی ایمیل'
@@ -848,7 +850,7 @@ class TuitionCategory(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='مبلغ (تومان)')
     duration_months = models.PositiveIntegerField(default=1, verbose_name='مدت (ماه)')
     is_active = models.BooleanField(default=True, verbose_name='فعال')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
     
     class Meta:
         verbose_name = 'دسته‌بندی شهریه'
@@ -871,15 +873,15 @@ class TuitionReceipt(models.Model):
     category = models.ForeignKey(TuitionCategory, on_delete=models.CASCADE, null=True, blank=True, verbose_name='دسته‌بندی شهریه')
     receipt_image = models.ImageField(upload_to='tuition_receipts/', verbose_name='تصویر رسید')
     amount_paid = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='مبلغ پرداخت شده (تومان)')
-    payment_date = models.DateField(verbose_name='تاریخ پرداخت')
-    expiry_date = models.DateField(verbose_name='تاریخ انقضا')
+    payment_date = jmodels.jDateField(verbose_name='تاریخ پرداخت')
+    expiry_date = jmodels.jDateField(verbose_name='تاریخ انقضا')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='وضعیت')
     notes = models.TextField(blank=True, null=True, verbose_name='یادداشت‌ها')
     admin_notes = models.TextField(blank=True, null=True, verbose_name='یادداشت‌های ادمین')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ آپلود')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ آپلود')
+    updated_at = jmodels.jDateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
     reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_tuitions', verbose_name='بررسی شده توسط')
-    reviewed_at = models.DateTimeField(null=True, blank=True, verbose_name='تاریخ بررسی')
+    reviewed_at = jmodels.jDateTimeField(null=True, blank=True, verbose_name='تاریخ بررسی')
     
     class Meta:
         verbose_name = 'رسید شهریه'
@@ -924,11 +926,11 @@ class SpecialTuitionFee(models.Model):
     title = models.CharField(max_length=200, verbose_name='عنوان شهریه ویژه')
     description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
     amount = models.DecimalField(max_digits=10, decimal_places=0, verbose_name='مبلغ (تومان)')
-    due_date = models.DateField(verbose_name='تاریخ سررسید')
+    due_date = jmodels.jDateField(verbose_name='تاریخ سررسید')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', verbose_name='وضعیت')
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='created_special_fees', verbose_name='ایجاد شده توسط')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = jmodels.jDateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
     notes = models.TextField(blank=True, null=True, verbose_name='یادداشت‌ها')
     
     class Meta:
@@ -955,7 +957,7 @@ class BlogCategory(models.Model):
     slug = models.SlugField(max_length=100, unique=True, verbose_name='نامک')
     description = models.TextField(blank=True, null=True, verbose_name='توضیحات')
     is_active = models.BooleanField(default=True, verbose_name='فعال')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
     
     class Meta:
         verbose_name = 'دسته‌بندی بلاگ'
@@ -984,9 +986,9 @@ class BlogPost(models.Model):
     is_featured = models.BooleanField(default=False, verbose_name='مقاله ویژه')
     allow_comments = models.BooleanField(default=True, verbose_name='اجازه کامنت')
     view_count = models.PositiveIntegerField(default=0, verbose_name='تعداد بازدید')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
-    published_at = models.DateTimeField(blank=True, null=True, verbose_name='تاریخ انتشار')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = jmodels.jDateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
+    published_at = jmodels.jDateTimeField(blank=True, null=True, verbose_name='تاریخ انتشار')
     
     class Meta:
         verbose_name = 'مقاله بلاگ'
@@ -999,7 +1001,7 @@ class BlogPost(models.Model):
     def save(self, *args, **kwargs):
         # Set published_at when status changes to published
         if self.status == 'published' and not self.published_at:
-            self.published_at = timezone.now()
+                self.published_at = timezone.now()
         elif self.status != 'published':
             self.published_at = None
         super().save(*args, **kwargs)
@@ -1022,8 +1024,8 @@ class BlogComment(models.Model):
     author_email = models.EmailField(verbose_name='ایمیل نویسنده')
     content = models.TextField(verbose_name='محتوای کامنت')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='وضعیت')
-    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
+    updated_at = jmodels.jDateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
     
     class Meta:
         verbose_name = 'کامنت بلاگ'

@@ -5,24 +5,8 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.http import HttpResponse, FileResponse, StreamingHttpResponse, HttpResponseForbidden, JsonResponse
 from django.urls import reverse
-from .forms import (
-    UserRegistrationForm, UserProfileForm, WorkoutPlanForm, 
-    DietPlanForm, PaymentForm, TicketForm,
-    TicketResponseForm, DocumentForm, PlanRequestForm,
-    BodyAnalysisReportForm, BodyAnalysisResponseForm,
-    InBodyReportForm, InBodyResponseForm,
-    MonthlyGoalForm, MonthlyGoalUpdateForm, MonthlyGoalCoachForm,
-    ProgressAnalysisForm, BodyInformationUserForm,
-    TuitionReceiptForm, TuitionReceiptAdminForm, SpecialTuitionFeeForm,
-    BlogCategoryForm, BlogPostForm, BlogCommentForm
-)
-from .models import (
-    UserProfile, WorkoutPlan, DietPlan, 
-    Payment, Ticket, TicketResponse, Document, PlanRequest,
-    BodyAnalysisReport, InBodyReport, MonthlyGoal, ProgressAnalysis, BodyInformationUser, PaymentCard,
-    TuitionReceipt, TuitionCategory, SpecialTuitionFee,
-    BlogCategory, BlogPost, BlogComment
-)
+from .forms import *
+from .models import *
 from django.db.models import Q, Avg, Sum, Count
 import datetime
 import os
@@ -43,6 +27,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from datetime import timedelta
 from functools import wraps
+import jdatetime
 
 
 # Custom decorator for AJAX views that require staff authentication
@@ -545,8 +530,9 @@ def download_workout_plan(request, plan_id):
     title = f"Workout Plan: {plan.get_plan_type_display()}"
     p.drawCentredString(300, 750, title)
     
-    # Add creation date
-    date_text = f"Created on: {plan.created_at.strftime('%Y/%m/%d')}"
+    # Add creation date in Jalali format
+    jalali_created_at = jdatetime.datetime.fromgregorian(datetime=plan.created_at)
+    date_text = f"Created on: {jalali_created_at.strftime('%Y/%m/%d')}"
     p.setFont('Helvetica', 10)
     p.drawString(50, 720, date_text)
     
@@ -859,7 +845,9 @@ def download_diet_plan(request, plan_id):
         
         # Add creation date
         try:
-            date_text = f"Created on: {plan.created_at.strftime('%Y/%m/%d')}"
+            # Add creation date in Jalali format
+            jalali_created_at = jdatetime.datetime.fromgregorian(datetime=plan.created_at)
+            date_text = f"Created on: {jalali_created_at.strftime('%Y/%m/%d')}"
             p.setFont('Helvetica', 10)
             p.drawString(50, 720, date_text)
         except Exception as e:
@@ -3180,6 +3168,16 @@ def tuition_dashboard(request):
         # Categories management
         all_categories = TuitionCategory.objects.all().order_by('amount')
         
+        # Calculate total amounts
+        from django.db.models import Sum
+        total_approved_amount = TuitionReceipt.objects.filter(status='approved').aggregate(
+            total=Sum('amount_paid')
+        )['total'] or 0
+        
+        total_pending_amount = TuitionReceipt.objects.filter(status='pending').aggregate(
+            total=Sum('amount_paid')
+        )['total'] or 0
+        
         context.update({
             'is_admin': True,
             'all_receipts': all_receipts,
@@ -3191,6 +3189,8 @@ def tuition_dashboard(request):
             'admin_approved_receipts': admin_approved_receipts,
             'admin_rejected_receipts': admin_rejected_receipts,
             'admin_expired_receipts': admin_expired_receipts,
+            'total_approved_amount': total_approved_amount,
+            'total_pending_amount': total_pending_amount,
         })
     
     return render(request, 'gym/tuition_dashboard.html', context)

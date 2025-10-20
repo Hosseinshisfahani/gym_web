@@ -7,16 +7,16 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Sum, Count
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
-from django.utils import timezone
 from django.urls import reverse
 from decimal import Decimal
 from datetime import datetime, timedelta
 import json
 from django.contrib.auth.models import User
-
-from .models import Category, Product, Cart, CartItem, Order, OrderItem, Wishlist, ProductImage, UserShippingAddress, ExchangeRate
+from django.utils import timezone
+import jdatetime
+from .models import *
 from gym.templatetags.custom_filters import format_price
-from .forms import ProductForm, CategoryForm, ProductImageForm, ProductSearchForm
+from .forms import *
 
 class DecimalEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -763,6 +763,8 @@ def shop_financial_dashboard(request):
     """داشبورد مالی فروشگاه"""
     # محاسبه آمار کلی
     today = timezone.now().date()
+    # Convert to Jalali date for better Persian calendar handling
+    jalali_today = jdatetime.date.fromgregorian(date=today)
     current_month = today.replace(day=1)
     last_month = (current_month - timedelta(days=1)).replace(day=1)
     
@@ -858,9 +860,20 @@ def shop_income_management(request):
     date_from = request.GET.get('date_from')
     date_to = request.GET.get('date_to')
     if date_from:
-        incomes = incomes.filter(date__gte=date_from)
+        # Convert Jalali date to Gregorian for database filtering
+        try:
+            from datetime import datetime
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+            incomes = incomes.filter(date__gte=date_from_obj)
+        except ValueError:
+            pass
     if date_to:
-        incomes = incomes.filter(date__lte=date_to)
+        try:
+            from datetime import datetime
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+            incomes = incomes.filter(date__lte=date_to_obj)
+        except ValueError:
+            pass
     
     # صفحه‌بندی
     paginator = Paginator(incomes, 20)
@@ -901,9 +914,20 @@ def shop_expense_management(request):
     date_from = request.GET.get('date_from')
     date_to = request.GET.get('date_to')
     if date_from:
-        expenses = expenses.filter(date__gte=date_from)
+        # Convert Jalali date to Gregorian for database filtering
+        try:
+            from datetime import datetime
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+            expenses = expenses.filter(date__gte=date_from_obj)
+        except ValueError:
+            pass
     if date_to:
-        expenses = expenses.filter(date__lte=date_to)
+        try:
+            from datetime import datetime
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+            expenses = expenses.filter(date__lte=date_to_obj)
+        except ValueError:
+            pass
     
     # صفحه‌بندی
     paginator = Paginator(expenses, 20)
@@ -1198,8 +1222,10 @@ def financial_api_data(request):
             status='paid'
         ).aggregate(total=Sum('amount'))['total'] or 0
         
+        # Convert to Jalali date for Persian calendar display
+        jalali_date_obj = jdatetime.date.fromgregorian(date=date)
         months_data.append({
-            'month': date.strftime('%Y-%m'),
+            'month': jalali_date_obj.strftime('%Y-%m'),
             'income': float(income),
             'expense': float(expense),
             'profit': float(income - expense)
@@ -1458,9 +1484,20 @@ def order_management(request):
     date_from = request.GET.get('date_from')
     date_to = request.GET.get('date_to')
     if date_from:
-        orders = orders.filter(created_at__gte=date_from)
+        # Convert Jalali date to Gregorian for database filtering
+        try:
+            from datetime import datetime
+            jalali_date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+            orders = orders.filter(created_at__date__gte=jalali_date_from_obj)
+        except ValueError:
+            pass
     if date_to:
-        orders = orders.filter(created_at__lte=date_to)
+        try:
+            from datetime import datetime
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+            orders = orders.filter(created_at__date__lte=date_to_obj)
+        except ValueError:
+            pass
     
     # جستجو
     search_query = request.GET.get('search')
@@ -1632,7 +1669,9 @@ def order_export(request):
         worksheet.write(row, 5, order.phone)
         worksheet.write(row, 6, order.get_status_display())
         worksheet.write(row, 7, float(order.total))
-        worksheet.write(row, 8, order.created_at.strftime('%Y-%m-%d %H:%M'))
+        # Convert to Jalali date for Persian calendar display
+        jalali_created_at = get_jalali_datetime(order.created_at)
+        worksheet.write(row, 8, jalali_created_at.strftime('%Y-%m-%d %H:%M'))
         worksheet.write(row, 9, order.address)
         worksheet.write(row, 10, order.city)
     
@@ -1685,8 +1724,10 @@ def order_statistics(request):
             status__in=['paid', 'processing', 'shipped', 'delivered']
         ).aggregate(total=Sum('total'))['total'] or 0
         
+        # Convert to Jalali date for Persian calendar display
+        jalali_month = jdatetime.date.fromgregorian(date=month_start)
         monthly_stats.append({
-            'month': month_start.strftime('%Y-%m'),
+            'month': jalali_month.strftime('%Y-%m'),
             'orders': orders_count,
             'revenue': revenue
         })
@@ -1809,7 +1850,8 @@ def sitemap_xml(request):
             'url': base_url + reverse('gym_shop:category_detail', args=[category.slug]),
             'priority': '0.7',
             'changefreq': 'weekly',
-            'lastmod': category.updated_at.strftime('%Y-%m-%d') if hasattr(category, 'updated_at') else timezone.now().strftime('%Y-%m-%d')
+            'lastmod': jdatetime.datetime.fromgregorian(datetime=category.updated_at).strftime('%Y-%m-%d')
+
         })
     
     # Product URLs
@@ -1820,7 +1862,7 @@ def sitemap_xml(request):
             'url': base_url + reverse('gym_shop:product_detail', args=[product.slug]),
             'priority': '0.6',
             'changefreq': 'weekly',
-            'lastmod': product.updated_at.strftime('%Y-%m-%d') if hasattr(product, 'updated_at') else timezone.now().strftime('%Y-%m-%d')
+            'lastmod': jdatetime.datetime.fromgregorian(datetime=product.updated_at).strftime('%Y-%m-%d') if hasattr(product, 'updated_at') else jdatetime.datetime.fromgregorian(datetime=timezone.now()).strftime('%Y-%m-%d')
         })
     
     # Combine all URLs

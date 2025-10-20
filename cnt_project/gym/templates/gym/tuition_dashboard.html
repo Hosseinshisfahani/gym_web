@@ -274,6 +274,215 @@
     </div>
     {% endif %}
 
+    <!-- Admin Receipt Status Checker & Payment Tracker -->
+    {% if is_admin %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-primary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        بررسی وضعیت رسیدها و پیگیری پرداخت‌ها
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- Filter Options -->
+                    <div class="row mb-3">
+                        <div class="col-md-3 mb-2">
+                            <select id="statusFilter" class="form-select" onchange="filterReceipts()">
+                                <option value="">همه وضعیت‌ها</option>
+                                <option value="pending">در انتظار بررسی</option>
+                                <option value="approved">تایید شده</option>
+                                <option value="rejected">رد شده</option>
+                                <option value="expired">منقضی شده</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <select id="categoryFilter" class="form-select" onchange="filterReceipts()">
+                                <option value="">همه دسته‌بندی‌ها</option>
+                                {% for category in all_categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <input type="text" id="userSearch" class="form-control" placeholder="جستجوی کاربر..." onkeyup="filterReceipts()">
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-outline-primary w-100" onclick="resetFilters()">
+                                <i class="fas fa-redo me-2"></i>
+                                بازنشانی فیلترها
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Receipts Table -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" id="receiptsTable">
+                            <thead class="table-primary">
+                                <tr>
+                                    <th style="width: 5%">#</th>
+                                    <th style="width: 18%">ورزشکار</th>
+                                    <th style="width: 12%">مبلغ</th>
+                                    <th style="width: 12%">تاریخ پرداخت</th>
+                                    <th style="width: 12%">تاریخ انقضا</th>
+                                    <th style="width: 10%">وضعیت</th>
+                                    <th style="width: 13%">بررسی شده توسط</th>
+                                    <th style="width: 12%">تاریخ آپلود</th>
+                                    <th style="width: 6%">عملیات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for receipt in all_receipts %}
+                                <tr class="receipt-row" 
+                                    data-status="{{ receipt.status }}"
+                                    data-category="{{ receipt.category.id }}"
+                                    data-user="{{ receipt.athlete.userprofile.name|default:receipt.athlete.username|lower }}">
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if receipt.athlete.userprofile.profile_image %}
+                                                <img src="{{ receipt.athlete.userprofile.profile_image.url }}" 
+                                                     alt="Profile" class="rounded-circle me-2" width="32" height="32">
+                                            {% else %}
+                                                <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                                     style="width: 32px; height: 32px;">
+                                                    <i class="fas fa-user text-white" style="font-size: 14px;"></i>
+                                                </div>
+                                            {% endif %}
+                                            <div>
+                                                <div class="fw-bold small">{{ receipt.athlete.userprofile.name|default:"بدون نام" }}</div>
+                                                <div class="text-muted" style="font-size: 0.75rem;">{{ receipt.athlete.username }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <strong>{{ receipt.amount_paid|floatformat:0|add_commas }}</strong>
+                                        <small class="text-muted d-block">تومان</small>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {{ receipt.payment_date|persian_date:"Y/m/d" }}
+                                    </td>
+                                    <td>
+                                        {% if receipt.is_expired %}
+                                            <span class="text-danger">
+                                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                                {{ receipt.expiry_date|persian_date:"Y/m/d" }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-success">
+                                                <i class="fas fa-check-circle me-1"></i>
+                                                {{ receipt.expiry_date|persian_date:"Y/m/d" }}
+                                            </span>
+                                            <small class="text-muted d-block">{{ receipt.days_until_expiry }} روز</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if receipt.status == 'approved' %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check-circle me-1"></i>
+                                                {{ receipt.get_status_display }}
+                                            </span>
+                                        {% elif receipt.status == 'pending' %}
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fas fa-clock me-1"></i>
+                                                {{ receipt.get_status_display }}
+                                            </span>
+                                        {% elif receipt.status == 'rejected' %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times-circle me-1"></i>
+                                                {{ receipt.get_status_display }}
+                                            </span>
+                                        {% elif receipt.status == 'expired' %}
+                                            <span class="badge bg-secondary">
+                                                <i class="fas fa-calendar-times me-1"></i>
+                                                {{ receipt.get_status_display }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if receipt.reviewed_by %}
+                                            <div class="small">
+                                                <i class="fas fa-user-check text-success me-1"></i>
+                                                {{ receipt.reviewed_by.userprofile.name|default:receipt.reviewed_by.username }}
+                                                <div class="text-muted" style="font-size: 0.7rem;">
+                                                    {{ receipt.reviewed_at|persian_date:"m/d H:i" }}
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            <span class="text-muted small">
+                                                <i class="fas fa-minus"></i>
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-upload me-1"></i>
+                                        {{ receipt.created_at|persian_date:"m/d H:i" }}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{% url 'gym:review_tuition_receipt' receipt.id %}" 
+                                               class="btn btn-outline-primary" 
+                                               title="بررسی کامل">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if receipt.receipt_image %}
+                                            <a href="{{ receipt.receipt_image.url }}" 
+                                               target="_blank" 
+                                               class="btn btn-outline-info" 
+                                               title="مشاهده رسید">
+                                                <i class="fas fa-image"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Summary Info -->
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="alert alert-info mb-0">
+                                <div class="row text-center">
+                                    <div class="col-md-2">
+                                        <strong>کل رسیدها:</strong>
+                                        <div class="fs-5 text-primary" id="totalCount">{{ all_receipts.count }}</div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <strong>نمایش داده شده:</strong>
+                                        <div class="fs-5 text-dark" id="visibleCount">{{ all_receipts.count }}</div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>مجموع مبالغ تایید شده:</strong>
+                                        <div class="fs-5 text-success">
+                                            {{ total_approved_amount|floatformat:0|add_commas }} تومان
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <strong>تایید شده:</strong>
+                                        <div class="fs-5 text-success" id="totalApproved">{{ admin_approved_receipts }}</div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>در انتظار بررسی:</strong>
+                                        <div class="fs-5 text-warning">
+                                            {{ admin_pending_receipts }} رسید
+                                            <small class="d-block text-muted">{{ total_pending_amount|floatformat:0|add_commas }} تومان</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Payment Information Section - Only for regular users -->
     {% if not is_admin %}
     <div class="row mb-4">
@@ -1507,6 +1716,110 @@
         } else {
             console.log('User cancelled deletion');
         }
+    }
+
+    // Filter and Search Functions for Admin Receipt Status Checker
+    function filterReceipts() {
+        const statusFilter = document.getElementById('statusFilter')?.value || '';
+        const categoryFilter = document.getElementById('categoryFilter')?.value || '';
+        const userSearch = document.getElementById('userSearch')?.value.toLowerCase() || '';
+        
+        const rows = document.querySelectorAll('.receipt-row');
+        let visibleCount = 0;
+        
+        rows.forEach(row => {
+            const status = row.getAttribute('data-status');
+            const category = row.getAttribute('data-category');
+            const user = row.getAttribute('data-user');
+            
+            let showRow = true;
+            
+            // Status filter
+            if (statusFilter && status !== statusFilter) {
+                showRow = false;
+            }
+            
+            // Category filter
+            if (categoryFilter && category !== categoryFilter) {
+                showRow = false;
+            }
+            
+            // User search
+            if (userSearch && !user.includes(userSearch)) {
+                showRow = false;
+            }
+            
+            // Show/hide row
+            if (showRow) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        // Update visible count
+        const visibleCountEl = document.getElementById('visibleCount');
+        if (visibleCountEl) {
+            visibleCountEl.textContent = visibleCount;
+        }
+    }
+
+    function resetFilters() {
+        // Reset all filter inputs
+        const statusFilter = document.getElementById('statusFilter');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const userSearch = document.getElementById('userSearch');
+        
+        if (statusFilter) statusFilter.value = '';
+        if (categoryFilter) categoryFilter.value = '';
+        if (userSearch) userSearch.value = '';
+        
+        // Show all rows
+        filterReceipts();
+        
+        showToast('فیلترها بازنشانی شدند', 'success');
+    }
+
+    // Export table to CSV (optional enhancement)
+    function exportToCSV() {
+        const table = document.getElementById('receiptsTable');
+        let csv = [];
+        
+        // Get headers
+        const headers = [];
+        table.querySelectorAll('thead th').forEach(th => {
+            headers.push(th.textContent.trim());
+        });
+        csv.push(headers.join(','));
+        
+        // Get visible rows
+        const rows = table.querySelectorAll('tbody tr.receipt-row');
+        rows.forEach(row => {
+            if (row.style.display !== 'none') {
+                const cols = [];
+                row.querySelectorAll('td').forEach((td, index) => {
+                    if (index < headers.length - 1) { // Skip actions column
+                        cols.push('"' + td.textContent.trim().replace(/"/g, '""') + '"');
+                    }
+                });
+                csv.push(cols.join(','));
+            }
+        });
+        
+        // Create and download file
+        const csvContent = '\ufeff' + csv.join('\n'); // Add BOM for Persian support
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'receipts_' + new Date().toISOString().split('T')[0] + '.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showToast('فایل CSV دانلود شد', 'success');
     }
 </script>
 {% endblock %}

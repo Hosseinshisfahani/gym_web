@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',  # For number formatting filters like intcomma
     'django.contrib.sites',  # Required for allauth
     'widget_tweaks',
+    'django_jalali',
     
     'gym',
     'gym_shop',
