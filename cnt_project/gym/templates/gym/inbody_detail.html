@@ -11,7 +11,11 @@
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">جزئیات گزارش اینبادی</h5>
+                    {% if is_admin %}
+                    <a href="{% url 'gym:inbody_reports_management' %}" class="btn btn-sm btn-outline-success">بازگشت به لیست</a>
+                    {% else %}
                     <a href="{% url 'gym:body_analysis_reports' %}" class="btn btn-sm btn-outline-success">بازگشت به لیست</a>
+                    {% endif %}
                 </div>
                 <div class="card-body">
                     <div class="row mb-4">

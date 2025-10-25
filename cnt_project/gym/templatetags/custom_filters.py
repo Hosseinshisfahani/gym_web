@@ -84,13 +84,18 @@ def abs(value):
 
 @register.filter
 def persian_date(value, format_string='Y/m/d'):
-    """Convert Gregorian date to Persian (Jalali) date"""
+    """Convert Gregorian date to Persian (Jalali) date or format existing Persian date"""
     if not value:
         return ""
     
     try:
-        # Handle both datetime and date objects
-        if isinstance(value, datetime):
+        # Check if it's already a jdatetime object
+        if isinstance(value, jdatetime.datetime):
+            persian_dt = value
+        elif isinstance(value, jdatetime.date):
+            persian_dt = value
+        # Handle Gregorian datetime and date objects
+        elif isinstance(value, datetime):
             persian_dt = jdatetime.datetime.fromgregorian(datetime=value)
         elif isinstance(value, date):
             persian_dt = jdatetime.date.fromgregorian(date=value)
@@ -104,6 +109,12 @@ def persian_date(value, format_string='Y/m/d'):
             # Handle datetime with time
             if isinstance(persian_dt, jdatetime.datetime):
                 return f"{persian_dt.year}/{persian_dt.month:02d}/{persian_dt.day:02d} {persian_dt.hour:02d}:{persian_dt.minute:02d}"
+            else:
+                return f"{persian_dt.year}/{persian_dt.month:02d}/{persian_dt.day:02d}"
+        elif format_string == 'Y/m/d H:i:s':
+            # Handle datetime with seconds
+            if isinstance(persian_dt, jdatetime.datetime):
+                return f"{persian_dt.year}/{persian_dt.month:02d}/{persian_dt.day:02d} {persian_dt.hour:02d}:{persian_dt.minute:02d}:{persian_dt.second:02d}"
             else:
                 return f"{persian_dt.year}/{persian_dt.month:02d}/{persian_dt.day:02d}"
         elif format_string == 'j F Y':
@@ -121,6 +132,30 @@ def persian_date(value, format_string='Y/m/d'):
             ]
             month_name = persian_months[persian_dt.month] if persian_dt.month <= 12 else str(persian_dt.month)
             return f"{persian_dt.day} {month_name}"
+        elif format_string == 'H:i':
+            # Handle time only
+            if isinstance(persian_dt, jdatetime.datetime):
+                return f"{persian_dt.hour:02d}:{persian_dt.minute:02d}"
+            else:
+                return "00:00"
+        elif format_string == 'relative':
+            # Relative time (e.g., "2 hours ago", "3 days ago")
+            from django.utils import timezone
+            now = timezone.now()
+            if isinstance(value, datetime):
+                diff = now - value
+                if diff.days > 0:
+                    return f"{diff.days} روز پیش"
+                elif diff.seconds > 3600:
+                    hours = diff.seconds // 3600
+                    return f"{hours} ساعت پیش"
+                elif diff.seconds > 60:
+                    minutes = diff.seconds // 60
+                    return f"{minutes} دقیقه پیش"
+                else:
+                    return "همین الان"
+            else:
+                return f"{persian_dt.year}/{persian_dt.month:02d}/{persian_dt.day:02d}"
         else:
             # Default format
             return f"{persian_dt.year}/{persian_dt.month:02d}/{persian_dt.day:02d}"

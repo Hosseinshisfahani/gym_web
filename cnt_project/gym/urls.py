@@ -47,7 +47,6 @@ urlpatterns = [
     path('tickets/', views.tickets, name='tickets'),
     path('tickets/add/', views.add_ticket, name='add_ticket'),
     path('tickets/<int:ticket_id>/', views.ticket_detail, name='ticket_detail'),
-    path('tickets/<int:ticket_id>/update-status/', views.update_ticket_status, name='update_ticket_status'),
     path('documents/', views.documents, name='documents'),
     path('documents/add/', views.add_document, name='add_document'),
     path('documents/<int:doc_id>/view/', views.view_document, name='view_document'),
@@ -74,6 +73,7 @@ urlpatterns = [
     path('body-analysis/', views.body_analysis_reports, name='body_analysis_reports'),
     path('body-analysis/<int:report_id>/', views.body_analysis_detail, name='body_analysis_detail'),
     path('inbody/<int:report_id>/', views.inbody_detail, name='inbody_detail'),
+    path('staff/inbody-reports/', views.inbody_reports_management, name='inbody_reports_management'),
     
     # Monthly Goals
     path('monthly-goals/', views.monthly_goals, name='monthly_goals'),

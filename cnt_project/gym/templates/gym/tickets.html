@@ -23,26 +23,28 @@
                             <th>موضوع</th>
                             <th>تاریخ ایجاد</th>
                             <th>آخرین بروزرسانی</th>
-                            <th>وضعیت</th>
                             <th>عملیات</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for ticket in tickets %}
                         <tr>
-                            <td>{{ ticket.subject }}</td>
-                            <td>{{ ticket.created_at|persian_date:"Y/m/d H:i" }}</td>
-                            <td>{{ ticket.updated_at|persian_date:"Y/m/d H:i" }}</td>
+                            <td class="fw-bold">{{ ticket.subject }}</td>
                             <td>
-                                <span class="badge {% if ticket.status == 'closed' %}bg-secondary
-                                    {% elif ticket.status == 'in_progress' %}bg-info
-                                    {% elif ticket.status == 'answered' %}bg-success
-                                    {% else %}bg-warning{% endif %}">
-                                    {% if ticket.status == 'open' %}باز
-                                    {% elif ticket.status == 'in_progress' %}در حال بررسی
-                                    {% elif ticket.status == 'answered' %}پاسخ داده شده
-                                    {% else %}بسته شده{% endif %}
-                                </span>
+                                <div class="date-display">
+                                    <i class="fas fa-calendar-alt text-muted me-1"></i>
+                                    <span class="date-text">{{ ticket.created_at|persian_date:"j F Y" }}</span>
+                                    <br>
+                                    <small class="text-muted time-text">{{ ticket.created_at|persian_date:"H:i" }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="date-display">
+                                    <i class="fas fa-clock text-muted me-1"></i>
+                                    <span class="date-text">{{ ticket.updated_at|persian_date:"j F Y" }}</span>
+                                    <br>
+                                    <small class="text-muted time-text">{{ ticket.updated_at|persian_date:"H:i" }}</small>
+                                </div>
                             </td>
                             <td>
                                 <a href="{% url 'gym:ticket_detail' ticket.id %}" class="btn btn-sm btn-info">
@@ -64,4 +66,40 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.date-display {
+    line-height: 1.4;
+}
+
+.date-text {
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.time-text {
+    font-size: 0.85em;
+    color: #6c757d;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0,0,0,.02);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0,0,0,.075);
+}
+</style>
 {% endblock %} 

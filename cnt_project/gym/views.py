@@ -993,16 +993,12 @@ def tickets(request):
     # For admin/staff users, show all tickets
     if request.user.is_staff:
         # Get filter parameters
-        status = request.GET.get('status')
         search_query = request.GET.get('search', '')
         
         # Base queryset
         tickets = Ticket.objects.select_related('user').all().order_by('-created_at')
         
         # Apply filters
-        if status:
-            tickets = tickets.filter(status=status)
-        
         if search_query:
             tickets = tickets.filter(
                 Q(subject__icontains=search_query) |
@@ -1014,7 +1010,6 @@ def tickets(request):
         context = {
             'tickets': tickets,
             'is_admin': True,
-            'status_filter': status,
             'search_query': search_query,
         }
         return render(request, 'gym/admin/tickets.html', context)
@@ -1059,9 +1054,9 @@ def ticket_detail(request, ticket_id):
             )
             response.save()
             
-            # Update ticket status when admin responds
+            # Update ticket when admin responds
             if request.user.is_staff:
-                ticket.status = 'in_progress'
+                ticket.updated_at = timezone.now()
                 ticket.save()
             
             messages.success(request, 'پاسخ با موفقیت ثبت شد.')
@@ -1077,21 +1072,6 @@ def ticket_detail(request, ticket_id):
     }
     return render(request, 'gym/ticket_detail.html', context)
 
-@login_required
-@staff_member_required
-def update_ticket_status(request, ticket_id):
-    ticket = get_object_or_404(Ticket, id=ticket_id)
-    
-    if request.method == 'POST':
-        status = request.POST.get('status')
-        if status in ['pending', 'in_progress', 'resolved', 'closed']:
-            ticket.status = status
-            ticket.save()
-            messages.success(request, 'وضعیت تیکت با موفقیت به‌روزرسانی شد.')
-        else:
-            messages.error(request, 'وضعیت نامعتبر است.')
-    
-    return redirect('gym:ticket_detail', ticket_id=ticket.id)
 
 # Document views
 @login_required
@@ -1670,20 +1650,32 @@ def payment_gateway_callback(request):
     return redirect('gym:payment_verify')
 
 def password_reset(request):
-    """Handle user password reset requests"""
+    """Handle user password reset requests using Melli code"""
     if request.method == 'POST':
-        email = request.POST.get('email', '').strip()
+        melli_code = request.POST.get('melli_code', '').strip()
         
-        # Check if email exists
-        if not email:
-            messages.error(request, 'لطفاً ایمیل خود را وارد کنید.')
+        # Check if melli code exists
+        if not melli_code:
+            messages.error(request, 'لطفاً کد ملی خود را وارد کنید.')
+            return render(request, 'gym/password_reset.html')
+        
+        # Validate melli code format
+        if not melli_code.isdigit() or len(melli_code) != 10:
+            messages.error(request, 'کد ملی باید ۱۰ رقم باشد.')
             return render(request, 'gym/password_reset.html')
         
         try:
-            user = User.objects.get(email=email)
+            # Find user by melli code through UserProfile
+            from .models import UserProfile
+            user_profile = UserProfile.objects.get(melli_code=melli_code)
+            user = user_profile.user
             
-            # Set a fixed password for testing purposes (TEMPORARY SOLUTION)
-            new_password = "123456"
+            # Generate a random password
+            import random
+            import string
+            
+            # Generate a random 8-character password with letters and numbers
+            new_password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
             
             # Update user's password
             user.set_password(new_password)
@@ -1691,14 +1683,15 @@ def password_reset(request):
             
             # Store the new password in session to display on success page
             request.session['temp_password'] = new_password
-            request.session['temp_email'] = email
+            request.session['temp_melli_code'] = melli_code
+            request.session['temp_user_name'] = user_profile.name or user.username
             
             messages.success(request, 'رمز عبور با موفقیت بازنشانی شد. از رمز جدید برای ورود استفاده کنید.')
             return redirect('gym:password_reset_success')
                 
-        except User.DoesNotExist:
-            # Don't reveal that the email doesn't exist for security reasons
-            messages.success(request, 'اگر این ایمیل در سیستم ثبت شده باشد، دستورالعمل بازیابی رمز عبور برای آن ارسال خواهد شد.')
+        except UserProfile.DoesNotExist:
+            # Don't reveal that the melli code doesn't exist for security reasons
+            messages.success(request, 'اگر این کد ملی در سیستم ثبت شده باشد، رمز عبور جدید برای آن تنظیم خواهد شد.')
             return redirect('gym:password_reset_success')
     
     return render(request, 'gym/password_reset.html')
@@ -1710,10 +1703,14 @@ def password_reset_success(request):
     # If we have a temporary password in the session, add it to the context
     if 'temp_password' in request.session:
         context['temp_password'] = request.session['temp_password']
-        context['temp_email'] = request.session['temp_email']
+        context['temp_melli_code'] = request.session.get('temp_melli_code', '')
+        context['temp_user_name'] = request.session.get('temp_user_name', '')
         # Clear the session data after showing it once
         del request.session['temp_password']
-        del request.session['temp_email']
+        if 'temp_melli_code' in request.session:
+            del request.session['temp_melli_code']
+        if 'temp_user_name' in request.session:
+            del request.session['temp_user_name']
     
     return render(request, 'gym/password_reset_success.html', context)
 
@@ -1886,7 +1883,7 @@ def inbody_detail(request, report_id):
             updated_report.response_date = timezone.now()
             updated_report.save()
             messages.success(request, 'پاسخ شما با موفقیت ثبت شد.')
-            return redirect('gym:body_analysis_reports')
+            return redirect('gym:inbody_reports_management')
     
     # Prepare form for admin response
     if request.user.is_staff:
@@ -1902,6 +1899,45 @@ def inbody_detail(request, report_id):
     }
     
     return render(request, 'gym/inbody_detail.html', context)
+
+# InBody Reports Management (Admin)
+@login_required
+@user_passes_test(lambda u: u.is_staff)
+def inbody_reports_management(request):
+    """Admin view to manage all InBody reports with filtering"""
+    
+    # Get all InBody reports
+    reports = InBodyReport.objects.all().order_by('-report_date')
+    
+    # Get filter parameters
+    status = request.GET.get('status')
+    user_id = request.GET.get('user_id')
+    search_query = request.GET.get('search', '')
+    
+    # Apply filters
+    if status:
+        reports = reports.filter(status=status)
+    
+    if user_id:
+        reports = reports.filter(user_id=user_id)
+    
+    if search_query:
+        reports = reports.filter(
+            Q(user__username__icontains=search_query) |
+            Q(user__userprofile__name__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(admin_response__icontains=search_query)
+        )
+        
+    context = {
+        'reports': reports,
+        'status': status,
+        'user_id': user_id,
+        'search_query': search_query,
+        'is_admin': True
+    }
+    
+    return render(request, 'gym/admin/inbody_reports.html', context)
 
 # Monthly Goals
 @login_required

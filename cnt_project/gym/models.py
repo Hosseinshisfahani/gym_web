@@ -147,16 +147,9 @@ class Payment(models.Model):
         return f"{self.user.username} - {self.amount} تومان - {self.get_status_display()}"
 
 class Ticket(models.Model):
-    STATUS_CHOICES = [
-        ('open', 'باز'),
-        ('in_progress', 'در حال بررسی'),
-        ('closed', 'بسته'),
-    ]
-    
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tickets')
     subject = models.CharField(max_length=200, verbose_name='موضوع')
     message = models.TextField(verbose_name='پیام')
-    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='open', verbose_name='وضعیت')
     created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='تاریخ ایجاد')
     updated_at = jmodels.jDateTimeField(auto_now=True, verbose_name='تاریخ به‌روزرسانی')
     

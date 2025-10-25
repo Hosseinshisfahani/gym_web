@@ -14,15 +14,6 @@
                     <label for="search" class="form-label">جستجو</label>
                     <input type="text" class="form-control" id="search" name="search" value="{{ search_query }}" placeholder="جستجو در عنوان، توضیحات یا نام کاربر">
                 </div>
-                <div class="col-md-4">
-                    <label for="status" class="form-label">وضعیت</label>
-                    <select class="form-select" id="status" name="status">
-                        <option value="">همه</option>
-                        <option value="open" {% if status_filter == 'open' %}selected{% endif %}>باز</option>
-                        <option value="in_progress" {% if status_filter == 'in_progress' %}selected{% endif %}>در حال بررسی</option>
-                        <option value="closed" {% if status_filter == 'closed' %}selected{% endif %}>بسته</option>
-                    </select>
-                </div>
                 <div class="col-md-4 d-flex align-items-end">
                     <button type="submit" class="btn btn-primary">اعمال فیلتر</button>
                 </div>
@@ -38,7 +29,6 @@
                                                 <th>شماره پیام</th>
                     <th>کاربر</th>
                     <th>عنوان</th>
-                    <th>وضعیت</th>
                     <th>تاریخ ایجاد</th>
                     <th>آخرین به‌روزرسانی</th>
                     <th>عملیات</th>
@@ -47,26 +37,38 @@
             <tbody>
                 {% for ticket in tickets %}
                 <tr>
-                    <td>#{{ ticket.id }}</td>
-                    <td>{{ ticket.user.get_full_name|default:ticket.user.username }}</td>
-                    <td>{{ ticket.subject }}</td>
+                    <td><span class="badge bg-secondary">#{{ ticket.id }}</span></td>
                     <td>
-                        <span class="badge {% if ticket.status == 'open' %}bg-warning
-                                         {% elif ticket.status == 'in_progress' %}bg-info
-                                         {% elif ticket.status == 'closed' %}bg-secondary
-                                         {% else %}bg-primary{% endif %}">
-                            {{ ticket.get_status_display }}
-                        </span>
+                        <div class="user-info">
+                            <strong>{{ ticket.user.get_full_name|default:ticket.user.username }}</strong>
+                            <br>
+                            <small class="text-muted">{{ ticket.user.email }}</small>
+                        </div>
                     </td>
-                    <td>{{ ticket.created_at|persian_date:"Y/m/d H:i" }}</td>
-                    <td>{{ ticket.updated_at|persian_date:"Y/m/d H:i" }}</td>
+                    <td class="fw-bold">{{ ticket.subject }}</td>
+                    <td>
+                        <div class="date-display">
+                            <i class="fas fa-calendar-alt text-muted me-1"></i>
+                            <span class="date-text">{{ ticket.created_at|persian_date:"j F Y" }}</span>
+                            <br>
+                            <small class="text-muted time-text">{{ ticket.created_at|persian_date:"H:i" }}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="date-display">
+                            <i class="fas fa-clock text-muted me-1"></i>
+                            <span class="date-text">{{ ticket.updated_at|persian_date:"j F Y" }}</span>
+                            <br>
+                            <small class="text-muted time-text">{{ ticket.updated_at|persian_date:"H:i" }}</small>
+                        </div>
+                    </td>
                     <td>
                         <a href="{% url 'gym:ticket_detail' ticket.id %}" class="btn btn-sm btn-primary">مشاهده و پاسخ</a>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" class="text-center">هیچ پیامی یافت نشد.</td>
+                    <td colspan="6" class="text-center">هیچ پیامی یافت نشد.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -74,42 +76,52 @@
     </div>
 </div>
 
-<!-- Status Update Modal -->
-<div class="modal fade" id="statusModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">به‌روزرسانی وضعیت پیام</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="statusForm" method="post">
-                {% csrf_token %}
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="ticketStatus" class="form-label">وضعیت جدید</label>
-                        <select class="form-select" id="ticketStatus" name="status">
-                            <option value="open">باز</option>
-                            <option value="in_progress">در حال بررسی</option>
-                            <option value="closed">بسته</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
-                    <button type="submit" class="btn btn-primary">ذخیره تغییرات</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 {% endblock %}
 
+{% block extra_css %}
+<style>
+.date-display {
+    line-height: 1.4;
+}
+
+.date-text {
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.time-text {
+    font-size: 0.85em;
+    color: #6c757d;
+}
+
+.user-info {
+    line-height: 1.4;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0,0,0,.02);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0,0,0,.075);
+}
+
+.badge {
+    font-size: 0.8em;
+}
+</style>
+{% endblock %}
+
 {% block extra_js %}
-<script>
-    function updateTicketStatus(ticketId) {
-        const form = document.getElementById('statusForm');
-        form.action = `/tickets/${ticketId}/update-status/`;
-    }
-</script>
 {% endblock %} 

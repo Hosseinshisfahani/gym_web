@@ -79,8 +79,7 @@ class PaymentAdmin(admin.ModelAdmin):
 class TicketAdmin(admin.ModelAdmin):
     verbose_name = 'تیکت'
     verbose_name_plural = 'تیکت‌ها'
-    list_display = ('subject', 'user', 'status', 'created_at')
-    list_filter = ('status',)
+    list_display = ('subject', 'user', 'created_at')
     search_fields = ('subject', 'user__username', 'user__userprofile__name')
     ordering = ('-created_at',)
 

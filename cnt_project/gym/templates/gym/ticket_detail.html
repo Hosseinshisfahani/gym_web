@@ -10,28 +10,24 @@
         <div class="col-md-8">
             <!-- Ticket Details -->
             <div class="card mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
+                <div class="card-header">
                     <h5 class="mb-0">{{ ticket.subject }}</h5>
-                    {% if is_admin %}
-                    <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#statusModal" onclick="updateTicketStatus({{ ticket.id }})">
-                        تغییر وضعیت
-                    </button>
-                    {% endif %}
                 </div>
                 <div class="card-body">
                     <div class="mb-3">
-                        <small class="text-muted">ایجاد شده توسط: {{ ticket.user.get_full_name|default:ticket.user.username }}</small>
-                        <br>
-                        <small class="text-muted">تاریخ ایجاد: {{ ticket.created_at|persian_date:"Y/m/d H:i" }}</small>
-                        <br>
-                        <small class="text-muted">وضعیت: 
-                            <span class="badge {% if ticket.status == 'open' %}bg-warning
-                                             {% elif ticket.status == 'in_progress' %}bg-info
-                                             {% elif ticket.status == 'closed' %}bg-secondary
-                                             {% else %}bg-primary{% endif %}">
-                                {{ ticket.get_status_display }}
-                            </span>
-                        </small>
+                        <div class="ticket-meta">
+                            <div class="meta-item">
+                                <i class="fas fa-user text-muted me-1"></i>
+                                <span class="text-muted">ایجاد شده توسط: </span>
+                                <strong>{{ ticket.user.get_full_name|default:ticket.user.username }}</strong>
+                            </div>
+                            <div class="meta-item">
+                                <i class="fas fa-calendar-alt text-muted me-1"></i>
+                                <span class="text-muted">تاریخ ایجاد: </span>
+                                <span class="date-text">{{ ticket.created_at|persian_date:"j F Y" }}</span>
+                                <span class="time-text"> - {{ ticket.created_at|persian_date:"H:i" }}</span>
+                            </div>
+                        </div>
                     </div>
                     <p class="card-text">{{ ticket.message }}</p>
                 </div>
@@ -47,14 +43,17 @@
                     <div class="mb-3 p-3 {% if response.user.is_staff %}bg-light{% else %}bg-white{% endif %} border rounded">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <div>
-                                <strong>{{ response.user.get_full_name|default:response.user.username }}</strong>
+                                <strong class="text-dark">{{ response.user.get_full_name|default:response.user.username }}</strong>
                                 {% if response.user.is_staff %}
                                 <span class="badge bg-info ms-2">پشتیبان</span>
                                 {% endif %}
                             </div>
-                            <small class="text-muted">{{ response.created_at|persian_date:"Y/m/d H:i" }}</small>
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>
+                                {{ response.created_at|persian_date:"j F Y" }} - {{ response.created_at|persian_date:"H:i" }}
+                            </small>
                         </div>
-                        <p class="mb-0">{{ response.message }}</p>
+                        <p class="mb-0 text-dark">{{ response.message }}</p>
                     </div>
                     {% empty %}
                     <p class="text-center text-muted">هنوز پاسخی ثبت نشده است.</p>
@@ -99,13 +98,14 @@
                             <strong>ایمیل:</strong> {{ ticket.user.email }}
                         </li>
                         <li class="list-group-item">
-                            <strong>تاریخ ایجاد:</strong> {{ ticket.created_at|persian_date:"Y/m/d H:i" }}
+                            <strong>تاریخ ایجاد:</strong> 
+                            <span class="date-text">{{ ticket.created_at|persian_date:"j F Y" }}</span>
+                            <span class="time-text"> - {{ ticket.created_at|persian_date:"H:i" }}</span>
                         </li>
                         <li class="list-group-item">
-                            <strong>آخرین به‌روزرسانی:</strong> {{ ticket.updated_at|persian_date:"Y/m/d H:i" }}
-                        </li>
-                        <li class="list-group-item">
-                            <strong>وضعیت:</strong> {{ ticket.get_status_display }}
+                            <strong>آخرین به‌روزرسانی:</strong> 
+                            <span class="date-text">{{ ticket.updated_at|persian_date:"j F Y" }}</span>
+                            <span class="time-text"> - {{ ticket.updated_at|persian_date:"H:i" }}</span>
                         </li>
                     </ul>
                 </div>
@@ -118,7 +118,6 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <button class="btn btn-secondary" onclick="updateStatus('closed')">بستن گفتگو</button>
                         <a href="{% url 'gym:tickets' %}" class="btn btn-outline-primary">بازگشت به پیام‌ها</a>
                     </div>
                 </div>
@@ -128,47 +127,58 @@
     </div>
 </div>
 
-<!-- Status Update Modal -->
-<div class="modal fade" id="statusModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                                    <h5 class="modal-title">به‌روزرسانی وضعیت پیام</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form id="statusForm" method="post">
-                {% csrf_token %}
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="ticketStatus" class="form-label">وضعیت جدید</label>
-                        <select class="form-select" id="ticketStatus" name="status">
-                            <option value="open">باز</option>
-                            <option value="in_progress">در حال بررسی</option>
-                            <option value="closed">بسته</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">انصراف</button>
-                    <button type="submit" class="btn btn-primary">ذخیره تغییرات</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.ticket-meta {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.375rem;
+    border-left: 4px solid #007bff;
+}
+
+.meta-item {
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.meta-item:last-child {
+    margin-bottom: 0;
+}
+
+.date-text {
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.time-text {
+    font-size: 0.9em;
+    color: #6c757d;
+}
+
+.list-group-item {
+    border: none;
+    padding: 0.75rem 1rem;
+}
+
+.list-group-item strong {
+    color: #495057;
+    min-width: 120px;
+    display: inline-block;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.badge {
+    font-size: 0.75em;
+}
+</style>
 {% endblock %}
 
 {% block extra_js %}
-<script>
-    function updateTicketStatus(ticketId) {
-        const form = document.getElementById('statusForm');
-        form.action = `/tickets/${ticketId}/update-status/`;
-    }
-
-    function updateStatus(status) {
-        const form = document.getElementById('statusForm');
-        document.getElementById('ticketStatus').value = status;
-        form.submit();
-    }
-</script>
 {% endblock %} 
