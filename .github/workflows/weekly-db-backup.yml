@@ -1,0 +1,45 @@
+name: Weekly PostgreSQL Backup
+
+on:
+  schedule:
+  - cron: '0 3 * * 0'
+  workflow_dispatch: {}
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up pg client
+      run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+    - name: Create backup filename
+      id: meta
+      run: |
+        TS=$(date -u +"%Y%m%dT%H%M%SZ")
+        echo "ts=$TS" >> $GITHUB_OUTPUT
+        echo "file=pgbackup_${TS}.sql.gz" >> $GITHUB_OUTPUT
+
+    - name: Dump database and compress
+      env:
+        PGHOST: ${{ secrets.PG_HOST }}
+        PGPORT: ${{ secrets.PG_PORT }}
+        PGUSER: ${{ secrets.PG_USER }}
+        PGPASSWORD: ${{ secrets.PG_PASSWORD }}
+        PGDATABASE: ${{ secrets.PG_DATABASE }}
+      run: |
+        pg_dump \
+          --no-owner --no-privileges \
+          --format=plain \
+          --dbname=$PGDATABASE \
+          --host=$PGHOST \
+          --port=$PGPORT \
+          --username=$PGUSER \
+          | gzip -9 > ${{ steps.meta.outputs.file }}
+
+    - name: Upload artifact (auto-delete by retention)
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ steps.meta.outputs.file }}
+        path: ${{ steps.meta.outputs.file }}
+        if-no-files-found: error
+        retention-days: 14

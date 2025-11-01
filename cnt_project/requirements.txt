@@ -5,6 +5,7 @@ sqlparse==0.5.3
 
 # Database
 psycopg2-binary==2.9.10  # PostgreSQL adapter for Python
+django-environ==0.11.2  # Optional: alternative to python-dotenv
 
 # Image Processing
 Pillow==11.2.1  # Python Imaging Library for image processing

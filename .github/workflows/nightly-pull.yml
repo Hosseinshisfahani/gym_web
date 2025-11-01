@@ -1,0 +1,31 @@
+name: Nightly Remote Pull
+
+on:
+  schedule:
+  - cron: '0 2 * * *'
+  workflow_dispatch: {}
+
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install SSH client
+      run: sudo apt-get update && sudo apt-get install -y openssh-client
+
+    - name: Add SSH key
+      env:
+        SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      run: |
+        mkdir -p ~/.ssh
+        echo "$SSH_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        printf "Host *\n  StrictHostKeyChecking no\n" > ~/.ssh/config
+
+    - name: Pull latest code on server
+      env:
+        SSH_USER: ${{ secrets.SSH_USER }}
+        SSH_HOST: ${{ secrets.SSH_HOST }}
+        SSH_PORT: ${{ secrets.SSH_PORT }}
+        PROJECT_DIR: ${{ secrets.REMOTE_PROJECT_DIR }}
+      run: |
+        ssh -p ${SSH_PORT:-22} $SSH_USER@$SSH_HOST "cd $PROJECT_DIR && git pull --rebase --autostash"
